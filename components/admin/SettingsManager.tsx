@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Save, Undo2, Sliders, Sparkles, Volume2, Gamepad2, Mail, MapPin, Globe, Check, Sheet } from "lucide-react";
+import { Save, Undo2, Sliders, Sparkles, Volume2, Gamepad2, Mail, MapPin, Globe, Check, Sheet, Moon, Sun } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export interface SiteSettingsMap {
@@ -13,6 +13,7 @@ export interface SiteSettingsMap {
   status?: string;
   githubUrl?: string;
   themeAccent?: string;
+  themeMode?: string;
   soundEnabled?: string;
   gamesEnabled?: string;
   [key: string]: string | undefined;
@@ -246,6 +247,47 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
 
             <div style={{ marginTop: 16 }}>
               <label style={{ display: "block", color: "var(--soft-white)", fontSize: 13, marginBottom: 8, fontWeight: 600 }}>
+                Display Theme Mode
+              </label>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+                {[
+                  { mode: "dark", label: "Dark Mode (Default)", icon: Moon },
+                  { mode: "light", label: "Light Mode", icon: Sun },
+                ].map(({ mode, label, icon: Icon }) => {
+                  const isSelected = (settings.themeMode ?? "dark") === mode;
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => handleChange("themeMode", mode)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "8px 16px",
+                        borderRadius: 10,
+                        border: isSelected ? "2px solid var(--orange)" : "1px solid var(--line)",
+                        background: isSelected ? "rgba(var(--orange-rgb), 0.12)" : "rgba(255, 255, 255, 0.03)",
+                        cursor: "pointer",
+                        color: "var(--white)",
+                        fontSize: 12,
+                        fontWeight: 600,
+                      }}
+                    >
+                      <Icon size={14} style={{ color: isSelected ? "var(--orange)" : "var(--silver)" }} />
+                      <span>{label}</span>
+                      {isSelected && <Check size={12} style={{ color: "var(--orange)", marginLeft: 2 }} />}
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="field-hint" style={{ marginTop: 6, display: "block" }}>
+                Controls public portfolio color scheme. Can only be configured here in the Admin Settings panel.
+              </span>
+            </div>
+
+            <div style={{ marginTop: 20 }}>
+              <label style={{ display: "block", color: "var(--soft-white)", fontSize: 13, marginBottom: 8, fontWeight: 600 }}>
                 Theme Accent Color
               </label>
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
@@ -286,22 +328,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginTop: 24 }}>
-              <div style={{ padding: 16, borderRadius: 12, border: "1px solid var(--line)", background: "rgba(255,255,255,0.02)" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div>
-                    <strong style={{ color: "var(--white)", fontSize: 13 }}>Interactive Web Audio FX</strong>
-                    <p style={{ margin: "4px 0 0", color: "var(--subtle)", fontSize: 11 }}>Synthesizes tactile UI cyber clicks and game audio.</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={(settings.soundEnabled ?? "true") === "true"}
-                    onChange={(e) => handleChange("soundEnabled", e.target.checked ? "true" : "false")}
-                    style={{ width: 18, height: 18, accentColor: "var(--orange)" }}
-                  />
-                </div>
-              </div>
-
+            <div style={{ marginTop: 24 }}>
               <div style={{ padding: 16, borderRadius: 12, border: "1px solid var(--line)", background: "rgba(255,255,255,0.02)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>

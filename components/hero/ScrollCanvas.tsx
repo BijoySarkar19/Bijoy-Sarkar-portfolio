@@ -80,23 +80,23 @@ export function ScrollCanvas() {
       if (!image?.complete || !image.naturalWidth) return false;
       if (lastDrawn === index) return true;
 
-      // Generous zoom to guarantee zero edge gaps or blank spaces on any display size or aspect ratio
-      const zoom = 1.20;
-      const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * zoom;
+      // Natural cover scale ensuring edge-to-edge coverage with zero distortion or black bars
+      const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
       const imageWidth = Math.ceil(image.naturalWidth * scale);
       const imageHeight = Math.ceil(image.naturalHeight * scale);
 
-      // On mobile / tablet portrait displays, center horizontally on Bijoy's head (focal point at ~42.2% of image width)
+      // Center horizontally on Bijoy's head (focal center X ≈ 42.2%, Y ≈ 23%)
       const isPortrait = width / height < 1.3;
       let dx = isPortrait
         ? Math.round(width / 2 - imageWidth * 0.422)
         : Math.round((width - imageWidth) / 2);
 
+      // Preserve full head and facial framing on all screen aspect ratios
       let dy = isPortrait
         ? Math.round(height * 0.32 - imageHeight * 0.23)
-        : Math.round((height - imageHeight) / 2);
+        : Math.round(height * 0.35 - imageHeight * 0.23);
 
-      // Symmetrically clamped against all 4 edges so zero black bars or empty gaps can ever appear
+      // 4-way clamp guaranteeing zero black bars while keeping head comfortably within viewport
       if (dx > 0) dx = 0;
       if (dx + imageWidth < width) dx = width - imageWidth;
       if (dy > 0) dy = 0;

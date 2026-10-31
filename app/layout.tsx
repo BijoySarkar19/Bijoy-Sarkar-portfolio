@@ -4,7 +4,6 @@ import { ScrollCanvas } from "@/components/hero/ScrollCanvas";
 import { CustomScrollbar } from "@/components/ui/CustomScrollbar";
 import { CleanCopyHandler } from "@/components/ui/CleanCopyHandler";
 import { ScrollEdgeEffects } from "@/components/ui/ScrollEdgeEffects";
-import { InteractiveAudioProvider } from "@/components/ui/InteractiveAudioProvider";
 import { prisma } from "@/lib/prisma";
 import "@/app/globals.css";
 
@@ -54,9 +53,19 @@ function hexToRgb(hex: string): string {
   return "255, 94, 44";
 }
 
+function lightenHex(hex: string, percent: number): string {
+  const clean = hex.replace("#", "");
+  const num = parseInt(clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean, 16);
+  const amt = Math.round(2.55 * percent);
+  const r = Math.min(255, Math.max(0, ((num >> 16) & 255) + amt));
+  const g = Math.min(255, Math.max(0, ((num >> 8) & 255) + amt));
+  const b = Math.min(255, Math.max(0, (num & 255) + amt));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   let themeAccent = "#ff5e2c";
-  let soundEnabled = true;
+  let themeMode = "dark";
   let gamesEnabled = true;
 
   try {
@@ -66,17 +75,20 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       settingsMap[s.key] = s.value;
     }
     if (settingsMap.themeAccent) themeAccent = settingsMap.themeAccent;
-    if (settingsMap.soundEnabled !== undefined) soundEnabled = settingsMap.soundEnabled !== "false";
+    if (settingsMap.themeMode) themeMode = settingsMap.themeMode;
     if (settingsMap.gamesEnabled !== undefined) gamesEnabled = settingsMap.gamesEnabled !== "false";
   } catch (err) {
     console.error("Failed to load settings in RootLayout:", err);
   }
 
   const rgb = hexToRgb(themeAccent);
+  const isLight = themeMode === "light";
 
   return (
     <html
       lang="en"
+      className={isLight ? "light-mode" : ""}
+      data-theme={themeMode}
       suppressHydrationWarning
       style={
         {
@@ -85,6 +97,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           "--orange-rgb": rgb,
           "--orange-glow": `rgba(${rgb}, 0.45)`,
           "--orange-soft": `rgba(${rgb}, 0.15)`,
+          "--orange-light": lightenHex(themeAccent, 20),
+          "--orange-lighter": lightenHex(themeAccent, 35),
         } as React.CSSProperties
       }
     >
@@ -94,7 +108,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <ScrollEdgeEffects />
         <CustomScrollbar />
         <CleanCopyHandler />
-        <InteractiveAudioProvider soundEnabled={soundEnabled} />
         <Navbar gamesEnabled={gamesEnabled} />
         {children}
       </body>

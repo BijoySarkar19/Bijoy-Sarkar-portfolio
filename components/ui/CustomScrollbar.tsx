@@ -19,15 +19,49 @@ export function CustomScrollbar() {
   const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
   const rafIdRef = useRef<number | null>(null);
 
-  // Determine current active section for tooltip indicator
-  const getSectionLabel = useCallback((percent: number) => {
-    if (percent < 0.12) return "Home";
-    if (percent < 0.28) return "About";
-    if (percent < 0.44) return "Skills";
-    if (percent < 0.65) return "Projects";
-    if (percent < 0.82) return "Resume";
-    if (percent < 0.94) return "Games";
-    return "Contact";
+  // Determine current active section dynamically from DOM elements present
+  const getSectionLabel = useCallback((_percent: number) => {
+    if (typeof document === "undefined") return "Home";
+
+    const sectionCandidates = [
+      { id: "home", label: "Home" },
+      { id: "about", label: "About" },
+      { id: "skills", label: "Skills" },
+      { id: "projects", label: "Projects" },
+      { id: "resume", label: "Resume" },
+      { id: "games", label: "Games" },
+      { id: "contact", label: "Contact" },
+    ];
+
+    // Only inspect sections actually mounted on the page
+    const presentSections = sectionCandidates
+      .map(({ id, label }) => {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        const rect = el.getBoundingClientRect();
+        return { id, label, top: rect.top + window.scrollY, height: rect.height };
+      })
+      .filter((s): s is { id: string; label: string; top: number; height: number } => Boolean(s));
+
+    if (presentSections.length === 0) return "Home";
+
+    const currentScrollY = window.scrollY;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+
+    // If reached bottom of document, prioritize the final section (Contact)
+    if (maxScroll > 0 && currentScrollY >= maxScroll - 60) {
+      return presentSections[presentSections.length - 1].label;
+    }
+
+    // Match section whose top has entered active viewport zone
+    for (let i = presentSections.length - 1; i >= 0; i--) {
+      const s = presentSections[i];
+      if (currentScrollY + window.innerHeight * 0.35 >= s.top) {
+        return s.label;
+      }
+    }
+
+    return presentSections[0].label;
   }, []);
 
   // Directly update thumb position via translate3d on compositor thread (0ms latency)

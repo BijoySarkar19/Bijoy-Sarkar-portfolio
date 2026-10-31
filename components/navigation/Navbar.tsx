@@ -36,8 +36,10 @@ export function Navbar({ gamesEnabled = true }: { gamesEnabled?: boolean }) {
     update();
     window.addEventListener("scroll", update, { passive: true });
 
-    const sections = navItems
-      .map(({ id }) => document.getElementById(id))
+    // Include contact in tracked sections so navbar active underline accurately clears from games/resume
+    const trackedIds = [...navItems.map(({ id }) => id), "contact"];
+    const sections = trackedIds
+      .map((id) => document.getElementById(id))
       .filter((element): element is HTMLElement => Boolean(element));
 
     const observer = new IntersectionObserver(
@@ -47,7 +49,7 @@ export function Navbar({ gamesEnabled = true }: { gamesEnabled?: boolean }) {
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (visible) setActive(visible.target.id);
       },
-      { rootMargin: "-18% 0px -62% 0px", threshold: [0, 0.2, 0.5, 0.8] }
+      { rootMargin: "-18% 0px -55% 0px", threshold: [0, 0.2, 0.5, 0.8] }
     );
     sections.forEach((section) => observer.observe(section));
 
@@ -69,11 +71,12 @@ export function Navbar({ gamesEnabled = true }: { gamesEnabled?: boolean }) {
       activeEl.blur();
     }
     setMenuOpen(false);
+    setActive(id);
     if (pathname === "/") {
       const el = document.getElementById(id);
       if (el) {
         e.preventDefault();
-        el.scrollIntoView({ behavior: "smooth" });
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
         window.history.pushState(null, "", `#${id}`);
       }
     }
@@ -121,7 +124,7 @@ export function Navbar({ gamesEnabled = true }: { gamesEnabled?: boolean }) {
           ))}
 
           <a
-            className="button"
+            className={`button nav-cta${active === "contact" ? " is-active" : ""}`}
             href={sectionHref("contact")}
             onClick={(e) => handleNavClick(e, "contact")}
           >

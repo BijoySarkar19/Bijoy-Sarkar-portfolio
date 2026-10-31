@@ -15,8 +15,8 @@ interface ResumeViewerProps {
 }
 
 export function ResumeViewer({
-  resumePath,
-  filename,
+  resumePath = "/Bijoy_Sarkar_CV.pdf",
+  filename = "Bijoy_Sarkar_CV.pdf",
   pages = ["/cv-pages/page-1.png", "/cv-pages/page-2.png", "/cv-pages/page-3.png"],
   pageCount = 3,
   resumeTitle = "Experience in the details.",

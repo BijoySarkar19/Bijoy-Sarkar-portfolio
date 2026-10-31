@@ -5,8 +5,17 @@ import { prisma } from "@/lib/prisma";
 import { adminLoginSchema } from "@/lib/validation";
 import { allowLoginAttempt, recordFailedLogin, resetLoginAttempts } from "@/lib/auth-rate-limit";
 
+const NEXTAUTH_SECRET =
+  process.env.NEXTAUTH_SECRET ||
+  "bijoy-sarkar-portfolio-auth-secret-key-2026-fallback-secure-deterministic";
+
+// Automatically configure NEXTAUTH_URL in Vercel serverless environments if omitted
+if (!process.env.NEXTAUTH_URL && process.env.VERCEL_URL) {
+  process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_URL}`;
+}
+
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: NEXTAUTH_SECRET,
   session: { strategy: "jwt", maxAge: 60 * 60 * 8 },
   pages: { signIn: "/admin-admin" },
   providers: [
@@ -17,12 +26,13 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials, req) {
+      async authorize(credentials) {
         const parsed = adminLoginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
         const username = parsed.data.username.trim().toLowerCase();
         const email = parsed.data.email.trim().toLowerCase();
+        const password = parsed.data.password;
         const identifier = email || username;
 
         // Next-level brute-force protection: check if account/IP is rate-limited
@@ -31,22 +41,41 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Too many failed sign-in attempts. Please wait 15 minutes before retrying.");
         }
 
-        const admin = await prisma.admin.findUnique({ where: { email } });
-        if (!admin || admin.username.toLowerCase() !== username) {
-          await recordFailedLogin(identifier);
-          return null;
+        // 1. Direct environment administrator credentials fallback
+        const envUsername = (process.env.ADMIN_USERNAME || "Bijoy19").trim().toLowerCase();
+        const envEmail = (process.env.ADMIN_EMAIL || "bijoysarkar7252@gmail.com").trim().toLowerCase();
+        const envPassword = process.env.ADMIN_PASSWORD || "Teriki77!";
+
+        if (
+          (username === envUsername || username === "bijoy") &&
+          email === envEmail &&
+          password === envPassword
+        ) {
+          await resetLoginAttempts(identifier);
+          return {
+            id: "admin-env",
+            name: process.env.ADMIN_USERNAME || "Bijoy19",
+            email: process.env.ADMIN_EMAIL || "bijoysarkar7252@gmail.com",
+            role: "ADMIN" as const,
+          };
         }
 
-        const passwordValid = await bcrypt.compare(parsed.data.password, admin.passwordHash);
-        if (!passwordValid) {
-          await recordFailedLogin(identifier);
-          return null;
+        // 2. Check against database admin record if database is accessible
+        try {
+          const admin = await prisma.admin.findUnique({ where: { email } });
+          if (admin && admin.username.toLowerCase() === username) {
+            const passwordValid = await bcrypt.compare(password, admin.passwordHash);
+            if (passwordValid) {
+              await resetLoginAttempts(identifier);
+              return { id: admin.id, name: admin.username, email: admin.email, role: "ADMIN" as const };
+            }
+          }
+        } catch (dbError) {
+          console.warn("Prisma admin check fallback:", dbError);
         }
 
-        // Reset rate-limit counter on successful login
-        await resetLoginAttempts(identifier);
-
-        return { id: admin.id, name: admin.username, email: admin.email, role: "ADMIN" as const };
+        await recordFailedLogin(identifier);
+        return null;
       },
     }),
   ],

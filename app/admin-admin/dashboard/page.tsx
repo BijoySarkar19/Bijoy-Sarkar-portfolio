@@ -8,33 +8,77 @@ import { formatIndianTime } from "@/lib/audit";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const [
-    totalProjects,
-    publishedProjects,
-    totalExperiences,
-    totalSkillGroups,
-    activeResume,
-    totalAuditLogs,
-    recentAuditLogs,
-    recentProjects,
-    totalMessages,
-    unreadMessages,
-  ] = await Promise.all([
-    prisma.project.count(),
-    prisma.project.count({ where: { published: true } }),
-    prisma.workExperience.count(),
-    prisma.skillGroup.count(),
-    prisma.resumeFile.findFirst({ where: { active: true } }),
-    prisma.auditLog.count(),
-    prisma.auditLog.findMany({ orderBy: { timestamp: "desc" }, take: 6 }),
-    prisma.project.findMany({
-      orderBy: { updatedAt: "desc" },
-      take: 4,
-      select: { id: true, title: true, slug: true, published: true, updatedAt: true },
-    }),
-    prisma.contactMessage.count(),
-    prisma.contactMessage.count({ where: { status: "UNREAD" } }),
-  ]);
+  let totalProjects = 15;
+  let publishedProjects = 15;
+  let totalExperiences = 5;
+  let totalSkillGroups = 7;
+  let activeResume: { filename: string; path: string } | null = {
+    filename: "Bijoy_Sarkar_CV.pdf",
+    path: "/Bijoy_Sarkar_CV.pdf",
+  };
+  let totalAuditLogs = 1;
+  let recentAuditLogs: Array<{
+    id: string;
+    entity: string;
+    entityId: string;
+    action: string;
+    changes: string;
+    adminId: string;
+    adminName: string;
+    timestamp: Date;
+  }> = [];
+  let recentProjects: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    published: boolean;
+    updatedAt: Date;
+  }> = [];
+  let totalMessages = 0;
+  let unreadMessages = 0;
+
+  try {
+    const [
+      pTotal,
+      pPublished,
+      expTotal,
+      skillsTotal,
+      resumeRecord,
+      logsTotal,
+      logsRecent,
+      projRecent,
+      msgTotal,
+      msgUnread,
+    ] = await Promise.all([
+      prisma.project.count(),
+      prisma.project.count({ where: { published: true } }),
+      prisma.workExperience.count(),
+      prisma.skillGroup.count(),
+      prisma.resumeFile.findFirst({ where: { active: true } }),
+      prisma.auditLog.count(),
+      prisma.auditLog.findMany({ orderBy: { timestamp: "desc" }, take: 6 }),
+      prisma.project.findMany({
+        orderBy: { updatedAt: "desc" },
+        take: 4,
+        select: { id: true, title: true, slug: true, published: true, updatedAt: true },
+      }),
+      prisma.contactMessage.count(),
+      prisma.contactMessage.count({ where: { status: "UNREAD" } }),
+    ]);
+
+    totalProjects = pTotal;
+    publishedProjects = pPublished;
+    totalExperiences = expTotal;
+    totalSkillGroups = skillsTotal;
+    if (resumeRecord) activeResume = resumeRecord;
+    totalAuditLogs = logsTotal;
+    recentAuditLogs = logsRecent;
+    recentProjects = projRecent;
+    totalMessages = msgTotal;
+    unreadMessages = msgUnread;
+  } catch (err) {
+    console.warn("Prisma error caught on AdminDashboardPage:", err);
+  }
 
   return (
     <main>

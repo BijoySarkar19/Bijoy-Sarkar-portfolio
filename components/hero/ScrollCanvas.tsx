@@ -35,8 +35,8 @@ export function ScrollCanvas() {
     const pending = new Map<number, HTMLImageElement>();
     const queue = new Set<number>();
     const root = document.documentElement;
-    const maxCache = 50;
-    const maxConcurrent = window.innerWidth < 700 ? 5 : 12;
+    const maxCache = 300;
+    const maxConcurrent = window.innerWidth < 700 ? 8 : 16;
     let activeLoads = 0;
     let currentFrame = 0;
     let targetFrame = 0;
@@ -46,6 +46,7 @@ export function ScrollCanvas() {
     let width = 0;
     let height = 0;
     let alive = true;
+    let idleTimer: NodeJS.Timeout | null = null;
 
     function updateAtmosphere(progress: number) {
       const rgb = progress < 0.52
@@ -80,11 +81,9 @@ export function ScrollCanvas() {
       if (!image?.complete || !image.naturalWidth) return false;
       if (lastDrawn === index) return true;
 
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-
-      // Natural cover scale ensuring edge-to-edge coverage with zero distortion or black bars
-      const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+      // Cover scaling with zoom = 1.20 and 4-way clamped coordinates per Rule 2
+      const zoom = 1.20;
+      const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * zoom;
       const imageWidth = Math.ceil(image.naturalWidth * scale);
       const imageHeight = Math.ceil(image.naturalHeight * scale);
 
@@ -99,7 +98,7 @@ export function ScrollCanvas() {
         ? Math.round(height * 0.32 - imageHeight * 0.23)
         : Math.round(height * 0.35 - imageHeight * 0.23);
 
-      // 4-way clamp guaranteeing zero black bars while keeping head comfortably within viewport
+      // 4-way clamp guaranteeing zero black bars or edge gaps
       if (dx > 0) dx = 0;
       if (dx + imageWidth < width) dx = width - imageWidth;
       if (dy > 0) dy = 0;
@@ -119,12 +118,25 @@ export function ScrollCanvas() {
       }
     }
 
-    function trimCache() {
-      if (cache.size <= maxCache) return;
-      const keep = new Set([...cache.keys()]
-        .sort((a, b) => Math.abs(a - currentFrame) - Math.abs(b - currentFrame))
-        .slice(0, maxCache));
-      for (const index of cache.keys()) if (!keep.has(index)) cache.delete(index);
+    function scheduleIdlePreload() {
+      if (!alive || activeLoads > 0 || queue.size > 0 || cache.size >= FRAME_COUNT) return;
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        if (!alive || activeLoads > 0 || queue.size > 0 || cache.size >= FRAME_COUNT) return;
+        const missing: number[] = [];
+        for (let i = 0; i < FRAME_COUNT; i++) {
+          if (!cache.has(i) && !pending.has(i)) {
+            missing.push(i);
+          }
+        }
+        if (missing.length === 0) return;
+        // Radiate outward from current frame
+        missing.sort((a, b) => Math.abs(a - targetFrame) - Math.abs(b - targetFrame));
+        for (let i = 0; i < Math.min(10, missing.length); i++) {
+          queue.add(missing[i]);
+        }
+        pump();
+      }, 60);
     }
 
     function pump() {
@@ -142,7 +154,6 @@ export function ScrollCanvas() {
           pending.delete(next);
           activeLoads -= 1;
           cache.set(next, image);
-          trimCache();
           drawClosest();
           pump();
         };
@@ -153,9 +164,13 @@ export function ScrollCanvas() {
         };
         image.src = `${FRAME_DIRECTORY}/frame_${String(next + 1).padStart(4, "0")}.jpg`;
       }
+
+      if (queue.size === 0 && activeLoads === 0) {
+        scheduleIdlePreload();
+      }
     }
 
-    function requestNear(center: number, behind = 4, ahead = 14) {
+    function requestNear(center: number, behind = 12, ahead = 35) {
       const start = Math.max(0, Math.floor(center) - behind);
       const end = Math.min(FRAME_COUNT - 1, Math.ceil(center) + ahead);
       for (let index = start; index <= end; index += 1) {
@@ -169,17 +184,17 @@ export function ScrollCanvas() {
       const progress = Math.max(0, Math.min(1, window.scrollY / scrollable));
       targetFrame = progress * (FRAME_COUNT - 1);
       updateAtmosphere(progress);
-      requestNear(targetFrame, 6, 20);
+      requestNear(targetFrame, 12, 35);
     }
 
     function render(now: number) {
       if (!alive) return;
       const elapsed = previousTime ? Math.min(now - previousTime, 48) : 16;
       previousTime = now;
-      const amount = 1 - Math.exp(-elapsed / 68);
+      const amount = 1 - Math.exp(-elapsed / 34);
       currentFrame += (targetFrame - currentFrame) * amount;
-      if (Math.abs(targetFrame - currentFrame) < 0.012) currentFrame = targetFrame;
-      requestNear(currentFrame);
+      if (Math.abs(targetFrame - currentFrame) < 0.008) currentFrame = targetFrame;
+      requestNear(currentFrame, 8, 25);
       drawClosest();
       frameId = window.requestAnimationFrame(render);
     }
@@ -187,12 +202,13 @@ export function ScrollCanvas() {
     window.addEventListener("scroll", updateScroll, { passive: true });
     window.addEventListener("resize", resize, { passive: true });
     resize();
-    requestNear(0, 0, 20);
+    requestNear(0, 0, 35);
     updateScroll();
     frameId = window.requestAnimationFrame(render);
 
     return () => {
       alive = false;
+      if (idleTimer) clearTimeout(idleTimer);
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("scroll", updateScroll);
       window.removeEventListener("resize", resize);

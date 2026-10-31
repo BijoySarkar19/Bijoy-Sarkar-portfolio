@@ -1,6 +1,10 @@
 import { getToken } from "next-auth/jwt";
 import { NextResponse, type NextRequest } from "next/server";
 
+const NEXTAUTH_SECRET =
+  process.env.NEXTAUTH_SECRET ||
+  "bijoy-sarkar-portfolio-auth-secret-key-2026-fallback-secure-deterministic";
+
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isProtectedAdminPage = pathname.startsWith("/admin-admin/dashboard");
@@ -11,7 +15,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET ?? "" });
+  const token = await getToken({ req: request, secret: NEXTAUTH_SECRET });
   if (token?.role === "ADMIN") {
     return NextResponse.next();
   }

@@ -24,6 +24,7 @@ export default async function HomePage() {
   let dbExperiences: any[] = [];
   let dbSkillGroups: any[] = [];
   let activeResume: any = null;
+  let totalResumeRecords = 0;
   let dbSettings: any[] = [];
 
   try {
@@ -44,6 +45,7 @@ export default async function HomePage() {
       prisma.workExperience.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }),
       prisma.skillGroup.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] }),
       prisma.resumeFile.findFirst({ where: { active: true } }),
+      prisma.resumeFile.count(),
       prisma.siteSetting.findMany(),
     ]);
     explicitFeatured = results[0];
@@ -52,7 +54,8 @@ export default async function HomePage() {
     dbExperiences = results[3];
     dbSkillGroups = results[4];
     activeResume = results[5];
-    dbSettings = results[6];
+    totalResumeRecords = results[6];
+    dbSettings = results[7];
 
     // If fewer than 5 explicit home projects, fill remaining up to 5 from main published projects
     if (explicitFeatured.length < 5) {
@@ -145,9 +148,26 @@ export default async function HomePage() {
   const gamesEnabled = settingsMap.gamesEnabled !== "false";
   const contactEnabled = settingsMap.contactEnabled !== "false";
 
+  // Resolve CV document:
+  // If database has resume records but none active, admin explicitly deactivated CV.
+  // If database has no resume records (unseeded) or DB query failed, use the bundled public CV.
+  let resolvedResumePath: string | null = null;
+  let resolvedResumeFilename: string | null = null;
+
+  if (activeResume?.path) {
+    resolvedResumePath = activeResume.path;
+    resolvedResumeFilename = activeResume.filename || "Bijoy_Sarkar_CV.pdf";
+  } else if (totalResumeRecords === 0) {
+    resolvedResumePath = "/Bijoy_Sarkar_CV.pdf";
+    resolvedResumeFilename = "Bijoy_Sarkar_CV.pdf";
+  } else {
+    resolvedResumePath = null;
+    resolvedResumeFilename = null;
+  }
+
   // Prevent browser PDF caching with deterministic version timestamp
   const resumeVersion = activeResume?.updatedAt ? new Date(activeResume.updatedAt).getTime() : 1;
-  const resumePathWithVersion = activeResume?.path ? `${activeResume.path}?v=${resumeVersion}` : null;
+  const resumePathWithVersion = resolvedResumePath ? `${resolvedResumePath}?v=${resumeVersion}` : null;
 
   // Read rendered CV preview pages from manifest
   let cvPages = ["/cv-pages/page-1.png", "/cv-pages/page-2.png", "/cv-pages/page-3.png"];
@@ -252,7 +272,7 @@ export default async function HomePage() {
         {resumeEnabled && (
           <ResumeViewer
             resumePath={resumePathWithVersion}
-            filename={activeResume?.filename}
+            filename={resolvedResumeFilename}
             pages={cvPages}
             pageCount={cvPageCount}
             resumeTitle={settingsMap.resumeTitle}

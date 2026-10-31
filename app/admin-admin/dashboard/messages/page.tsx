@@ -7,14 +7,23 @@ import { ExternalLink } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function AdminMessagesPage() {
-  const [messages, unreadCount] = await Promise.all([
-    prisma.contactMessage.findMany({
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.contactMessage.count({
-      where: { status: "UNREAD" },
-    }),
-  ]);
+  let messages: any[] = [];
+  let unreadCount = 0;
+
+  try {
+    const [msgs, unread] = await Promise.all([
+      prisma.contactMessage.findMany({
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.contactMessage.count({
+        where: { status: "UNREAD" },
+      }),
+    ]);
+    messages = msgs;
+    unreadCount = unread;
+  } catch (err) {
+    console.warn("Prisma error caught on AdminMessagesPage:", err);
+  }
 
   return (
     <main>

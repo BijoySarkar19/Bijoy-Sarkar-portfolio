@@ -6,7 +6,12 @@ import { authOptions } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 export default async function AdminLoginPage() {
-  const session = await getServerSession(authOptions);
+  let session = null;
+  try {
+    session = await getServerSession(authOptions);
+  } catch (error) {
+    console.warn("getServerSession warning on /admin-admin:", error);
+  }
   if (session?.user?.role === "ADMIN") redirect("/admin-admin/dashboard");
   return (
     <main className="admin-login-wrap">

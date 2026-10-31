@@ -289,3 +289,5 @@ export const FALLBACK_PROJECTS: FallbackProject[] = [
     sortOrder: 15,
   },
 ];
+
+export { experiences as FALLBACK_EXPERIENCES, skillGroups as FALLBACK_SKILL_GROUPS } from "@/lib/portfolio-data";

@@ -421,7 +421,15 @@ img { display: block; max-width: 100%; }
 .project-link:hover .project-arrow { transform: translate(2px, -2px); }
 .project-card-links { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .project-github { display: grid; width: 29px; height: 29px; place-items: center; border: 1px solid var(--line); border-radius: 50%; }
-.projects-footer { display: flex; justify-content: center; margin-top: 36px; }
+.project-footer,
+.projects-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-top: 42px;
+  text-align: center;
+}
 .empty-state { padding: 42px 20px; color: var(--muted); text-align: center; }
 .empty-state-mark { color: var(--orange); font-family: monospace; font-size: 18px; }
 .empty-state h3 { margin: 12px 0 6px; color: var(--white); font-size: 18px; letter-spacing: -0.04em; }

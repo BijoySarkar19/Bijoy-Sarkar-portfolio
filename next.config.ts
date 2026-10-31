@@ -60,6 +60,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
   turbopack: { root: process.cwd() },
+  outputFileTracingIncludes: {
+    "/**": ["./dev.db"],
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [],

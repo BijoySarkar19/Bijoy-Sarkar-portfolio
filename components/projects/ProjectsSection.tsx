@@ -107,9 +107,9 @@ export function ProjectsSection({
           )}
         </div>
 
-        <div className="project-footer" data-reveal>
+        <div className="project-footer" data-reveal style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", marginTop: "3rem" }}>
           <Link className="button button-secondary" href="/projects">
-            Browse all {totalCount} projects in directory <ArrowRight size={14} />
+            Browse all projects in directory <ArrowRight size={14} />
           </Link>
         </div>
       </div>

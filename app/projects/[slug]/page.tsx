@@ -5,17 +5,30 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { ProjectGallery } from "@/components/projects/ProjectGallery";
 import { prisma } from "@/lib/prisma";
-import { externalUrl, toPortfolioProject } from "@/lib/projects";
+import { externalUrl, toPortfolioProject, type PortfolioProject } from "@/lib/projects";
+import { FALLBACK_PROJECTS } from "@/lib/fallback-data";
 import { SocialIcon } from "@/components/ui/SocialIcon";
 
 export const dynamic = "force-dynamic";
 
 interface ProjectPageProps { params: Promise<{ slug: string }> }
 
-async function getProject(slug: string) {
-  const project = await prisma.project.findUnique({ where: { slug } });
-  if (!project?.published) return null;
-  return toPortfolioProject(project);
+async function getProject(slug: string): Promise<PortfolioProject | null> {
+  try {
+    const project = await prisma.project.findUnique({ where: { slug } });
+    if (project?.published) return toPortfolioProject(project);
+  } catch (err) {
+    console.warn("Database fallback in getProject:", err);
+  }
+
+  const fallback = FALLBACK_PROJECTS.find((p) => p.slug === slug && p.published);
+  if (!fallback) return null;
+  return {
+    ...fallback,
+    images: [fallback.image1, fallback.image2, fallback.image3],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 }
 
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {

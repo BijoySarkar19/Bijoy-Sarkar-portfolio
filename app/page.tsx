@@ -9,75 +9,129 @@ import { GamesSection } from "@/components/games/GamesSection";
 import { SocialIconName } from "@/components/ui/SocialIcon";
 import { parseDegrees, type DegreeItem } from "@/lib/degrees";
 import { prisma } from "@/lib/prisma";
-import { toPortfolioProject } from "@/lib/projects";
+import { toPortfolioProject, type PortfolioProject } from "@/lib/projects";
+import { FALLBACK_PROJECTS } from "@/lib/fallback-data";
+import { experiences as fallbackExperiences, skillGroups as fallbackSkillGroups } from "@/lib/portfolio-data";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [
-    explicitFeatured,
-    ongoingRecords,
-    totalProjectCount,
-    dbExperiences,
-    dbSkillGroups,
-    activeResume,
-    dbSettings,
-  ] = await Promise.all([
-    // 1. Projects selected by admin for Main Page Top 5
-    prisma.project.findMany({
-      where: { published: true, isOngoing: false, featuredOnHome: true },
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
-      take: 5,
-    }),
-    // 2. Currently Working Projects (e.g. CivicLens Core, max 2 on Main Page)
-    prisma.project.findMany({
-      where: { published: true, isOngoing: true, featuredOnHome: true },
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
-      take: 2,
-    }),
-    prisma.project.count({ where: { published: true } }),
-    prisma.workExperience.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }),
-    prisma.skillGroup.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] }),
-    prisma.resumeFile.findFirst({ where: { active: true } }),
-    prisma.siteSetting.findMany(),
-  ]);
+  let explicitFeatured: any[] = [];
+  let ongoingRecords: any[] = [];
+  let totalProjectCount = 0;
+  let dbExperiences: any[] = [];
+  let dbSkillGroups: any[] = [];
+  let activeResume: any = null;
+  let dbSettings: any[] = [];
 
-  // If fewer than 5 explicit home projects, fill remaining up to 5 from main published projects
-  let homeRecords = explicitFeatured;
-  if (homeRecords.length < 5) {
-    const chosenIds = explicitFeatured.map((p) => p.id);
-    const filler = await prisma.project.findMany({
-      where: { published: true, isOngoing: false, id: { notIn: chosenIds } },
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
-      take: 5 - homeRecords.length,
-    });
-    homeRecords = [...homeRecords, ...filler];
+  try {
+    const results = await Promise.all([
+      // 1. Projects selected by admin for Main Page Top 5
+      prisma.project.findMany({
+        where: { published: true, isOngoing: false, featuredOnHome: true },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+        take: 5,
+      }),
+      // 2. Currently Working Projects (e.g. CivicLens Core, max 2 on Main Page)
+      prisma.project.findMany({
+        where: { published: true, isOngoing: true, featuredOnHome: true },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+        take: 2,
+      }),
+      prisma.project.count({ where: { published: true } }),
+      prisma.workExperience.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }),
+      prisma.skillGroup.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] }),
+      prisma.resumeFile.findFirst({ where: { active: true } }),
+      prisma.siteSetting.findMany(),
+    ]);
+    explicitFeatured = results[0];
+    ongoingRecords = results[1];
+    totalProjectCount = results[2];
+    dbExperiences = results[3];
+    dbSkillGroups = results[4];
+    activeResume = results[5];
+    dbSettings = results[6];
+
+    // If fewer than 5 explicit home projects, fill remaining up to 5 from main published projects
+    if (explicitFeatured.length < 5) {
+      const chosenIds = explicitFeatured.map((p) => p.id);
+      const filler = await prisma.project.findMany({
+        where: { published: true, isOngoing: false, id: { notIn: chosenIds } },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+        take: 5 - explicitFeatured.length,
+      });
+      explicitFeatured = [...explicitFeatured, ...filler];
+    }
+  } catch (err) {
+    console.warn("Database fallback engaged on HomePage:", err);
   }
 
-  const settingsMap: Record<string, string> = {};
+  const settingsMap: Record<string, string> = {
+    location: "Agartala, Tripura, India",
+    locationMapUrl: "https://maps.google.com/?q=Agartala,+Tripura,+India",
+    contactEmail: "bijoysarkar7252@gmail.com",
+    contactRecipientEmail: "bijoysarkar7252@gmail.com",
+  };
   for (const s of dbSettings) {
     settingsMap[s.key] = s.value;
   }
 
-  const featuredProjects = homeRecords.map(toPortfolioProject);
-  const ongoingProjects = ongoingRecords.map(toPortfolioProject);
+  // Resolve projects: use DB if available, otherwise resilient fallback dataset
+  let featuredProjects: PortfolioProject[] = [];
+  let ongoingProjects: PortfolioProject[] = [];
 
-  const experiences = dbExperiences.map((e) => ({
-    period: e.period,
-    role: e.role,
-    organization: e.organization,
-    summary: e.summary,
-    tags: typeof e.tags === "string" ? JSON.parse(e.tags || "[]") : e.tags,
-  }));
+  if (explicitFeatured.length > 0) {
+    featuredProjects = explicitFeatured.map(toPortfolioProject);
+  } else {
+    featuredProjects = FALLBACK_PROJECTS.filter((p) => !p.isOngoing)
+      .slice(0, 5)
+      .map((p) => ({
+        ...p,
+        images: [p.image1, p.image2, p.image3],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+  }
 
-  const skillGroups = dbSkillGroups.map((g) => ({
-    title: g.title,
-    note: g.note,
-    icon: g.icon,
-    skills: typeof g.skills === "string" ? JSON.parse(g.skills || "[]") : g.skills,
-  }));
+  if (ongoingRecords.length > 0) {
+    ongoingProjects = ongoingRecords.map(toPortfolioProject);
+  } else {
+    ongoingProjects = FALLBACK_PROJECTS.filter((p) => p.isOngoing && p.featuredOnHome)
+      .slice(0, 2)
+      .map((p) => ({
+        ...p,
+        images: [p.image1, p.image2, p.image3],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+  }
+
+  if (totalProjectCount === 0) {
+    totalProjectCount = FALLBACK_PROJECTS.length;
+  }
+
+  const experiences =
+    dbExperiences.length > 0
+      ? dbExperiences.map((e) => ({
+          period: e.period,
+          role: e.role,
+          organization: e.organization,
+          summary: e.summary,
+          tags: typeof e.tags === "string" ? JSON.parse(e.tags || "[]") : e.tags,
+        }))
+      : fallbackExperiences;
+
+  const skillGroups =
+    dbSkillGroups.length > 0
+      ? dbSkillGroups.map((g) => ({
+          title: g.title,
+          note: g.note,
+          icon: g.icon,
+          skills: typeof g.skills === "string" ? JSON.parse(g.skills || "[]") : g.skills,
+        }))
+      : fallbackSkillGroups;
 
   // Parse degrees from settings or fallback
   const degrees: DegreeItem[] = parseDegrees(settingsMap.degreesList);

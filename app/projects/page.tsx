@@ -4,14 +4,29 @@ import { ArrowLeft } from "lucide-react";
 import { Footer } from "@/components/Footer";
 import { ProjectGrid } from "@/components/projects/ProjectGrid";
 import { prisma } from "@/lib/prisma";
-import { toPortfolioProject } from "@/lib/projects";
+import { toPortfolioProject, type PortfolioProject } from "@/lib/projects";
+import { FALLBACK_PROJECTS } from "@/lib/fallback-data";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Projects — Bijoy Sarkar", description: "Selected engineering, AI/ML, cybersecurity, full-stack, and mobile projects by Bijoy Sarkar." };
 
 export default async function ProjectsPage() {
-  const records = await prisma.project.findMany({ where: { published: true }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] });
-  const projects = records.map(toPortfolioProject);
+  let projects: PortfolioProject[] = [];
+  try {
+    const records = await prisma.project.findMany({ where: { published: true }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] });
+    projects = records.map(toPortfolioProject);
+  } catch (err) {
+    console.warn("Database fallback in ProjectsPage:", err);
+  }
+
+  if (projects.length === 0) {
+    projects = FALLBACK_PROJECTS.filter((p) => p.published).map((p) => ({
+      ...p,
+      images: [p.image1, p.image2, p.image3],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+  }
   return (
     <div className="site-shell">
       <main className="section projects-section project-index">

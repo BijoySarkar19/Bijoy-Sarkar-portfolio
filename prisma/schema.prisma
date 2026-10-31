@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Project {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  title           String
+  description     String
+  longDescription String
+  image1          String
+  image2          String
+  image3          String
+  techStack       String   @default("[]")
+  features        String   @default("[]")
+  githubUrl       String?
+  liveUrl         String?
+  published       Boolean  @default(true)
+  isOngoing       Boolean  @default(false)
+  featuredOnHome  Boolean  @default(false)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([published, sortOrder])
+  @@index([isOngoing])
+  @@index([featuredOnHome])
+}
+
+model ContactRateLimit {
+  ipHash     String   @id
+  windowStart DateTime
+  attempts   Int      @default(0)
+  updatedAt  DateTime @updatedAt
+
+  @@index([updatedAt])
+}
+
+model WorkExperience {
+  id           String   @id @default(cuid())
+  period       String
+  role         String
+  organization String
+  summary      String
+  tags         String   @default("[]")
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
+model SkillGroup {
+  id        String   @id @default(cuid())
+  title     String   @unique
+  note      String
+  icon      String
+  skills    String   @default("[]")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
+model ResumeFile {
+  id        String   @id @default(cuid())
+  filename  String
+  path      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  entity    String
+  entityId  String
+  action    String
+  changes   String   @default("{}")
+  adminId   String
+  adminName String
+  timestamp DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([timestamp])
+}
+
+model ContactMessage {
+  id             String   @id @default(cuid())
+  name           String
+  email          String
+  phone          String?
+  message        String
+  submittedAtIST String
+  ipAddress      String?
+  status         String   @default("UNREAD") // UNREAD, READ, REPLIED, ARCHIVED
+  googleSynced   Boolean  @default(false)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}

@@ -305,7 +305,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
       <form onSubmit={handleSave} className="admin-form">
         <div
           className="admin-grid"
-          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 20 }}
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 20 }}
         >
           {/* Section Visibility Modules (Image 2 request) */}
           <div className="admin-card" style={{ gridColumn: "1 / -1" }}>
@@ -322,7 +322,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
                 gap: 12,
               }}
             >
@@ -368,7 +368,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
 
           {/* Education & Degrees Manager */}
           <div className="admin-card" style={{ gridColumn: "1 / -1" }}>
-            <div className="admin-card-heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div className="admin-card-heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
               <div>
                 <p className="section-kicker">Academic Credentials</p>
                 <h3>Degrees &amp; Education Management</h3>
@@ -381,7 +381,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
-                  padding: "6px 12px",
+                  padding: "8px 14px",
                   borderRadius: 8,
                   background: "rgba(var(--orange-rgb), 0.15)",
                   border: "1px solid var(--orange)",
@@ -398,165 +398,145 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
               Add and manage your academic degrees. Toggle &apos;Show on Home&apos; to decide which degrees appear on the public portfolio. Adding M.Tech or other degrees automatically renders a dedicated credential card on the main page.
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {degrees.map((deg, index) => (
-                <div
-                  key={deg.id}
-                  style={{
-                    padding: 16,
-                    borderRadius: 14,
-                    border: "1px solid var(--line)",
-                    background: "rgba(255, 255, 255, 0.03)",
-                    display: "grid",
-                    gridTemplateColumns: "54px repeat(auto-fit, minmax(200px, 1fr)) 100px 36px",
-                    gap: 12,
-                    alignItems: "end",
-                  }}
-                >
-                  {/* Reorder Position & Arrows */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: 10, color: "var(--subtle)", fontWeight: 700 }}>#{index + 1}</span>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <div key={deg.id} className="admin-degree-item-card">
+                  {/* Top Bar with Reordering, Badge, Home Toggle, and Delete */}
+                  <div className="admin-degree-topbar">
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span className="admin-order-chip" style={{ fontWeight: 700, fontSize: 11, padding: "3px 8px" }}>
+                        #{index + 1}
+                      </span>
+                      <div style={{ display: "inline-flex", gap: 4 }}>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveDegree(index, "up")}
+                          disabled={index === 0}
+                          title="Move Degree Up"
+                          aria-label="Move degree up"
+                          className="admin-reorder-btn"
+                        >
+                          <ChevronUp size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveDegree(index, "down")}
+                          disabled={index === degrees.length - 1}
+                          title="Move Degree Down"
+                          aria-label="Move degree down"
+                          className="admin-reorder-btn"
+                        >
+                          <ChevronDown size={13} />
+                        </button>
+                      </div>
+                      <span style={{ fontSize: 12, color: "var(--silver)", fontWeight: 600, marginLeft: 2 }}>
+                        {deg.degree.trim() || `Credential #${index + 1}`}
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                      <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12, color: "var(--silver)" }}>
+                        <input
+                          type="checkbox"
+                          checked={deg.showOnHome}
+                          onChange={(e) => handleUpdateDegree(deg.id, "showOnHome", e.target.checked)}
+                          style={{ width: 16, height: 16, accentColor: "var(--orange)", cursor: "pointer" }}
+                        />
+                        <span>Show on Home</span>
+                      </label>
                       <button
                         type="button"
-                        onClick={() => handleMoveDegree(index, "up")}
-                        disabled={index === 0}
-                        title="Move Degree Up"
+                        onClick={() => handleDeleteDegree(deg.id)}
+                        className="admin-small-button danger"
+                        title="Remove degree"
+                        aria-label="Remove degree"
                         style={{
-                          width: 26,
-                          height: 20,
+                          width: 32,
+                          height: 32,
+                          padding: 0,
                           display: "grid",
                           placeItems: "center",
-                          borderRadius: 5,
-                          border: "1px solid var(--line)",
-                          background: index === 0 ? "transparent" : "rgba(255, 255, 255, 0.06)",
-                          color: index === 0 ? "var(--subtle)" : "var(--white)",
-                          cursor: index === 0 ? "not-allowed" : "pointer",
-                          opacity: index === 0 ? 0.3 : 1,
+                          borderRadius: 8,
+                          background: "rgba(239, 68, 68, 0.1)",
+                          border: "1px solid rgba(239, 68, 68, 0.3)",
+                          color: "#ef4444",
+                          cursor: "pointer",
                         }}
                       >
-                        <ChevronUp size={13} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMoveDegree(index, "down")}
-                        disabled={index === degrees.length - 1}
-                        title="Move Degree Down"
-                        style={{
-                          width: 26,
-                          height: 20,
-                          display: "grid",
-                          placeItems: "center",
-                          borderRadius: 5,
-                          border: "1px solid var(--line)",
-                          background: index === degrees.length - 1 ? "transparent" : "rgba(255, 255, 255, 0.06)",
-                          color: index === degrees.length - 1 ? "var(--subtle)" : "var(--white)",
-                          cursor: index === degrees.length - 1 ? "not-allowed" : "pointer",
-                          opacity: index === degrees.length - 1 ? 0.3 : 1,
-                        }}
-                      >
-                        <ChevronDown size={13} />
+                        <Trash2 size={13} />
                       </button>
                     </div>
                   </div>
 
-                  <div className="field" style={{ margin: 0 }}>
-                    <label style={{ fontSize: 11 }}>Degree Title *</label>
-                    <input
-                      value={deg.degree}
-                      onChange={(e) => handleUpdateDegree(deg.id, "degree", e.target.value)}
-                      placeholder="e.g. B.Tech · Computer Science & Engineering"
-                    />
-                  </div>
-                  <div className="field" style={{ margin: 0 }}>
-                    <label style={{ fontSize: 11 }}>University / Institution *</label>
-                    <input
-                      value={deg.institution}
-                      onChange={(e) => handleUpdateDegree(deg.id, "institution", e.target.value)}
-                      placeholder="e.g. ICFAI University Tripura"
-                    />
-                  </div>
-                  <div className="field" style={{ margin: 0 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                      <label style={{ fontSize: 11, margin: 0 }}>University Webpage Link</label>
-                      {deg.link ? (
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateDegree(deg.id, "link", "")}
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            color: "var(--orange)",
-                            fontSize: 10,
-                            cursor: "pointer",
-                            padding: "0 2px",
-                            textDecoration: "underline",
-                          }}
-                        >
-                          Remove Link
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateDegree(deg.id, "link", "https://www.iutripura.edu.in/")}
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            color: "var(--orange)",
-                            fontSize: 10,
-                            cursor: "pointer",
-                            padding: "0 2px",
-                            textDecoration: "underline",
-                          }}
-                        >
-                          Add ICFAI Link
-                        </button>
-                      )}
+                  {/* Form fields: 2 columns on desktop, 1 column stacked on mobile */}
+                  <div className="admin-degree-fields">
+                    <div className="field" style={{ margin: 0 }}>
+                      <label style={{ fontSize: 11 }}>Degree Title *</label>
+                      <input
+                        value={deg.degree}
+                        onChange={(e) => handleUpdateDegree(deg.id, "degree", e.target.value)}
+                        placeholder="e.g. B.Tech · Computer Science & Engineering"
+                      />
                     </div>
-                    <input
-                      value={deg.link}
-                      onChange={(e) => handleUpdateDegree(deg.id, "link", e.target.value)}
-                      placeholder="https://www.iutripura.edu.in/ (or leave blank)"
-                    />
-                  </div>
-                  <div className="field" style={{ margin: 0 }}>
-                    <label style={{ fontSize: 11 }}>Completion / Period</label>
-                    <input
-                      value={deg.period}
-                      onChange={(e) => handleUpdateDegree(deg.id, "period", e.target.value)}
-                      placeholder="e.g. 2023—expected 2027"
-                    />
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
-                    <span style={{ fontSize: 10, color: "var(--subtle)" }}>Show on Home</span>
-                    <input
-                      type="checkbox"
-                      checked={deg.showOnHome}
-                      onChange={(e) => handleUpdateDegree(deg.id, "showOnHome", e.target.checked)}
-                      style={{ width: 18, height: 18, accentColor: "var(--orange)", cursor: "pointer" }}
-                    />
-                  </div>
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteDegree(deg.id)}
-                      className="admin-small-button"
-                      title="Remove degree"
-                      style={{
-                        width: 32,
-                        height: 32,
-                        padding: 0,
-                        display: "grid",
-                        placeItems: "center",
-                        borderRadius: 8,
-                        background: "rgba(239, 68, 68, 0.1)",
-                        border: "1px solid rgba(239, 68, 68, 0.3)",
-                        color: "#ef4444",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                    <div className="field" style={{ margin: 0 }}>
+                      <label style={{ fontSize: 11 }}>University / Institution *</label>
+                      <input
+                        value={deg.institution}
+                        onChange={(e) => handleUpdateDegree(deg.id, "institution", e.target.value)}
+                        placeholder="e.g. ICFAI University Tripura"
+                      />
+                    </div>
+                    <div className="field" style={{ margin: 0 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, flexWrap: "wrap", gap: 4 }}>
+                        <label style={{ fontSize: 11, margin: 0 }}>University Webpage Link</label>
+                        {deg.link ? (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateDegree(deg.id, "link", "")}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "var(--orange)",
+                              fontSize: 10,
+                              cursor: "pointer",
+                              padding: "0 2px",
+                              textDecoration: "underline",
+                            }}
+                          >
+                            Remove Link
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateDegree(deg.id, "link", "https://www.iutripura.edu.in/")}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "var(--orange)",
+                              fontSize: 10,
+                              cursor: "pointer",
+                              padding: "0 2px",
+                              textDecoration: "underline",
+                            }}
+                          >
+                            Add ICFAI Link
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        value={deg.link}
+                        onChange={(e) => handleUpdateDegree(deg.id, "link", e.target.value)}
+                        placeholder="https://www.iutripura.edu.in/ (or leave blank)"
+                      />
+                    </div>
+                    <div className="field" style={{ margin: 0 }}>
+                      <label style={{ fontSize: 11 }}>Completion / Period</label>
+                      <input
+                        value={deg.period}
+                        onChange={(e) => handleUpdateDegree(deg.id, "period", e.target.value)}
+                        placeholder="e.g. 2023—expected 2027"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -578,7 +558,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
                 gap: 18,
               }}
             >

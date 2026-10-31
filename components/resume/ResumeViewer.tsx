@@ -10,6 +10,8 @@ interface ResumeViewerProps {
   filename?: string | null;
   pages?: string[];
   pageCount?: number;
+  resumeTitle?: string;
+  resumeSubtitle?: string;
 }
 
 export function ResumeViewer({
@@ -17,6 +19,8 @@ export function ResumeViewer({
   filename,
   pages = ["/cv-pages/page-1.png", "/cv-pages/page-2.png", "/cv-pages/page-3.png"],
   pageCount = 3,
+  resumeTitle = "Experience in the details.",
+  resumeSubtitle = "Education, internships, technical work, and the projects behind this portfolio—all in one place.",
 }: ResumeViewerProps) {
   // Zoom level ranges strictly from 10% (0.10) to 500% (5.00), default 100% (1.00)
   const [zoom, setZoom] = useState(1);
@@ -171,9 +175,9 @@ export function ResumeViewer({
           <div className="resume-copy" data-reveal style={{ marginBottom: "2rem" }}>
             <p className="section-kicker">Resume</p>
             <h2 className="section-title" id="resume-title">
-              Experience in<br /><span className="accent">the details.</span>
+              {resumeTitle}
             </h2>
-            <p>Education, internships, technical work, and the projects behind this portfolio.</p>
+            <p>{resumeSubtitle}</p>
           </div>
           <UpcomingNotice area="curriculum vitae & resume credentials" />
         </div>
@@ -190,9 +194,9 @@ export function ResumeViewer({
         <div className="resume-copy" data-reveal>
           <p className="section-kicker">Resume</p>
           <h2 className="section-title" id="resume-title">
-            Experience in<br /><span className="accent">the details.</span>
+            {resumeTitle}
           </h2>
-          <p>Education, internships, technical work, and the projects behind this portfolio—all in one place.</p>
+          <p>{resumeSubtitle}</p>
 
           <div className="resume-actions">
             <a className="button" href={currentPath} download={currentFilename}>

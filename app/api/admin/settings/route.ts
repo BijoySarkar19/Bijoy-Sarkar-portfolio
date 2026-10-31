@@ -52,6 +52,8 @@ export async function POST(request: Request) {
       "contactEmail",
       "contactRecipientEmail",
       "location",
+      "currentLocation",
+      "displayAddressMode",
       "status",
       "githubUrl",
       "linkedinUrl",
@@ -63,7 +65,32 @@ export async function POST(request: Request) {
       "googleSheetsWebhookUrl",
       "themeAccent",
       "themeMode",
+      // Section toggles
+      "heroEnabled",
+      "aboutEnabled",
+      "skillsEnabled",
+      "projectsEnabled",
+      "resumeEnabled",
       "gamesEnabled",
+      "contactEnabled",
+      // Section copy texts
+      "aboutTitle",
+      "aboutBio",
+      "aboutLead",
+      "skillsTitle",
+      "skillsSubtitle",
+      "projectsTitle",
+      "projectsSubtitle",
+      "ongoingTitle",
+      "ongoingSubtitle",
+      "resumeTitle",
+      "resumeSubtitle",
+      "gamesTitle",
+      "gamesSubtitle",
+      "contactTitle",
+      "contactSubtitle",
+      // Degrees & Education
+      "degreesList",
     ];
 
     for (const key of allowedKeys) {

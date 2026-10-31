@@ -7,6 +7,7 @@ import { ProjectsSection } from "@/components/projects/ProjectsSection";
 import { ResumeViewer } from "@/components/resume/ResumeViewer";
 import { GamesSection } from "@/components/games/GamesSection";
 import { SocialIconName } from "@/components/ui/SocialIcon";
+import { DEFAULT_DEGREES, type DegreeItem } from "@/components/admin/SettingsManager";
 import { prisma } from "@/lib/prisma";
 import { toPortfolioProject } from "@/lib/projects";
 import { existsSync, readFileSync } from "fs";
@@ -60,18 +61,8 @@ export default async function HomePage() {
     settingsMap[s.key] = s.value;
   }
 
-  // Fallback to published ongoing projects (max 2) if none are explicitly marked
-  let finalOngoingRecords = ongoingRecords;
-  if (finalOngoingRecords.length === 0) {
-    finalOngoingRecords = await prisma.project.findMany({
-      where: { published: true, isOngoing: true },
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
-      take: 2,
-    });
-  }
-
   const featuredProjects = homeRecords.map(toPortfolioProject);
-  const ongoingProjects = finalOngoingRecords.map(toPortfolioProject);
+  const ongoingProjects = ongoingRecords.map(toPortfolioProject);
 
   const experiences = dbExperiences.map((e) => ({
     period: e.period,
@@ -88,7 +79,25 @@ export default async function HomePage() {
     skills: typeof g.skills === "string" ? JSON.parse(g.skills || "[]") : g.skills,
   }));
 
+  // Parse degrees from settings or fallback
+  let degrees: DegreeItem[] = DEFAULT_DEGREES;
+  if (settingsMap.degreesList) {
+    try {
+      const parsed = JSON.parse(settingsMap.degreesList);
+      if (Array.isArray(parsed) && parsed.length > 0) degrees = parsed;
+    } catch (e) {
+      console.error("Failed to parse degreesList:", e);
+    }
+  }
+
+  // Section module flags (Default: all enabled)
+  const heroEnabled = settingsMap.heroEnabled !== "false";
+  const aboutEnabled = settingsMap.aboutEnabled !== "false";
+  const skillsEnabled = settingsMap.skillsEnabled !== "false";
+  const projectsEnabled = settingsMap.projectsEnabled !== "false";
+  const resumeEnabled = settingsMap.resumeEnabled !== "false";
   const gamesEnabled = settingsMap.gamesEnabled !== "false";
+  const contactEnabled = settingsMap.contactEnabled !== "false";
 
   // Prevent browser PDF caching with deterministic version timestamp
   const resumeVersion = activeResume?.updatedAt ? new Date(activeResume.updatedAt).getTime() : 1;
@@ -135,33 +144,83 @@ export default async function HomePage() {
   if (discord) dynamicSocialLinks.push({ label: "Discord", href: discord, icon: "discord" });
 
   const publicEmail = settingsMap.contactEmail || "bijoysarkar7252@gmail.com";
-  const publicLocation = settingsMap.location || "Agartala, Tripura, India";
+
+  // Address resolution
+  const primaryLoc = settingsMap.location || "Agartala, Tripura, India";
+  const currentLoc = settingsMap.currentLocation || "";
+  const addrMode = settingsMap.displayAddressMode || "primary";
+  let resolvedLocation = primaryLoc;
+  if (addrMode === "current" && currentLoc) {
+    resolvedLocation = currentLoc;
+  } else if (addrMode === "both" && currentLoc) {
+    resolvedLocation = `${primaryLoc} · Current: ${currentLoc}`;
+  }
 
   return (
     <div className="site-shell">
       <main>
-        <Hero
-          subhead={settingsMap.heroSubhead}
-          bio={settingsMap.heroBio}
-          location={settingsMap.location}
-          status={settingsMap.status}
-          githubUrl={settingsMap.githubUrl}
-        />
-        <About experiences={experiences} />
-        <Skills skillGroups={skillGroups} />
-        <ProjectsSection
-          projects={featuredProjects}
-          ongoingProjects={ongoingProjects}
-          totalCount={totalProjectCount}
-        />
-        <ResumeViewer
-          resumePath={resumePathWithVersion}
-          filename={activeResume?.filename}
-          pages={cvPages}
-          pageCount={cvPageCount}
-        />
-        {gamesEnabled && <GamesSection />}
-        <Contact email={publicEmail} location={publicLocation} socialLinks={dynamicSocialLinks} />
+        {heroEnabled && (
+          <Hero
+            subhead={settingsMap.heroSubhead}
+            bio={settingsMap.heroBio}
+            location={resolvedLocation}
+            status={settingsMap.status}
+            githubUrl={settingsMap.githubUrl}
+            degrees={degrees}
+          />
+        )}
+        {aboutEnabled && (
+          <About
+            experiences={experiences}
+            degrees={degrees}
+            aboutTitle={settingsMap.aboutTitle}
+            aboutBio={settingsMap.aboutBio}
+            aboutLead={settingsMap.aboutLead}
+          />
+        )}
+        {skillsEnabled && (
+          <Skills
+            skillGroups={skillGroups}
+            skillsTitle={settingsMap.skillsTitle}
+            skillsSubtitle={settingsMap.skillsSubtitle}
+          />
+        )}
+        {projectsEnabled && (
+          <ProjectsSection
+            projects={featuredProjects}
+            ongoingProjects={ongoingProjects}
+            totalCount={totalProjectCount}
+            projectsTitle={settingsMap.projectsTitle}
+            projectsSubtitle={settingsMap.projectsSubtitle}
+            ongoingTitle={settingsMap.ongoingTitle}
+            ongoingSubtitle={settingsMap.ongoingSubtitle}
+          />
+        )}
+        {resumeEnabled && (
+          <ResumeViewer
+            resumePath={resumePathWithVersion}
+            filename={activeResume?.filename}
+            pages={cvPages}
+            pageCount={cvPageCount}
+            resumeTitle={settingsMap.resumeTitle}
+            resumeSubtitle={settingsMap.resumeSubtitle}
+          />
+        )}
+        {gamesEnabled && (
+          <GamesSection
+            gamesTitle={settingsMap.gamesTitle}
+            gamesSubtitle={settingsMap.gamesSubtitle}
+          />
+        )}
+        {contactEnabled && (
+          <Contact
+            email={publicEmail}
+            location={resolvedLocation}
+            socialLinks={dynamicSocialLinks}
+            contactTitle={settingsMap.contactTitle}
+            contactSubtitle={settingsMap.contactSubtitle}
+          />
+        )}
       </main>
       <Footer email={publicEmail} socialLinks={dynamicSocialLinks} />
     </div>

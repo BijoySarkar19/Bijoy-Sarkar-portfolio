@@ -31,9 +31,6 @@ export default async function AdminProjectsPage() {
           <p className="section-kicker">Content management</p>
           <h1>Projects</h1>
         </div>
-        <Link className="button" href="/admin-admin/dashboard/projects/new">
-          Add project <Plus size={14} />
-        </Link>
       </div>
 
       <AdminNavigation active="projects" />

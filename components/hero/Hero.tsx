@@ -1,21 +1,41 @@
 import { ArrowDown, ArrowRight, MapPin, GraduationCap } from "lucide-react";
 import { SocialIcon } from "@/components/ui/SocialIcon";
+import type { DegreeItem } from "@/components/admin/SettingsManager";
 
 export interface HeroProps {
+  title?: string;
   subhead?: string;
   bio?: string;
   location?: string;
   status?: string;
   githubUrl?: string;
+  degrees?: DegreeItem[];
 }
 
 export function Hero({
   subhead = "Building intelligent systems and full-stack solutions.",
   bio = "Computer Science undergraduate focused on AI/ML, secure software, and useful digital products.",
-  location = "Agartala, India",
+  location = "Agartala, Tripura, India",
   status = "Open to opportunities",
   githubUrl = "https://github.com/BijoySarkar19",
+  degrees = [
+    {
+      id: "btech",
+      degree: "B.Tech . Computer Science and Engineering",
+      institution: "ICFAI University Tripura",
+      link: "https://www.iutripura.edu.in/",
+      period: "2023—expected 2027",
+      showOnHome: true,
+    },
+  ],
 }: HeroProps = {}) {
+  const activeDegrees = degrees.filter((d) => d.showOnHome);
+  const primaryDegree = activeDegrees[0] || {
+    degree: "B.Tech . Computer Science and Engineering",
+    institution: "ICFAI University Tripura",
+    link: "https://www.iutripura.edu.in/",
+  };
+
   return (
     <section className="hero section-wrap" id="home" aria-labelledby="hero-title">
       <div className="hero-content">
@@ -43,7 +63,7 @@ export function Hero({
               <div>
                 <a
                   className="hero-meta-link"
-                  href="https://www.google.com/maps/search/?api=1&query=Agartala%2C%20Tripura%2C%20India"
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -57,16 +77,16 @@ export function Hero({
               <div>
                 <a
                   className="hero-meta-link"
-                  href="https://www.iutripura.edu.in/"
+                  href={primaryDegree.link || "https://www.iutripura.edu.in/"}
                   target="_blank"
                   rel="noreferrer"
                 >
                   <strong>
                     <GraduationCap size={13} style={{ display: "inline", marginRight: 5, verticalAlign: "-2px" }} />
-                    ICFAI University Tripura
+                    {primaryDegree.institution}
                   </strong>
                 </a>
-                <span>B.Tech . Computer Science and Engineering</span>
+                <span>{primaryDegree.degree}</span>
               </div>
             </div>
           </div>

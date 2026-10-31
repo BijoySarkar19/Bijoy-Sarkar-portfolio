@@ -14,22 +14,31 @@ export interface ContactProps {
   email?: string;
   location?: string;
   socialLinks?: SocialLinkItem[];
+  contactTitle?: string;
+  contactSubtitle?: string;
 }
 
 export function Contact({
   email = "bijoysarkar7252@gmail.com",
   location = "Agartala, Tripura, India",
   socialLinks = defaultSocialLinks,
+  contactTitle = "Have a problem worth solving?",
+  contactSubtitle = "For software roles, AI/ML work, or a project idea, send a note and tell me what you have in mind.",
 }: ContactProps) {
+  // Extract accent word (e.g. solving?)
+  const words = contactTitle.split(" ");
+  const lastWord = words.length > 1 ? words.pop() : "";
+  const mainWords = words.join(" ");
+
   return (
     <section className="section contact-section" id="contact" aria-labelledby="contact-title">
       <div className="section-wrap contact-layout">
         <div className="contact-copy" data-reveal>
           <p className="section-kicker">Get in touch</p>
           <h2 className="section-title" id="contact-title">
-            Have a problem worth <span className="accent">solving?</span>
+            {mainWords} {lastWord && <span className="accent">{lastWord}</span>}
           </h2>
-          <p>For software roles, AI/ML work, or a project idea, send a note and tell me what you have in mind.</p>
+          <p>{contactSubtitle}</p>
           <div className="contact-details-list">
             <EmailLink className="contact-detail" email={email} />
             <a

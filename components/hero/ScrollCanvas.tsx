@@ -80,6 +80,9 @@ export function ScrollCanvas() {
       if (!image?.complete || !image.naturalWidth) return false;
       if (lastDrawn === index) return true;
 
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
       // Natural cover scale ensuring edge-to-edge coverage with zero distortion or black bars
       const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
       const imageWidth = Math.ceil(image.naturalWidth * scale);

@@ -4,6 +4,7 @@ import { ScrollCanvas } from "@/components/hero/ScrollCanvas";
 import { CustomScrollbar } from "@/components/ui/CustomScrollbar";
 import { CleanCopyHandler } from "@/components/ui/CleanCopyHandler";
 import { ScrollEdgeEffects } from "@/components/ui/ScrollEdgeEffects";
+import { BirthdayCelebration } from "@/components/ui/BirthdayCelebration";
 import { prisma } from "@/lib/prisma";
 import "@/app/globals.css";
 
@@ -69,6 +70,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   let themeAccent = "#ff5e2c";
   let themeMode = "dark";
   let gamesEnabled = true;
+  let aboutEnabled = true;
+  let projectsEnabled = true;
+  let resumeEnabled = true;
+  let contactEnabled = true;
+  let contactEmail = "bijoysarkar7252@gmail.com";
 
   try {
     const settings = await prisma.siteSetting.findMany();
@@ -79,6 +85,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     if (settingsMap.themeAccent) themeAccent = settingsMap.themeAccent;
     if (settingsMap.themeMode) themeMode = settingsMap.themeMode;
     if (settingsMap.gamesEnabled !== undefined) gamesEnabled = settingsMap.gamesEnabled !== "false";
+    if (settingsMap.aboutEnabled !== undefined) aboutEnabled = settingsMap.aboutEnabled !== "false";
+    if (settingsMap.projectsEnabled !== undefined) projectsEnabled = settingsMap.projectsEnabled !== "false";
+    if (settingsMap.resumeEnabled !== undefined) resumeEnabled = settingsMap.resumeEnabled !== "false";
+    if (settingsMap.contactEnabled !== undefined) contactEnabled = settingsMap.contactEnabled !== "false";
+    if (settingsMap.contactEmail) contactEmail = settingsMap.contactEmail;
   } catch (err) {
     console.error("Failed to load settings in RootLayout:", err);
   }
@@ -110,7 +121,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <ScrollEdgeEffects />
         <CustomScrollbar />
         <CleanCopyHandler />
-        <Navbar gamesEnabled={gamesEnabled} />
+        <Navbar
+          gamesEnabled={gamesEnabled}
+          aboutEnabled={aboutEnabled}
+          projectsEnabled={projectsEnabled}
+          resumeEnabled={resumeEnabled}
+          contactEnabled={contactEnabled}
+        />
+        <BirthdayCelebration contactEmail={contactEmail} />
         {children}
       </body>
     </html>

@@ -13,14 +13,34 @@ const items = [
   { label: "Games", id: "games" },
 ];
 
-export function Navbar({ gamesEnabled = true }: { gamesEnabled?: boolean }) {
+export interface NavbarProps {
+  gamesEnabled?: boolean;
+  aboutEnabled?: boolean;
+  projectsEnabled?: boolean;
+  resumeEnabled?: boolean;
+  contactEnabled?: boolean;
+}
+
+export function Navbar({
+  gamesEnabled = true,
+  aboutEnabled = true,
+  projectsEnabled = true,
+  resumeEnabled = true,
+  contactEnabled = true,
+}: NavbarProps) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
 
-  const navItems = items.filter((item) => gamesEnabled || item.id !== "games");
+  const navItems = items.filter((item) => {
+    if (item.id === "about" && !aboutEnabled) return false;
+    if (item.id === "projects" && !projectsEnabled) return false;
+    if (item.id === "resume" && !resumeEnabled) return false;
+    if (item.id === "games" && !gamesEnabled) return false;
+    return true;
+  });
 
   useEffect(() => {
     if (!menuOpen) {

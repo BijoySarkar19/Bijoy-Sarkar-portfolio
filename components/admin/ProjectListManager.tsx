@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Pencil, Sparkles, Rocket, Star, Eye, EyeOff, RotateCcw } from "lucide-react";
+import { ArrowUpRight, Pencil, Sparkles, Rocket, Star, Eye, EyeOff, RotateCcw, Plus } from "lucide-react";
 import { DeleteProjectButton } from "@/components/admin/DeleteProjectButton";
 
 export interface AdminProjectItem {
@@ -111,6 +111,16 @@ export function ProjectListManager({ initialProjects }: { initialProjects: Admin
 
   return (
     <div className="admin-project-manager">
+      {/* Top action row placed below Sign Out navigation */}
+      <div className="admin-crud-header" style={{ marginBottom: 18 }}>
+        <div>
+          <h2>Projects Catalog ({projects.length})</h2>
+          <p className="admin-form-help">Manage portfolio showcases, stage deployment, and live status.</p>
+        </div>
+        <Link className="button" href="/admin-admin/dashboard/projects/new">
+          <Plus size={14} /> Add Project
+        </Link>
+      </div>
       {/* Stats & Guidelines Bar */}
       <div className="admin-project-stats-bar">
         <div className="stat-pill">

@@ -209,6 +209,10 @@ img { display: block; max-width: 100%; }
   height: 100vh;
   height: 100dvh;
   background: #000;
+  image-rendering: auto;
+  image-rendering: smooth;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 .canvas-atmosphere {
   position: fixed;
@@ -219,6 +223,8 @@ img { display: block; max-width: 100%; }
     radial-gradient(ellipse at 50% 56%, rgb(var(--ambient-rgb) / 0.45), transparent 68%),
     linear-gradient(180deg, rgb(0 0 0 / 0.42), rgb(0 0 0 / 0.25) 48%, rgb(0 0 0 / 0.84));
   transition: background-color 400ms ease;
+  backdrop-filter: blur(0.4px);
+  -webkit-backdrop-filter: blur(0.4px);
 }
 .site-shell { position: relative; z-index: 2; min-height: 100vh; isolation: isolate; }
 .section-wrap { width: min(100% - 48px, 1420px); margin-inline: auto; }
@@ -2169,6 +2175,10 @@ img { display: block; max-width: 100%; }
   border-radius: 12px;
   overflow: hidden;
   background: #000;
+  image-rendering: auto;
+  image-rendering: smooth;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 /* Audit dataset view */
@@ -2847,4 +2857,279 @@ html.light-mode .mobile-nav-item.is-active,
 html.light-mode .mobile-nav-item:hover {
   background: rgba(var(--orange-rgb), 0.08);
   color: var(--orange);
+}
+
+/* Admin Workspace Isolation in Light Mode (Keeps admin dark cyber theme crisp and legible) */
+html.light-mode .admin-shell,
+html.light-mode .admin-login-wrap {
+  --white: #ffffff !important;
+  --soft-white: #e2e8f0 !important;
+  --silver: #cbd5e1 !important;
+  --muted: #94a3b8 !important;
+}
+
+html.light-mode .admin-topline h1,
+html.light-mode .admin-crud-header h2,
+html.light-mode .admin-nav a,
+html.light-mode .admin-table th,
+html.light-mode .admin-table td strong {
+  color: #ffffff !important;
+}
+
+html.light-mode .admin-nav a[aria-current="page"] {
+  color: var(--orange) !important;
+}
+
+/* Light Mode Contrast Fix: Game Instructions Overlay (Image 2) */
+html.light-mode .game-info-overlay {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15) !important;
+}
+html.light-mode .game-info-heading,
+html.light-mode .game-info-block h5,
+html.light-mode .illus-key {
+  color: #090d16 !important;
+}
+html.light-mode .game-info-block p,
+html.light-mode .game-info-block ul,
+html.light-mode .game-info-block li {
+  color: #334155 !important;
+}
+html.light-mode .illus-key {
+  background: rgba(15, 23, 42, 0.06) !important;
+  border-color: rgba(15, 23, 42, 0.15) !important;
+}
+html.light-mode .illus-card-back {
+  background: rgba(15, 23, 42, 0.06) !important;
+  color: var(--orange) !important;
+}
+html.light-mode .game-info-close-btn {
+  background: rgba(15, 23, 42, 0.05) !important;
+  color: #334155 !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+/* Light Mode Contrast Fix: Country Code Dropdown Popover (Image 3) */
+html.light-mode .country-dropdown-popover {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12) !important;
+}
+html.light-mode .country-search-bar {
+  background: #f1f5f9 !important;
+  border-bottom-color: rgba(15, 23, 42, 0.08) !important;
+}
+html.light-mode .country-search-input {
+  color: #090d16 !important;
+}
+html.light-mode .country-item-btn {
+  color: #334155 !important;
+}
+html.light-mode .country-item-btn:hover {
+  background: rgba(var(--orange-rgb), 0.1) !important;
+  color: #090d16 !important;
+}
+html.light-mode .country-item-btn.is-none {
+  border-bottom-color: rgba(15, 23, 42, 0.1) !important;
+  color: #e11d48 !important;
+}
+html.light-mode .country-item-btn.is-custom {
+  border-top-color: rgba(15, 23, 42, 0.1) !important;
+  color: #d97706 !important;
+}
+
+/* ==========================================================================
+   19 October Birthday Celebration Architecture
+   ========================================================================== */
+.birthday-floating-chip {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 95;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border: 1px solid rgba(var(--orange-rgb), 0.5);
+  border-radius: 999px;
+  background: rgba(10, 14, 26, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), 0 0 20px rgba(var(--orange-rgb), 0.2);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  animation: birthday-chip-enter 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.birthday-floating-chip:hover {
+  transform: translateY(-2px);
+  border-color: var(--orange);
+  box-shadow: 0 12px 36px rgba(var(--orange-rgb), 0.35);
+}
+.birthday-sparkle-dot {
+  font-size: 14px;
+  animation: birthday-pulse 2s ease-in-out infinite;
+}
+.birthday-chip-icon {
+  color: var(--orange);
+}
+
+.birthday-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: birthday-fade-in 240ms ease both;
+}
+.birthday-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  padding: 34px 30px 28px;
+  border: 1px solid rgba(var(--orange-rgb), 0.55);
+  border-radius: 22px;
+  background: linear-gradient(150deg, rgba(14, 18, 34, 0.97), rgba(8, 10, 20, 0.98));
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85), 0 0 40px rgba(var(--orange-rgb), 0.25);
+  text-align: center;
+  animation: birthday-modal-pop 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.birthday-card-aura {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(var(--orange-rgb), 0.35), transparent 70%);
+  pointer-events: none;
+}
+.birthday-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+.birthday-close-btn:hover {
+  background: rgba(var(--orange-rgb), 0.2);
+  border-color: var(--orange);
+  color: #fff;
+  transform: rotate(90deg);
+}
+.birthday-badge-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.birthday-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border: 1px solid rgba(var(--orange-rgb), 0.35);
+  border-radius: 999px;
+  background: rgba(var(--orange-rgb), 0.1);
+  color: #ffd7c9;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.birthday-title {
+  margin: 0 0 12px;
+  color: #ffffff;
+  font-size: clamp(22px, 3.5vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+}
+.birthday-description {
+  margin: 0 0 24px;
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.birthday-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.birthday-wish-btn {
+  background: var(--orange);
+  color: #fff;
+  font-weight: 700;
+  border: 0;
+  box-shadow: 0 0 24px rgba(var(--orange-rgb), 0.4);
+}
+.birthday-explore-btn {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+}
+.birthday-card-footer {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #64748b;
+  font-size: 11px;
+}
+
+/* Light mode overrides for birthday modal */
+html.light-mode .birthday-floating-chip {
+  background: rgba(255, 255, 255, 0.95);
+  color: #090d16;
+  border-color: rgba(var(--orange-rgb), 0.45);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+html.light-mode .birthday-modal-card {
+  background: #ffffff;
+  border-color: rgba(var(--orange-rgb), 0.35);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18), 0 0 35px rgba(var(--orange-rgb), 0.15);
+}
+html.light-mode .birthday-title {
+  color: #090d16;
+}
+html.light-mode .birthday-description {
+  color: #475569;
+}
+html.light-mode .birthday-card-footer {
+  border-top-color: rgba(15, 23, 42, 0.08);
+  color: #94a3b8;
+}
+html.light-mode .birthday-close-btn {
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #475569;
+}
+
+@keyframes birthday-chip-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes birthday-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes birthday-modal-pop {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes birthday-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.2); opacity: 1; }
 }

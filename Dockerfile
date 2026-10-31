@@ -17,6 +17,10 @@ COPY . .
 ENV DATABASE_URL="file:/app/data/dev.db"
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV NEXT_PUBLIC_SITE_URL="https://bijoy-sarkar-portfolio.vercel.app"
+
+# Ensure data directory exists for SQLite
+RUN mkdir -p /app/data
 
 # Generate Prisma Client
 RUN npx prisma generate --config prisma7.config.ts

@@ -9,9 +9,15 @@ const NEXTAUTH_SECRET =
   process.env.NEXTAUTH_SECRET ||
   "bijoy-sarkar-portfolio-auth-secret-key-2026-fallback-secure-deterministic";
 
-// Automatically configure NEXTAUTH_URL in Vercel serverless environments if omitted
-if (!process.env.NEXTAUTH_URL && process.env.VERCEL_URL) {
-  process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_URL}`;
+// Automatically configure NEXTAUTH_URL in production / Vercel environments if omitted
+if (!process.env.NEXTAUTH_URL) {
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  } else if (process.env.VERCEL_URL) {
+    process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_URL}`;
+  } else {
+    process.env.NEXTAUTH_URL = "https://bijoy-sarkar-portfolio.vercel.app";
+  }
 }
 
 export const authOptions: NextAuthOptions = {

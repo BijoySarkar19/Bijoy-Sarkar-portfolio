@@ -6,9 +6,10 @@ import { CleanCopyHandler } from "@/components/ui/CleanCopyHandler";
 import { ScrollEdgeEffects } from "@/components/ui/ScrollEdgeEffects";
 import { BirthdayCelebration } from "@/components/ui/BirthdayCelebration";
 import { prisma } from "@/lib/prisma";
+import { getSiteUrl } from "@/lib/site-url";
 import "@/app/globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:4173";
+const siteUrl = getSiteUrl();
 
 export const dynamic = "force-dynamic";
 

@@ -6,8 +6,19 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.3.3-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
 [![Prisma](https://img.shields.io/badge/Prisma-7.10.1-2d3748?logo=prisma)](https://www.prisma.io/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ed?logo=docker)](https://www.docker.com/)
+[![Live Production](https://img.shields.io/badge/Production-Live-success?logo=vercel)](https://bijoy-sarkar-portfolio.vercel.app)
+[![Admin Portal](https://img.shields.io/badge/Admin_Portal-Protected-orange?logo=shield)](https://bijoy-sarkar-portfolio.vercel.app/admin-admin)
 
 A modern, full-stack portfolio for **Bijoy Sarkar**, Software Engineer and AI Developer. The application showcases machine learning systems, secure engineering projects, and full-stack applications with high-performance scroll-driven sequence animation, interactive retro intermission puzzles, and a private administration portal with Indian Standard Time (IST) audit tracking.
+
+---
+
+## 🌐 Live Deployments & Dedicated Purpose Endpoints
+
+| Purpose | Description | Live Endpoint |
+| :--- | :--- | :--- |
+| **Public Portfolio Showcase** | Client-facing showcase featuring the 300-frame canvas scroll experience, AI/ML & systems projects, ongoing builds, interactive CV document viewer, and contact inquiry dispatch. | 🚀 [**bijoy-sarkar-portfolio.vercel.app**](https://bijoy-sarkar-portfolio.vercel.app) |
+| **Admin Management Portal** | Private and secure administration workspace for curating projects (Top 5 Main & Top 2 Ongoing), work experience, skills & languages, CV uploads & deactivations, copywriting, messages inbox & Google Sheets sync, and IST audit datasets with one-click undo engine. | 🛡️ [**bijoy-sarkar-portfolio.vercel.app/admin-admin**](https://bijoy-sarkar-portfolio.vercel.app/admin-admin) |
 
 ---
 
@@ -130,6 +141,7 @@ A modern, full-stack portfolio for **Bijoy Sarkar**, Software Engineer and AI De
    ```env
    DATABASE_URL="file:./dev.db"
    NEXTAUTH_SECRET="your-generated-random-secret"
+   # Local development: http://localhost:4173 | Production: https://bijoy-sarkar-portfolio.vercel.app
    NEXTAUTH_URL="http://localhost:4173"
    ADMIN_USERNAME="Bijoy19"
    ADMIN_EMAIL="bijoysarkar7252@gmail.com"

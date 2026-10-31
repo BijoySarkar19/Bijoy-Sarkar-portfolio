@@ -12,14 +12,14 @@ services:
       - NODE_ENV=production
       - PORT=4173
       - DATABASE_URL=file:/app/data/dev.db
-      - NEXTAUTH_URL=http://localhost:4173
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://bijoy-sarkar-portfolio.vercel.app}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-nextauth-secret-key-change-in-production}
       - ADMIN_USERNAME=${ADMIN_USERNAME:-Bijoy19}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-bijoysarkar7252@gmail.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Teriki77!}
       - CONTACT_EMAIL=${CONTACT_EMAIL:-bijoysarkar7252@gmail.com}
       - RATE_LIMIT_SALT=${RATE_LIMIT_SALT:-custom-production-salt}
-      - NEXT_PUBLIC_SITE_URL=http://localhost:4173
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-https://bijoy-sarkar-portfolio.vercel.app}
     volumes:
       - portfolio_data:/app/data
       - portfolio_uploads:/app/public/uploads

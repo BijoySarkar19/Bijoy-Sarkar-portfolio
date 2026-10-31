@@ -100,3 +100,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 16. **Hero Meta & Contact Details Formatting**:
     - Hero metadata (`Agartala, India | Open to opportunities` and `ICFAI University Tripura | B.Tech . Computer Science and Engineering`) are aligned side-by-side (`display: flex; flex-direction: row;`) across all screen widths including desktop, tablet, and mobile.
     - Contact section details (`bijoysarkar7252@gmail.com` and `Agartala, Tripura, India`) are stacked vertically one below another in `.contact-details-list`.
+
+17. **Production & Administration Dedicated Endpoints**:
+    - **Public Production Website**: `https://bijoy-sarkar-portfolio.vercel.app` (Hero canvas sequence, intelligent systems showcase, ongoing builds, CV viewer, intermission games, and contact inquiry dispatch).
+    - **Admin CMS Management Workspace**: `https://bijoy-sarkar-portfolio.vercel.app/admin-admin` (Protected administration workspace for projects curation, work experience, skills & languages, CV uploads/deactivations, copywriting, messages inbox, and IST audit datasets with one-click undo engine).
+    - Canvas background animations are strictly isolated to public routes and hidden from `/admin-admin/*`.

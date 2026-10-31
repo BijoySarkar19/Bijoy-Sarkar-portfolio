@@ -2644,23 +2644,48 @@ html.light-mode body {
   color: #090d16;
 }
 
+/* Translucent Light Mode Atmosphere */
 html.light-mode .canvas-atmosphere {
   background:
     radial-gradient(ellipse at 50% 56%, rgba(var(--orange-rgb), 0.08), transparent 70%),
-    linear-gradient(180deg, rgba(248, 250, 252, 0.82), rgba(248, 250, 252, 0.6) 48%, rgba(248, 250, 252, 0.95));
+    linear-gradient(180deg, rgba(248, 250, 252, 0.85), rgba(248, 250, 252, 0.72) 48%, rgba(248, 250, 252, 0.98));
 }
 
 html.light-mode .scroll-canvas {
-  filter: contrast(0.96) brightness(1.05);
+  filter: contrast(0.95) brightness(1.08);
+}
+
+/* Transparent Section Backgrounds in Light Mode */
+html.light-mode .about-section,
+html.light-mode .skills-section,
+html.light-mode .projects-section,
+html.light-mode .resume-section,
+html.light-mode .games-section,
+html.light-mode .contact-section {
+  background: transparent !important;
+}
+
+/* Hero Typography in Light Mode */
+html.light-mode .hero-title {
+  text-shadow: none !important;
+  color: #090d16;
+}
+
+html.light-mode .hero-title .hero-title-second {
+  color: #1e293b;
+}
+
+html.light-mode .hero-meta {
+  border-top-color: rgba(15, 23, 42, 0.08);
 }
 
 html.light-mode .navbar {
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.85);
   border-bottom-color: rgba(15, 23, 42, 0.06);
 }
 
 html.light-mode .navbar.is-scrolled {
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
@@ -2684,21 +2709,72 @@ html.light-mode .custom-scrollbar-tooltip {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
+html.light-mode .metric-card {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
 html.light-mode .skill-card,
 html.light-mode .project-card,
 html.light-mode .game-card,
 html.light-mode .contact-form,
 html.light-mode .admin-card,
 html.light-mode .cv-bezel {
-  background: rgba(255, 255, 255, 0.88);
-  border-color: rgba(15, 23, 42, 0.08);
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.06) !important;
+}
+
+html.light-mode .project-image-frame {
+  background: #e2e8f0;
+}
+
+html.light-mode .project-image-frame::after {
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.45));
+}
+
+html.light-mode .tag {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #334155;
 }
 
 html.light-mode .skill-pill {
   border-color: rgba(15, 23, 42, 0.08);
   background: rgba(15, 23, 42, 0.04);
   color: #334155;
+}
+
+html.light-mode .resume-viewer {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+}
+
+html.light-mode .resume-viewer-head {
+  background: rgba(241, 245, 249, 0.95);
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+  color: #64748b;
+}
+
+html.light-mode .resume-viewer-head span:first-child {
+  color: #090d16;
+}
+
+html.light-mode .resume-zoom-btn {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #090d16;
+}
+
+html.light-mode .resume-zoom-input-box {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+html.light-mode .resume-zoom-input {
+  color: #090d16;
 }
 
 html.light-mode .game-2048-board {
@@ -2709,6 +2785,11 @@ html.light-mode .game-2048-board {
 html.light-mode .game-2048-cell {
   background: rgba(0, 0, 0, 0.05);
   color: #090d16;
+}
+
+html.light-mode .memory-card {
+  background: linear-gradient(145deg, rgba(var(--orange-rgb), 0.12), rgba(241, 245, 249, 0.95));
+  border-color: rgba(var(--orange-rgb), 0.35);
 }
 
 html.light-mode .site-footer {
@@ -2735,7 +2816,6 @@ html.light-mode .button-secondary {
   color: #090d16;
 }
 
-
 html.light-mode .hero-meta,
 html.light-mode .hero-meta-item,
 html.light-mode .contact-detail {
@@ -2743,7 +2823,7 @@ html.light-mode .contact-detail {
 }
 
 html.light-mode .social-link {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.85);
   border-color: rgba(15, 23, 42, 0.1);
   color: #475569;
 }

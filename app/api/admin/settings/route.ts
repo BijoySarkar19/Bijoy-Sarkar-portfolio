@@ -50,18 +50,25 @@ export async function POST(request: Request) {
       "heroSubhead",
       "heroBio",
       "contactEmail",
+      "contactRecipientEmail",
       "location",
       "status",
       "githubUrl",
+      "linkedinUrl",
+      "twitterUrl",
+      "instagramUrl",
+      "facebookUrl",
+      "youtubeUrl",
+      "discordUrl",
       "googleSheetsWebhookUrl",
       "themeAccent",
-      "soundEnabled",
+      "themeMode",
       "gamesEnabled",
     ];
 
     for (const key of allowedKeys) {
       if (key in body) {
-        const val = cleanText(String(body[key] ?? ""));
+        const val = cleanText(String(body[key] ?? "")).trim();
         currentMap[key] = val;
         await prisma.siteSetting.upsert({
           where: { key },

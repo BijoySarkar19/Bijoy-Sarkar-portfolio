@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { ProjectsSection } from "@/components/projects/ProjectsSection";
 import { ResumeViewer } from "@/components/resume/ResumeViewer";
 import { GamesSection } from "@/components/games/GamesSection";
+import { SocialIconName } from "@/components/ui/SocialIcon";
 import { prisma } from "@/lib/prisma";
 import { toPortfolioProject } from "@/lib/projects";
 import { existsSync, readFileSync } from "fs";
@@ -109,6 +110,33 @@ export default async function HomePage() {
     console.error("Could not load CV manifest:", err);
   }
 
+  // Construct dynamic social links from settingsMap with graceful defaults
+  const dynamicSocialLinks: { label: string; href: string; icon: SocialIconName }[] = [];
+
+  const github = settingsMap.githubUrl ?? "https://github.com/BijoySarkar19";
+  if (github) dynamicSocialLinks.push({ label: "GitHub", href: github, icon: "github" });
+
+  const linkedin = settingsMap.linkedinUrl ?? "https://www.linkedin.com/in/bijoysarkar19";
+  if (linkedin) dynamicSocialLinks.push({ label: "LinkedIn", href: linkedin, icon: "linkedin" });
+
+  const instagram = settingsMap.instagramUrl ?? "https://www.instagram.com/bijoyysarkarr?obrf=dW1zenpraWt3eGI=";
+  if (instagram) dynamicSocialLinks.push({ label: "Instagram", href: instagram, icon: "instagram" });
+
+  const facebook = settingsMap.facebookUrl ?? "https://www.facebook.com/share/1Cs44JBwnk/";
+  if (facebook) dynamicSocialLinks.push({ label: "Facebook", href: facebook, icon: "facebook" });
+
+  const twitter = settingsMap.twitterUrl ?? "https://x.com/bijoyy_19";
+  if (twitter) dynamicSocialLinks.push({ label: "X", href: twitter, icon: "x" });
+
+  const youtube = settingsMap.youtubeUrl;
+  if (youtube) dynamicSocialLinks.push({ label: "YouTube", href: youtube, icon: "youtube" });
+
+  const discord = settingsMap.discordUrl;
+  if (discord) dynamicSocialLinks.push({ label: "Discord", href: discord, icon: "discord" });
+
+  const publicEmail = settingsMap.contactEmail || "bijoysarkar7252@gmail.com";
+  const publicLocation = settingsMap.location || "Agartala, Tripura, India";
+
   return (
     <div className="site-shell">
       <main>
@@ -133,9 +161,9 @@ export default async function HomePage() {
           pageCount={cvPageCount}
         />
         {gamesEnabled && <GamesSection />}
-        <Contact />
+        <Contact email={publicEmail} location={publicLocation} socialLinks={dynamicSocialLinks} />
       </main>
-      <Footer />
+      <Footer email={publicEmail} socialLinks={dynamicSocialLinks} />
     </div>
   );
 }

@@ -11,6 +11,7 @@ export interface ContactRecord {
   message: string;
   submittedAtIST: string;
   ipAddress?: string | null;
+  recipientEmail?: string | null;
 }
 
 const CSV_DIR = join(process.cwd(), "public", "downloads");
@@ -76,7 +77,8 @@ export async function syncWithGoogleSheetWebhook(record: ContactRecord) {
       headers: { "Content-Type": "application/json" },
       redirect: "follow",
       body: JSON.stringify({
-        account: "bijoysarkar7252@gmail.com",
+        account: record.recipientEmail || "bijoysarkar7252@gmail.com",
+        recipientEmail: record.recipientEmail || "bijoysarkar7252@gmail.com",
         timestampIST: record.submittedAtIST,
         name: record.name,
         email: record.email,

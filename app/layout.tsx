@@ -9,6 +9,8 @@ import "@/app/globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:4173";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Bijoy Sarkar — Software Engineer & AI Developer",

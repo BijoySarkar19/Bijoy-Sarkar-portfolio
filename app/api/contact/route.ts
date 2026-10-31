@@ -90,7 +90,27 @@ export async function POST(request: Request) {
       ipAddress: remoteIp,
     });
 
-    // 3. Attempt Google Sheets Webhook Sync if configured
+    // 3. Determine contact inbox recipient email from site settings
+    let recipientEmail = "bijoysarkar7252@gmail.com";
+    try {
+      const recipientSetting = await prisma.siteSetting.findUnique({
+        where: { key: "contactRecipientEmail" },
+      });
+      if (recipientSetting?.value?.trim()) {
+        recipientEmail = recipientSetting.value.trim();
+      } else {
+        const fallbackEmailSetting = await prisma.siteSetting.findUnique({
+          where: { key: "contactEmail" },
+        });
+        if (fallbackEmailSetting?.value?.trim()) {
+          recipientEmail = fallbackEmailSetting.value.trim();
+        }
+      }
+    } catch {
+      // Use fallback
+    }
+
+    // 4. Attempt Google Sheets Webhook Sync if configured
     const syncRes = await syncWithGoogleSheetWebhook({
       id: saved.id,
       name: data.name,
@@ -99,6 +119,7 @@ export async function POST(request: Request) {
       message: data.message,
       submittedAtIST,
       ipAddress: remoteIp,
+      recipientEmail,
     });
 
     if (syncRes.synced) {
@@ -108,9 +129,9 @@ export async function POST(request: Request) {
       });
     }
 
-    // 4. Send email delivery if SMTP is configured (non-blocking fallback)
+    // 5. Send email delivery if SMTP is configured (non-blocking fallback)
     try {
-      await sendContactEmail(data, now, riskInfo);
+      await sendContactEmail(data, now, riskInfo, recipientEmail);
     } catch (emailError) {
       console.warn("Email transport skipped/unconfigured:", emailError);
     }

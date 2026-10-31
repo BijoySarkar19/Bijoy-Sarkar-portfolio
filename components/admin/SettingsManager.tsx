@@ -9,9 +9,16 @@ export interface SiteSettingsMap {
   heroSubhead?: string;
   heroBio?: string;
   contactEmail?: string;
+  contactRecipientEmail?: string;
   location?: string;
   status?: string;
   githubUrl?: string;
+  linkedinUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  youtubeUrl?: string;
+  discordUrl?: string;
   themeAccent?: string;
   themeMode?: string;
   soundEnabled?: string;
@@ -56,6 +63,21 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
       if (data.settings) {
         setSettings(data.settings);
       }
+
+      if (typeof document !== "undefined") {
+        if (settings.themeMode === "light") {
+          document.documentElement.classList.add("light-mode");
+          document.documentElement.setAttribute("data-theme", "light");
+        } else {
+          document.documentElement.classList.remove("light-mode");
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+        if (settings.themeAccent) {
+          document.documentElement.style.setProperty("--theme-accent", settings.themeAccent);
+          document.documentElement.style.setProperty("--orange", settings.themeAccent);
+        }
+      }
+
       setLastAuditId(data.auditLogId || null);
       setMessage({
         text: "Portfolio settings updated and saved! Recorded in audit log with Indian Time (IST).",
@@ -176,20 +198,32 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
           <div className="admin-card">
             <div className="admin-card-heading">
               <div>
-                <p className="section-kicker">Availability &amp; Contacts</p>
-                <h3>Public Contact Information</h3>
+                <p className="section-kicker">Availability &amp; Inboxes</p>
+                <h3>Contact &amp; Delivery Settings</h3>
               </div>
             </div>
 
             <div className="field" style={{ marginTop: 14 }}>
-              <label htmlFor="setting-contactEmail">Contact Email Address</label>
+              <label htmlFor="setting-contactEmail">Public Display Email</label>
               <input
                 id="setting-contactEmail"
                 type="email"
-                value={settings.contactEmail ?? "bijoysarkar190@gmail.com"}
+                value={settings.contactEmail ?? "bijoysarkar7252@gmail.com"}
                 onChange={(e) => handleChange("contactEmail", e.target.value)}
               />
-              <span className="field-hint">Recipients for public contact inquiries.</span>
+              <span className="field-hint">Publicly displayed email on Contact section, Hero, and Footer.</span>
+            </div>
+
+            <div className="field">
+              <label htmlFor="setting-contactRecipientEmail">Contact Form Destination Inbox</label>
+              <input
+                id="setting-contactRecipientEmail"
+                type="email"
+                placeholder="bijoysarkar7252@gmail.com"
+                value={settings.contactRecipientEmail ?? "bijoysarkar7252@gmail.com"}
+                onChange={(e) => handleChange("contactRecipientEmail", e.target.value)}
+              />
+              <span className="field-hint">Where visitor messages sent through the Contact Us form will be delivered.</span>
             </div>
 
             <div className="field">
@@ -210,19 +244,10 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
               />
             </div>
 
-            <div className="field">
-              <label htmlFor="setting-githubUrl">GitHub Profile URL</label>
-              <input
-                id="setting-githubUrl"
-                value={settings.githubUrl ?? "https://github.com/BijoySarkar19"}
-                onChange={(e) => handleChange("githubUrl", e.target.value)}
-              />
-            </div>
-
             <div className="field" style={{ gridColumn: "1 / -1" }}>
               <label htmlFor="setting-googleSheetsWebhookUrl" style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <Sheet size={14} style={{ color: "#34a853" }} />
-                <span>Google Sheets Webhook URL (for bijoysarkar7252@gmail.com)</span>
+                <span>Google Sheets Webhook URL</span>
               </label>
               <input
                 id="setting-googleSheetsWebhookUrl"
@@ -231,8 +256,88 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                 onChange={(e) => handleChange("googleSheetsWebhookUrl", e.target.value)}
               />
               <span className="field-hint">
-                Paste your deployed Google Apps Script Web App URL here. Submissions will automatically append to your live Google Sheet and alert bijoysarkar7252@gmail.com.
+                Deployed Google Apps Script Web App URL. Contact submissions automatically sync here.
               </span>
+            </div>
+          </div>
+
+          {/* Social Media Links */}
+          <div className="admin-card">
+            <div className="admin-card-heading">
+              <div>
+                <p className="section-kicker">Social Media</p>
+                <h3>Online Profiles &amp; Handles</h3>
+              </div>
+            </div>
+
+            <div className="field" style={{ marginTop: 14 }}>
+              <label htmlFor="setting-githubUrl">GitHub Profile URL</label>
+              <input
+                id="setting-githubUrl"
+                value={settings.githubUrl ?? "https://github.com/BijoySarkar19"}
+                onChange={(e) => handleChange("githubUrl", e.target.value)}
+                placeholder="https://github.com/BijoySarkar19"
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="setting-linkedinUrl">LinkedIn Profile URL</label>
+              <input
+                id="setting-linkedinUrl"
+                value={settings.linkedinUrl ?? "https://www.linkedin.com/in/bijoysarkar19"}
+                onChange={(e) => handleChange("linkedinUrl", e.target.value)}
+                placeholder="https://www.linkedin.com/in/bijoysarkar19"
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="setting-twitterUrl">X / Twitter Profile URL</label>
+              <input
+                id="setting-twitterUrl"
+                value={settings.twitterUrl ?? "https://x.com/bijoyy_19"}
+                onChange={(e) => handleChange("twitterUrl", e.target.value)}
+                placeholder="https://x.com/bijoyy_19"
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="setting-instagramUrl">Instagram Profile URL</label>
+              <input
+                id="setting-instagramUrl"
+                value={settings.instagramUrl ?? "https://www.instagram.com/bijoyysarkarr?obrf=dW1zenpraWt3eGI="}
+                onChange={(e) => handleChange("instagramUrl", e.target.value)}
+                placeholder="https://www.instagram.com/username"
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="setting-facebookUrl">Facebook Profile URL</label>
+              <input
+                id="setting-facebookUrl"
+                value={settings.facebookUrl ?? "https://www.facebook.com/share/1Cs44JBwnk/"}
+                onChange={(e) => handleChange("facebookUrl", e.target.value)}
+                placeholder="https://www.facebook.com/..."
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="setting-youtubeUrl">YouTube Channel URL</label>
+              <input
+                id="setting-youtubeUrl"
+                value={settings.youtubeUrl ?? ""}
+                onChange={(e) => handleChange("youtubeUrl", e.target.value)}
+                placeholder="https://youtube.com/@channel (Optional)"
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="setting-discordUrl">Discord Profile / Invite URL</label>
+              <input
+                id="setting-discordUrl"
+                value={settings.discordUrl ?? ""}
+                onChange={(e) => handleChange("discordUrl", e.target.value)}
+                placeholder="https://discord.gg/... or username (Optional)"
+              />
             </div>
           </div>
 

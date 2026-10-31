@@ -11,13 +11,18 @@ function escapeHtml(value: string) {
   })[character] ?? character);
 }
 
-export async function sendContactEmail(data: ContactInput, submittedAt: Date, riskInfo: string) {
+export async function sendContactEmail(
+  data: ContactInput,
+  submittedAt: Date,
+  riskInfo: string,
+  recipientEmail?: string
+) {
   const host = process.env.EMAIL_HOST;
   const port = Number(process.env.EMAIL_PORT ?? 587);
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASS;
   const from = process.env.EMAIL_FROM;
-  const recipient = process.env.CONTACT_EMAIL;
+  const recipient = recipientEmail || process.env.CONTACT_EMAIL || "bijoysarkar7252@gmail.com";
   if (!host || !user || !pass || !from || !recipient || !Number.isFinite(port)) return false;
 
   const transporter = nodemailer.createTransport({

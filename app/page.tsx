@@ -76,9 +76,23 @@ export default async function HomePage() {
     locationMapUrl: "https://maps.google.com/?q=Agartala,+Tripura,+India",
     contactEmail: "bijoysarkar7252@gmail.com",
     contactRecipientEmail: "bijoysarkar7252@gmail.com",
+    googleSheetsWebhookUrl: "https://script.google.com/macros/s/AKfycbxtE4fuHg9Mpp-DuLBfF2ve2cpeWiwKk8IE7Nkw_xO2gOjlYniUzAI3Vw8D4Hy0JrPzNw/exec",
   };
   for (const s of dbSettings) {
     settingsMap[s.key] = s.value;
+  }
+
+  // Cross-route fallback store in /tmp
+  try {
+    const storePath = "/tmp/settings-store.json";
+    if (existsSync(storePath)) {
+      const stored = JSON.parse(readFileSync(storePath, "utf-8"));
+      for (const [k, v] of Object.entries(stored)) {
+        if (typeof v === "string") settingsMap[k] = v;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not read /tmp/settings-store.json on HomePage:", err);
   }
 
   // Resolve projects: use DB if available, otherwise resilient fallback dataset

@@ -158,6 +158,15 @@ export async function POST(request: Request) {
       console.warn("Audit log save failed:", auditError);
     }
 
+    // Save to /tmp/settings-store.json for cross-container memory on serverless
+    try {
+      const { writeFileSync } = await import("node:fs");
+      const storePath = "/tmp/settings-store.json";
+      writeFileSync(storePath, JSON.stringify({ ...previousMap, ...currentMap }), "utf-8");
+    } catch (storeErr) {
+      console.warn("Could not save /tmp/settings-store.json:", storeErr);
+    }
+
     return NextResponse.json({
       success: true,
       settings: { ...previousMap, ...currentMap },

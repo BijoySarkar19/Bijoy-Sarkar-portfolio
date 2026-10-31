@@ -83,13 +83,33 @@ const ACCENT_PRESETS = [
 
 export function SettingsManager({ initialSettings }: { initialSettings: SiteSettingsMap }) {
   const router = useRouter();
-  const [settings, setSettings] = useState<SiteSettingsMap>(initialSettings);
+  const [settings, setSettings] = useState<SiteSettingsMap>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem("admin_site_settings");
+        if (local) {
+          const parsed = JSON.parse(local);
+          return { ...initialSettings, ...parsed };
+        }
+      } catch {}
+    }
+    return initialSettings;
+  });
   const [loading, setLoading] = useState(false);
   const [lastAuditId, setLastAuditId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error"; canUndo?: boolean } | null>(null);
 
   // Degrees state
   const [degrees, setDegrees] = useState<DegreeItem[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const localDegrees = localStorage.getItem("admin_degrees_list");
+        if (localDegrees) {
+          const parsed = JSON.parse(localDegrees);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+    }
     try {
       if (initialSettings.degreesList) {
         const parsed = JSON.parse(initialSettings.degreesList);
@@ -180,6 +200,14 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
       }
 
       setLastAuditId(data.auditLogId || null);
+
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("admin_site_settings", JSON.stringify(data.settings || payload));
+          localStorage.setItem("admin_degrees_list", JSON.stringify(degrees));
+        } catch {}
+      }
+
       setMessage({
         text: "Portfolio settings, sections, degrees, and content updated and saved! Recorded in audit log.",
         type: "success",
@@ -212,9 +240,20 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
       const refreshData = await refreshRes.json();
       if (refreshData.settings) {
         setSettings(refreshData.settings);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("admin_site_settings", JSON.stringify(refreshData.settings));
+          } catch {}
+        }
         if (refreshData.settings.degreesList) {
           try {
-            setDegrees(JSON.parse(refreshData.settings.degreesList));
+            const parsedDegrees = JSON.parse(refreshData.settings.degreesList);
+            setDegrees(parsedDegrees);
+            if (typeof window !== "undefined") {
+              try {
+                localStorage.setItem("admin_degrees_list", JSON.stringify(parsedDegrees));
+              } catch {}
+            }
           } catch {}
         }
       }

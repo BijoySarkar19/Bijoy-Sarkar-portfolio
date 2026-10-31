@@ -362,13 +362,29 @@ async function main() {
     { key: "heroTitle", value: "Software Engineer & AI Developer" },
     { key: "heroSubhead", value: "Building intelligent systems and full-stack solutions." },
     { key: "heroBio", value: "Computer Science undergraduate focused on AI/ML, secure software, and useful digital products." },
-    { key: "contactEmail", value: "bijoysarkar190@gmail.com" },
-    { key: "location", value: "Agartala, India" },
+    { key: "contactEmail", value: "bijoysarkar7252@gmail.com" },
+    { key: "contactRecipientEmail", value: "bijoysarkar7252@gmail.com" },
+    { key: "location", value: "Agartala, Tripura, India" },
+    { key: "locationMapUrl", value: "https://maps.google.com/?q=Agartala,+Tripura,+India" },
     { key: "status", value: "Open to opportunities" },
     { key: "githubUrl", value: "https://github.com/BijoySarkar19" },
     { key: "themeAccent", value: "#ff5e2c" },
-    { key: "soundEnabled", value: "true" },
+    { key: "themeMode", value: "dark" },
+    { key: "soundEnabled", value: "false" },
     { key: "gamesEnabled", value: "true" },
+    {
+      key: "degreesList",
+      value: JSON.stringify([
+        {
+          id: "btech-degree",
+          degree: "B.Tech · Computer Science & Engineering",
+          institution: "ICFAI University Tripura",
+          link: "https://www.iutripura.edu.in/",
+          period: "2023 - 2027",
+          showOnHome: true,
+        },
+      ]),
+    },
   ];
 
   for (const s of defaultSettings) {

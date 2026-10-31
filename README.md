@@ -109,8 +109,8 @@ A modern, full-stack portfolio for **Bijoy Sarkar**, Software Engineer and AI De
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/BijoySarkar19/portfolio.git
-   cd portfolio
+   git clone https://github.com/BijoySarkar19/Bijoy-Sarkar-portfolio.git
+   cd Bijoy-Sarkar-portfolio
    ```
 
 2. **Install dependencies:**

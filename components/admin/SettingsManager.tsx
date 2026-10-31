@@ -11,6 +11,8 @@ import {
   GraduationCap,
   Plus,
   Trash2,
+  ChevronUp,
+  ChevronDown,
   ExternalLink,
   MapPin,
   Layers,
@@ -18,26 +20,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-export interface DegreeItem {
-  id: string;
-  degree: string;
-  institution: string;
-  link: string;
-  period: string;
-  showOnHome: boolean;
-}
-
-export const DEFAULT_DEGREES: DegreeItem[] = [
-  {
-    id: "btech-degree",
-    degree: "B.Tech · Computer Science & Engineering",
-    institution: "ICFAI University Tripura",
-    link: "https://www.iutripura.edu.in/",
-    period: "2023—expected 2027",
-    showOnHome: true,
-  },
-];
+import { DEFAULT_DEGREES, type DegreeItem } from "@/lib/degrees";
 
 export interface SiteSettingsMap {
   heroTitle?: string;
@@ -46,7 +29,9 @@ export interface SiteSettingsMap {
   contactEmail?: string;
   contactRecipientEmail?: string;
   location?: string;
+  locationMapUrl?: string;
   currentLocation?: string;
+  currentLocationMapUrl?: string;
   displayAddressMode?: string;
   status?: string;
   githubUrl?: string;
@@ -141,6 +126,18 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
       if (!window.confirm("Are you sure you want to remove this degree? At least one degree is recommended.")) return;
     }
     setDegrees((prev) => prev.filter((d) => d.id !== id));
+  }
+
+  function handleMoveDegree(index: number, direction: "up" | "down") {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= degrees.length) return;
+    setDegrees((prev) => {
+      const copy = [...prev];
+      const temp = copy[index];
+      copy[index] = copy[targetIndex];
+      copy[targetIndex] = temp;
+      return copy;
+    });
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -372,11 +369,58 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                     border: "1px solid var(--line)",
                     background: "rgba(255, 255, 255, 0.03)",
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr)) 120px 40px",
+                    gridTemplateColumns: "54px repeat(auto-fit, minmax(200px, 1fr)) 100px 36px",
                     gap: 12,
                     alignItems: "end",
                   }}
                 >
+                  {/* Reorder Position & Arrows */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 10, color: "var(--subtle)", fontWeight: 700 }}>#{index + 1}</span>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveDegree(index, "up")}
+                        disabled={index === 0}
+                        title="Move Degree Up"
+                        style={{
+                          width: 26,
+                          height: 20,
+                          display: "grid",
+                          placeItems: "center",
+                          borderRadius: 5,
+                          border: "1px solid var(--line)",
+                          background: index === 0 ? "transparent" : "rgba(255, 255, 255, 0.06)",
+                          color: index === 0 ? "var(--subtle)" : "var(--white)",
+                          cursor: index === 0 ? "not-allowed" : "pointer",
+                          opacity: index === 0 ? 0.3 : 1,
+                        }}
+                      >
+                        <ChevronUp size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveDegree(index, "down")}
+                        disabled={index === degrees.length - 1}
+                        title="Move Degree Down"
+                        style={{
+                          width: 26,
+                          height: 20,
+                          display: "grid",
+                          placeItems: "center",
+                          borderRadius: 5,
+                          border: "1px solid var(--line)",
+                          background: index === degrees.length - 1 ? "transparent" : "rgba(255, 255, 255, 0.06)",
+                          color: index === degrees.length - 1 ? "var(--subtle)" : "var(--white)",
+                          cursor: index === degrees.length - 1 ? "not-allowed" : "pointer",
+                          opacity: index === degrees.length - 1 ? 0.3 : 1,
+                        }}
+                      >
+                        <ChevronDown size={13} />
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="field" style={{ margin: 0 }}>
                     <label style={{ fontSize: 11 }}>Degree Title *</label>
                     <input
@@ -394,11 +438,46 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                     />
                   </div>
                   <div className="field" style={{ margin: 0 }}>
-                    <label style={{ fontSize: 11 }}>University Webpage Link</label>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <label style={{ fontSize: 11, margin: 0 }}>University Webpage Link</label>
+                      {deg.link ? (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateDegree(deg.id, "link", "")}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "var(--orange)",
+                            fontSize: 10,
+                            cursor: "pointer",
+                            padding: "0 2px",
+                            textDecoration: "underline",
+                          }}
+                        >
+                          Remove Link
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateDegree(deg.id, "link", "https://www.iutripura.edu.in/")}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "var(--orange)",
+                            fontSize: 10,
+                            cursor: "pointer",
+                            padding: "0 2px",
+                            textDecoration: "underline",
+                          }}
+                        >
+                          Add ICFAI Link
+                        </button>
+                      )}
+                    </div>
                     <input
                       value={deg.link}
                       onChange={(e) => handleUpdateDegree(deg.id, "link", e.target.value)}
-                      placeholder="https://www.iutripura.edu.in/"
+                      placeholder="https://www.iutripura.edu.in/ (or leave blank)"
                     />
                   </div>
                   <div className="field" style={{ margin: 0 }}>
@@ -750,7 +829,18 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                 value={settings.location ?? "Agartala, Tripura, India"}
                 onChange={(e) => handleChange("location", e.target.value)}
               />
-              <span className="field-hint">Home city/state/country.</span>
+              <span className="field-hint">Home city/state/country (default: Agartala, Tripura, India).</span>
+            </div>
+
+            <div className="field">
+              <label htmlFor="setting-locationMapUrl">Permanent Address Google Maps Link</label>
+              <input
+                id="setting-locationMapUrl"
+                value={settings.locationMapUrl ?? "https://maps.google.com/?q=Agartala,+Tripura,+India"}
+                onChange={(e) => handleChange("locationMapUrl", e.target.value)}
+                placeholder="https://maps.google.com/?q=Agartala,+Tripura,+India"
+              />
+              <span className="field-hint">Link opened when visitors click on the permanent address.</span>
             </div>
 
             <div className="field">
@@ -762,6 +852,17 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                 placeholder="e.g. Bengaluru, Karnataka, India (or leave blank)"
               />
               <span className="field-hint">For future relocations or internships.</span>
+            </div>
+
+            <div className="field">
+              <label htmlFor="setting-currentLocationMapUrl">Current Address Google Maps Link (Optional)</label>
+              <input
+                id="setting-currentLocationMapUrl"
+                value={settings.currentLocationMapUrl ?? ""}
+                onChange={(e) => handleChange("currentLocationMapUrl", e.target.value)}
+                placeholder="e.g. https://maps.google.com/?q=Bengaluru,+Karnataka,+India"
+              />
+              <span className="field-hint">Google Maps link for current address.</span>
             </div>
 
             <div className="field">

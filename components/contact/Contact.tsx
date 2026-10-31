@@ -13,6 +13,7 @@ export interface SocialLinkItem {
 export interface ContactProps {
   email?: string;
   location?: string;
+  locationMapUrl?: string;
   socialLinks?: SocialLinkItem[];
   contactTitle?: string;
   contactSubtitle?: string;
@@ -21,6 +22,7 @@ export interface ContactProps {
 export function Contact({
   email = "bijoysarkar7252@gmail.com",
   location = "Agartala, Tripura, India",
+  locationMapUrl,
   socialLinks = defaultSocialLinks,
   contactTitle = "Have a problem worth solving?",
   contactSubtitle = "For software roles, AI/ML work, or a project idea, send a note and tell me what you have in mind.",
@@ -29,6 +31,8 @@ export function Contact({
   const words = contactTitle.split(" ");
   const lastWord = words.length > 1 ? words.pop() : "";
   const mainWords = words.join(" ");
+
+  const mapsUrl = locationMapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
 
   return (
     <section className="section contact-section" id="contact" aria-labelledby="contact-title">
@@ -43,9 +47,10 @@ export function Contact({
             <EmailLink className="contact-detail" email={email} />
             <a
               className="contact-detail"
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+              href={mapsUrl}
               target="_blank"
               rel="noreferrer"
+              title="Open in Google Maps"
             >
               <MapPin size={15} /> {location} <ArrowUpRight size={13} />
             </a>

@@ -2859,25 +2859,105 @@ html.light-mode .mobile-nav-item:hover {
   color: var(--orange);
 }
 
-/* Admin Workspace Isolation in Light Mode (Keeps admin dark cyber theme crisp and legible) */
+/* Admin Workspace in Light Mode */
+html.light-mode body:has(.admin-shell),
+html.light-mode body:has(.admin-login-wrap) {
+  background: #f8fafc !important;
+  color: #090d16 !important;
+}
+
 html.light-mode .admin-shell,
 html.light-mode .admin-login-wrap {
-  --white: #ffffff !important;
-  --soft-white: #e2e8f0 !important;
-  --silver: #cbd5e1 !important;
-  --muted: #94a3b8 !important;
+  background: #f8fafc !important;
+  color: #090d16 !important;
+  --white: #090d16 !important;
+  --soft-white: #1e293b !important;
+  --silver: #334155 !important;
+  --muted: #64748b !important;
+  --subtle: #94a3b8 !important;
+  --line: rgba(15, 23, 42, 0.12) !important;
 }
 
 html.light-mode .admin-topline h1,
 html.light-mode .admin-crud-header h2,
-html.light-mode .admin-nav a,
-html.light-mode .admin-table th,
-html.light-mode .admin-table td strong {
-  color: #ffffff !important;
+html.light-mode .admin-card-heading h2,
+html.light-mode .admin-card h2,
+html.light-mode .admin-card h3,
+html.light-mode .admin-skill-mgmt-card h4 {
+  color: #090d16 !important;
+}
+
+html.light-mode .admin-card,
+html.light-mode .admin-stat,
+html.light-mode .admin-skill-mgmt-card,
+html.light-mode .admin-table-wrap,
+html.light-mode .admin-project-stats-bar,
+html.light-mode .admin-login {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+  color: #090d16 !important;
+}
+
+html.light-mode .admin-nav a {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #475569 !important;
+}
+
+html.light-mode .admin-nav a:hover {
+  background: rgba(var(--orange-rgb), 0.08) !important;
+  color: var(--orange) !important;
+  border-color: rgba(var(--orange-rgb), 0.3) !important;
 }
 
 html.light-mode .admin-nav a[aria-current="page"] {
+  background: rgba(var(--orange-rgb), 0.12) !important;
+  border-color: var(--orange) !important;
   color: var(--orange) !important;
+  font-weight: 600;
+}
+
+html.light-mode .admin-table th {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1) !important;
+}
+
+html.light-mode .admin-table td {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+  color: #334155 !important;
+}
+
+html.light-mode .admin-table td strong {
+  color: #090d16 !important;
+}
+
+html.light-mode .admin-tab {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #475569 !important;
+}
+
+html.light-mode .admin-tab.is-active {
+  background: rgba(var(--orange-rgb), 0.12) !important;
+  border-color: var(--orange) !important;
+  color: var(--orange) !important;
+}
+
+html.light-mode .admin-shell .field input,
+html.light-mode .admin-shell .field textarea,
+html.light-mode .admin-shell .field select,
+html.light-mode .admin-login input {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.18) !important;
+  color: #090d16 !important;
+}
+
+html.light-mode .admin-small-button {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.16) !important;
+  color: #334155 !important;
 }
 
 /* Light Mode Contrast Fix: Game Instructions Overlay (Image 2) */

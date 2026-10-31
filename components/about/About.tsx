@@ -1,8 +1,7 @@
 import { ArrowUpRight, GraduationCap } from "lucide-react";
 import { experiences as fallbackExperiences } from "@/lib/portfolio-data";
 import { UpcomingNotice } from "@/components/ui/UpcomingNotice";
-import type { DegreeItem } from "@/components/admin/SettingsManager";
-import { DEFAULT_DEGREES } from "@/components/admin/SettingsManager";
+import { DEFAULT_DEGREES, type DegreeItem } from "@/lib/degrees";
 
 export interface ExperienceDisplayItem {
   period: string;
@@ -28,8 +27,13 @@ export function About({
   aboutLead = "I turn complex requirements into clear, reliable software. I enjoy exploring the details, connecting the right tools, and shaping each idea into something people can use.",
 }: AboutProps) {
   const items = experiences !== undefined ? experiences : fallbackExperiences;
-  const activeDegrees = degrees.filter((d) => d.showOnHome);
+  const degreeList = Array.isArray(degrees) && degrees.length > 0 ? degrees : DEFAULT_DEGREES;
+  const activeDegrees = degreeList.filter((d) => d && d.showOnHome !== false);
   const primaryDegree = activeDegrees[0] || DEFAULT_DEGREES[0];
+
+  // Extract expected completion year (e.g., from "2023 - 2027", completion is 2027)
+  const matchYears = primaryDegree.period?.match(/\d{4}/g);
+  const completionYear = matchYears && matchYears.length > 0 ? matchYears[matchYears.length - 1] : "2027";
 
   // Accentuate the last word of title if standard pattern
   const titleWords = aboutTitle.split(" ");
@@ -55,7 +59,7 @@ export function About({
               <span>internship experiences</span>
             </div>
             <div className="metric-card">
-              <strong>{primaryDegree.period?.match(/\d{4}/)?.[0] || "2027"}</strong>
+              <strong>{completionYear}</strong>
               <span>Expected {primaryDegree.degree?.split("·")?.[0]?.trim() || "B.Tech"} completion</span>
             </div>
           </div>

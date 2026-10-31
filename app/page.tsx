@@ -7,7 +7,7 @@ import { ProjectsSection } from "@/components/projects/ProjectsSection";
 import { ResumeViewer } from "@/components/resume/ResumeViewer";
 import { GamesSection } from "@/components/games/GamesSection";
 import { SocialIconName } from "@/components/ui/SocialIcon";
-import { DEFAULT_DEGREES, type DegreeItem } from "@/components/admin/SettingsManager";
+import { parseDegrees, type DegreeItem } from "@/lib/degrees";
 import { prisma } from "@/lib/prisma";
 import { toPortfolioProject } from "@/lib/projects";
 import { existsSync, readFileSync } from "fs";
@@ -80,15 +80,7 @@ export default async function HomePage() {
   }));
 
   // Parse degrees from settings or fallback
-  let degrees: DegreeItem[] = DEFAULT_DEGREES;
-  if (settingsMap.degreesList) {
-    try {
-      const parsed = JSON.parse(settingsMap.degreesList);
-      if (Array.isArray(parsed) && parsed.length > 0) degrees = parsed;
-    } catch (e) {
-      console.error("Failed to parse degreesList:", e);
-    }
-  }
+  const degrees: DegreeItem[] = parseDegrees(settingsMap.degreesList);
 
   // Section module flags (Default: all enabled)
   const heroEnabled = settingsMap.heroEnabled !== "false";
@@ -147,13 +139,19 @@ export default async function HomePage() {
 
   // Address resolution
   const primaryLoc = settingsMap.location || "Agartala, Tripura, India";
+  const primaryMapUrl = settingsMap.locationMapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(primaryLoc)}`;
   const currentLoc = settingsMap.currentLocation || "";
+  const currentMapUrl = settingsMap.currentLocationMapUrl || (currentLoc ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentLoc)}` : "");
   const addrMode = settingsMap.displayAddressMode || "primary";
+
   let resolvedLocation = primaryLoc;
+  let resolvedMapUrl = primaryMapUrl;
   if (addrMode === "current" && currentLoc) {
     resolvedLocation = currentLoc;
+    resolvedMapUrl = currentMapUrl || primaryMapUrl;
   } else if (addrMode === "both" && currentLoc) {
     resolvedLocation = `${primaryLoc} · Current: ${currentLoc}`;
+    resolvedMapUrl = primaryMapUrl;
   }
 
   return (
@@ -164,6 +162,7 @@ export default async function HomePage() {
             subhead={settingsMap.heroSubhead}
             bio={settingsMap.heroBio}
             location={resolvedLocation}
+            locationMapUrl={resolvedMapUrl}
             status={settingsMap.status}
             githubUrl={settingsMap.githubUrl}
             degrees={degrees}
@@ -216,6 +215,7 @@ export default async function HomePage() {
           <Contact
             email={publicEmail}
             location={resolvedLocation}
+            locationMapUrl={resolvedMapUrl}
             socialLinks={dynamicSocialLinks}
             contactTitle={settingsMap.contactTitle}
             contactSubtitle={settingsMap.contactSubtitle}

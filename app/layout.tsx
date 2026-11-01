@@ -87,6 +87,9 @@ export const metadata: Metadata = {
     },
   },
   icons: { icon: "/favicon.svg?v=2", shortcut: "/favicon.svg?v=2" },
+  verification: {
+    google: "google220d1e3d7cee1635",
+  },
   category: "technology",
 };
 

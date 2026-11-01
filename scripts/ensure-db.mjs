@@ -14,4 +14,11 @@ if (!existsSync(databasePath)) {
   mkdirSync(dirname(databasePath), { recursive: true });
   const database = new Database(databasePath);
   database.close();
+} else {
+  try {
+    const database = new Database(databasePath);
+    // Ensure CivicLens Core is active in Currently Working (1/2)
+    database.prepare(`UPDATE Project SET featuredOnHome = 1 WHERE slug = 'civiclens-core' AND isOngoing = 1`).run();
+    database.close();
+  } catch {}
 }

@@ -4,6 +4,7 @@ import { AdminNavigation } from "@/components/admin/AdminNavigation";
 import { SocialIcon } from "@/components/ui/SocialIcon";
 import { prisma } from "@/lib/prisma";
 import { formatIndianTime } from "@/lib/audit";
+import { parseAuditChanges } from "@/lib/audit-diff";
 
 export const dynamic = "force-dynamic";
 
@@ -219,20 +220,68 @@ export default async function AdminDashboardPage() {
           </div>
           {recentAuditLogs.length ? (
             <div className="admin-recent-list">
-              {recentAuditLogs.map((log) => (
-                <div className="admin-recent-item" key={log.id} style={{ justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span className="admin-recent-icon"><History size={15} /></span>
-                    <div>
-                      <strong style={{ fontSize: 11, color: "var(--white)" }}>{log.action} · {log.entity}</strong>
-                      <small style={{ display: "block", color: "var(--subtle)", fontSize: 9 }}>by {log.adminName}</small>
+              {recentAuditLogs.map((log) => {
+                const audit = parseAuditChanges(log.changes, log.action, log.entity);
+                return (
+                  <div
+                    className="admin-recent-item"
+                    key={log.id}
+                    style={{
+                      flexDirection: "column",
+                      alignItems: "stretch",
+                      gap: 8,
+                      padding: "14px 16px",
+                      minHeight: "auto",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <span className="admin-recent-icon" style={{ flexShrink: 0 }}><History size={14} /></span>
+                        <strong style={{ fontSize: 11, color: "var(--white)" }}>
+                          {log.action} · {log.entity}
+                        </strong>
+                        <small style={{ color: "var(--subtle)", fontSize: 10 }}>by {log.adminName}</small>
+                      </div>
+                      <span style={{ color: "var(--orange)", fontSize: 10, fontVariantNumeric: "tabular-nums" }}>
+                        {formatIndianTime(log.timestamp)}
+                      </span>
                     </div>
+
+                    <p style={{ margin: 0, fontSize: 12, color: "var(--silver)", lineHeight: 1.5 }}>
+                      {audit.summary}
+                    </p>
+
+                    {audit.diffs.length > 0 && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 2 }}>
+                        {audit.diffs.slice(0, 3).map((d) => (
+                          <div
+                            key={d.field}
+                            style={{
+                              fontSize: 11,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              background: "rgba(255, 255, 255, 0.03)",
+                              padding: "4px 8px",
+                              borderRadius: 6,
+                              border: "1px solid rgba(255, 255, 255, 0.06)",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <span style={{ color: "var(--muted)", fontWeight: 600 }}>{d.label}:</span>
+                            <span style={{ color: "#f87171", textDecoration: "line-through" }}>{d.from}</span>
+                            <span style={{ color: "var(--subtle)" }}>→</span>
+                            <span style={{ color: "#4ade80", fontWeight: 600 }}>{d.to}</span>
+                          </div>
+                        ))}
+                        {audit.diffs.length > 3 && (
+                          <span style={{ fontSize: 10, color: "var(--subtle)" }}>+{audit.diffs.length - 3} more modified fields</span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <span style={{ color: "var(--orange)", fontSize: 10, fontVariantNumeric: "tabular-nums" }}>
-                    {formatIndianTime(log.timestamp)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="empty-state">

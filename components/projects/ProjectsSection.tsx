@@ -52,7 +52,7 @@ export function ProjectsSection({
           </div>
           <div>
             <p className="project-count">
-              {String(projects.length).padStart(2, "0")} featured on main page · Rest in index
+              {String(projects.length).padStart(2, "0")} featured on main page · Rest in directory
             </p>
             <p className="section-heading-aside">{projectsSubtitle}</p>
           </div>

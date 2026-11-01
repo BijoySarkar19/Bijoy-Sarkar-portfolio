@@ -38,12 +38,13 @@ export async function POST(request: Request, { params }: RouteContext) {
       const nextOngoing = !project.isOngoing;
       let nextFeatured = project.featuredOnHome;
 
-      if (nextOngoing && nextFeatured) {
+      if (nextOngoing) {
         const countOngoingHome = await prisma.project.count({
           where: { isOngoing: true, featuredOnHome: true, id: { not: id } },
         });
-        if (countOngoingHome >= 2) nextFeatured = false;
-      } else if (!nextOngoing && nextFeatured) {
+        // Automatically feature on Home (Top 2) if space is available (< 2)
+        nextFeatured = countOngoingHome < 2;
+      } else {
         const countMainHome = await prisma.project.count({
           where: { isOngoing: false, featuredOnHome: true, id: { not: id } },
         });
@@ -55,7 +56,7 @@ export async function POST(request: Request, { params }: RouteContext) {
         data: { isOngoing: nextOngoing, featuredOnHome: nextFeatured },
       });
       auditSummary = nextOngoing
-        ? `Marked "${project.title}" as Currently Working Project (In Active Development)`
+        ? `Marked "${project.title}" as Currently Working Project${nextFeatured ? " (automatically featured on Home)" : ""}`
         : `Deployed "${project.title}" from Currently Working to Main Projects section`;
     } else if (action === "toggle_featured_home") {
       const nextFeatured = !project.featuredOnHome;

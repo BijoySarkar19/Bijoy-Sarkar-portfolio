@@ -41,6 +41,8 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
   const [title, setTitle] = useState(project.title);
   const [slug, setSlug] = useState(project.slug);
   const [slugEdited, setSlugEdited] = useState(Boolean(project.slug));
+  const [isOngoing, setIsOngoing] = useState(Boolean(project.isOngoing));
+  const [featuredOnHome, setFeaturedOnHome] = useState(Boolean(project.featuredOnHome));
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("error");
@@ -129,12 +131,35 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
             <span>Published on portfolio</span>
           </label>
           <label className="publish-field">
-            <input name="featuredOnHome" type="checkbox" defaultChecked={project.featuredOnHome} />
-            <span>★ Feature in Main Page Top 5</span>
+            <input
+              name="isOngoing"
+              type="checkbox"
+              checked={isOngoing}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setIsOngoing(checked);
+                if (checked) {
+                  // Automatically feature on Home when moving to Currently Working
+                  setFeaturedOnHome(true);
+                }
+              }}
+            />
+            <span style={{ color: isOngoing ? "var(--orange)" : "inherit", fontWeight: isOngoing ? 600 : 400 }}>
+              ⚡ Currently Working (In Active Development)
+            </span>
           </label>
           <label className="publish-field">
-            <input name="isOngoing" type="checkbox" defaultChecked={project.isOngoing} />
-            <span>⚡ Currently Working (In Active Development)</span>
+            <input
+              name="featuredOnHome"
+              type="checkbox"
+              checked={featuredOnHome}
+              onChange={(e) => setFeaturedOnHome(e.target.checked)}
+            />
+            <span>
+              {isOngoing
+                ? "⭐ Showcase in Currently Working on Main Page (Top 2)"
+                : "★ Feature in Main Page Top 5"}
+            </span>
           </label>
         </div>
       </div>

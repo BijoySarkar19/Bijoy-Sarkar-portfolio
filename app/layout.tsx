@@ -15,23 +15,79 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Bijoy Sarkar — Software Engineer & AI Developer",
-  description: "Portfolio of Bijoy Sarkar — Software Engineer and AI Developer building intelligent systems, full-stack applications, AI/ML solutions and secure software.",
-  alternates: { canonical: "/" },
+  title: {
+    default: "Bijoy Sarkar — Portfolio | Software Engineer & AI Developer",
+    template: "%s | Bijoy Sarkar",
+  },
+  description:
+    "Official portfolio of Bijoy Sarkar, Software Engineer and AI Developer based in Agartala, India. Discover intelligent systems, full-stack applications, CivicLens Core, machine learning engineering, and curriculum vitae at bijoy-sarkar-portfolio.vercel.app.",
+  keywords: [
+    "Bijoy Sarkar",
+    "Bijoy Sarkar portfolio",
+    "bijoy sarkar portfolio .vercel.app",
+    "bijoy-sarkar-portfolio.vercel.app",
+    "bijoysarkar",
+    "Bijoy Sarkar software engineer",
+    "Bijoy Sarkar AI developer",
+    "Bijoy Sarkar ICFAI University Tripura",
+    "Bijoy Sarkar Agartala",
+    "Bijoy Sarkar Tripura",
+    "Bijoy Sarkar developer",
+    "CivicLens Core",
+    "Rakshak AI",
+    "Software Engineer portfolio",
+    "AI Developer portfolio",
+    "Full Stack Engineer",
+    "Machine Learning Developer",
+    "Next.js Portfolio",
+    "React",
+    "TypeScript",
+    "Python",
+    "Docker"
+  ],
+  authors: [{ name: "Bijoy Sarkar", url: siteUrl }],
+  creator: "Bijoy Sarkar",
+  publisher: "Bijoy Sarkar",
+  alternates: { canonical: siteUrl },
   openGraph: {
-    type: "website",
-    url: "/",
-    title: "Bijoy Sarkar — Software Engineer & AI Developer",
-    description: "Building intelligent systems and full-stack solutions.",
+    type: "profile",
+    locale: "en_US",
+    url: siteUrl,
+    title: "Bijoy Sarkar — Portfolio | Software Engineer & AI Developer",
+    description:
+      "Official portfolio of Bijoy Sarkar, Software Engineer and AI Developer. Intelligent systems, full-stack builds, and CV at bijoy-sarkar-portfolio.vercel.app.",
     siteName: "Bijoy Sarkar Portfolio",
+    images: [
+      {
+        url: `${siteUrl}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        alt: "Bijoy Sarkar — Software Engineer & AI Developer Portfolio",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bijoy Sarkar — Software Engineer & AI Developer",
-    description: "Building intelligent systems and full-stack solutions.",
+    title: "Bijoy Sarkar — Portfolio | Software Engineer & AI Developer",
+    description:
+      "Official portfolio of Bijoy Sarkar, Software Engineer and AI Developer at bijoy-sarkar-portfolio.vercel.app.",
+    creator: "@bijoyy_19",
+    site: "@bijoyy_19",
+    images: [`${siteUrl}/twitter-image`],
   },
-  robots: { index: true, follow: true },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   icons: { icon: "/favicon.svg?v=2", shortcut: "/favicon.svg?v=2" },
+  category: "technology",
 };
 
 export const viewport: Viewport = {
@@ -116,6 +172,79 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         } as React.CSSProperties
       }
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "WebSite",
+                  "@id": `${siteUrl}/#website`,
+                  url: siteUrl,
+                  name: "Bijoy Sarkar Portfolio",
+                  alternateName: [
+                    "bijoy sarkar portfolio",
+                    "bijoy sarkar portfolio .vercel.app",
+                    "bijoy-sarkar-portfolio.vercel.app",
+                    "Bijoy Sarkar Official Website",
+                  ],
+                  description:
+                    "Official portfolio of Bijoy Sarkar — Software Engineer and AI Developer.",
+                  publisher: {
+                    "@id": `${siteUrl}/#person`,
+                  },
+                  inLanguage: "en-US",
+                },
+                {
+                  "@type": "Person",
+                  "@id": `${siteUrl}/#person`,
+                  name: "Bijoy Sarkar",
+                  alternateName: ["Bijoy Sarkar", "BijoySarkar19", "Bijoy Sarkar Portfolio"],
+                  url: siteUrl,
+                  image: `${siteUrl}/opengraph-image`,
+                  jobTitle: "Software Engineer & AI Developer",
+                  worksFor: {
+                    "@type": "Organization",
+                    name: "Software Engineering & AI Systems",
+                  },
+                  alumniOf: {
+                    "@type": "EducationalOrganization",
+                    name: "ICFAI University Tripura",
+                    url: "https://www.iutripura.edu.in/",
+                  },
+                  address: {
+                    "@type": "PostalAddress",
+                    addressLocality: "Agartala",
+                    addressRegion: "Tripura",
+                    addressCountry: "India",
+                  },
+                  sameAs: [
+                    "https://github.com/BijoySarkar19",
+                    "https://www.linkedin.com/in/bijoysarkar19",
+                    "https://x.com/bijoyy_19",
+                    "https://www.instagram.com/bijoyysarkarr",
+                    "https://facebook.com/share/1Cs44JBwnk/",
+                  ],
+                  knowsAbout: [
+                    "Artificial Intelligence",
+                    "Machine Learning",
+                    "Full-Stack Software Engineering",
+                    "Cybersecurity",
+                    "React",
+                    "Next.js",
+                    "TypeScript",
+                    "Python",
+                    "FastAPI",
+                    "Docker",
+                  ],
+                },
+              ],
+            }),
+          }}
+        />
+      </head>
       <body suppressHydrationWarning>
         <ScrollCanvas />
         <div className="canvas-atmosphere" aria-hidden="true" />

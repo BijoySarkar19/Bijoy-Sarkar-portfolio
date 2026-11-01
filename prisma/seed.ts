@@ -229,7 +229,7 @@ const projects = [
     liveUrl: null,
     published: true,
     isOngoing: true,
-    featuredOnHome: false,
+    featuredOnHome: true,
     sortOrder: 15,
   },
 ];

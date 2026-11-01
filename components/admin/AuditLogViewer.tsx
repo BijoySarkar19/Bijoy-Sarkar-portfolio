@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Download, Search, Filter, ShieldCheck, Database, Calendar, User, Undo2, Check } from "lucide-react";
 import { formatIndianTime } from "@/lib/ist-date";
+import { parseAuditChanges } from "@/lib/audit-diff";
 import { useRouter } from "next/navigation";
 
 export interface AuditItem {
@@ -172,8 +173,8 @@ export function AuditLogViewer({ initialLogs }: { initialLogs: AuditItem[] }) {
         </div>
       </div>
 
-      {/* Dataset table */}
-      <div className="admin-table-wrap">
+      {/* Dataset table (desktop) */}
+      <div className="admin-table-wrap admin-audit-table-desktop">
         <table className="admin-table">
           <thead>
             <tr>
@@ -211,12 +212,54 @@ export function AuditLogViewer({ initialLogs }: { initialLogs: AuditItem[] }) {
                       <span>{log.adminName}</span>
                     </div>
                   </td>
-                  <td style={{ maxWidth: 360, whiteSpace: "normal" }}>
-                    <pre className="admin-changes-pre">
-                      {typeof log.changes === "object"
-                        ? JSON.stringify(log.changes, null, 1)
-                        : String(log.changes)}
-                    </pre>
+                  <td style={{ minWidth: 280, maxWidth: 420, whiteSpace: "normal" }}>
+                    {(() => {
+                      const audit = parseAuditChanges(log.changes, log.action, log.entity);
+                      return (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          <p style={{ margin: 0, fontSize: 12, color: "var(--white)", fontWeight: 600, lineHeight: 1.4 }}>
+                            {audit.summary}
+                          </p>
+
+                          {audit.diffs.length > 0 ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                              {audit.diffs.map((d) => (
+                                <div
+                                  key={d.field}
+                                  style={{
+                                    fontSize: 11,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    background: "rgba(255, 255, 255, 0.03)",
+                                    padding: "4px 8px",
+                                    borderRadius: 6,
+                                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                                    flexWrap: "wrap",
+                                  }}
+                                >
+                                  <strong style={{ color: "var(--silver)" }}>{d.label}:</strong>
+                                  <span style={{ color: "#f87171", textDecoration: "line-through" }}>{d.from}</span>
+                                  <span style={{ color: "var(--subtle)" }}>→</span>
+                                  <span style={{ color: "#4ade80", fontWeight: 600 }}>{d.to}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+
+                          {audit.rawText && audit.rawText.length > 3 && (
+                            <details style={{ marginTop: 2 }}>
+                              <summary style={{ fontSize: 10, color: "var(--subtle)", cursor: "pointer", textDecoration: "underline" }}>
+                                Raw Data
+                              </summary>
+                              <pre className="admin-changes-pre" style={{ marginTop: 4, maxHeight: 150, overflowY: "auto", fontSize: 10 }}>
+                                {audit.rawText}
+                              </pre>
+                            </details>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td>
                     {canUndo ? (
@@ -247,6 +290,85 @@ export function AuditLogViewer({ initialLogs }: { initialLogs: AuditItem[] }) {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile-Friendly Audit Activity Cards (Hidden on Desktop, Visible on Phone/Tablet) */}
+      <div className="admin-audit-mobile-list">
+        {filtered.map((log) => {
+          const canUndo = log.action !== "INITIAL_SEED" && log.action !== "LOGIN" && !log.changes?.toString().includes("UNDO:");
+          const audit = parseAuditChanges(log.changes, log.action, log.entity);
+          return (
+            <div key={`mobile-${log.id}`} className="admin-audit-mobile-card">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span className={`admin-action-badge ${getActionBadgeClass(log.action)}`}>
+                    {log.action}
+                  </span>
+                  <strong style={{ color: "var(--white)", fontSize: 13 }}>{log.entity}</strong>
+                </div>
+                {canUndo && (
+                  <button
+                    type="button"
+                    className="admin-small-button"
+                    onClick={() => handleUndo(log.id)}
+                    disabled={loadingUndoId === log.id}
+                    title="Revert this modification"
+                    style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0 }}
+                  >
+                    <Undo2 size={11} /> {loadingUndoId === log.id ? "Undoing..." : "Undo"}
+                  </button>
+                )}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--subtle)", marginTop: 2 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <User size={12} />
+                  <span>{log.adminName}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, color: "var(--orange)" }}>
+                  <Calendar size={12} />
+                  <span>{log.indianTime}</span>
+                </div>
+              </div>
+
+              <div style={{ padding: "8px 10px", background: "rgba(255, 255, 255, 0.02)", borderRadius: 8, border: "1px solid var(--line)" }}>
+                <p style={{ margin: 0, fontSize: 12, color: "var(--silver)", fontWeight: 500, lineHeight: 1.5 }}>
+                  {audit.summary}
+                </p>
+
+                {audit.diffs.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+                    {audit.diffs.map((d) => (
+                      <div
+                        key={d.field}
+                        style={{
+                          fontSize: 11,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          background: "rgba(255, 255, 255, 0.04)",
+                          padding: "4px 8px",
+                          borderRadius: 6,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <strong style={{ color: "var(--muted)" }}>{d.label}:</strong>
+                        <span style={{ color: "#f87171", textDecoration: "line-through" }}>{d.from}</span>
+                        <span style={{ color: "var(--subtle)" }}>→</span>
+                        <span style={{ color: "#4ade80", fontWeight: 600 }}>{d.to}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        {filtered.length === 0 && (
+          <div className="empty-state" style={{ padding: 24 }}>
+            <p className="muted">No activity records match your current filters.</p>
+          </div>
+        )}
       </div>
     </div>
   );

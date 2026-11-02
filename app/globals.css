@@ -3384,19 +3384,93 @@ html.light-mode .birthday-close-btn {
   transform: scaleX(1);
 }
 
-/* Symmetrical and Balanced Action Buttons */
-.hero-actions .button,
-.resume-actions .button {
+/* Matched Button Sizing: identical length (width) and breadth (height) with distinct colors */
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+.hero-actions .button {
+  width: 172px;
+  min-width: 172px;
+  max-width: 172px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  font-size: 13px;
+  font-weight: 650;
+  border-radius: 999px;
+  box-sizing: border-box;
+  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.resume-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.resume-actions .button {
+  width: 176px;
+  min-width: 176px;
+  max-width: 176px;
+  height: 46px;
   min-height: 46px;
-  padding: 0 20px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   font-size: 12.5px;
   font-weight: 650;
   border-radius: 999px;
+  box-sizing: border-box;
   transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+/* Mobile & Tablet Portrait Symmetrical Button Sizing */
+@media (max-width: 600px) {
+  .hero-actions {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 10px;
+  }
+  .hero-actions .button {
+    flex: 1 1 0;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: 46px;
+    min-height: 46px;
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .resume-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 10px;
+  }
+  .resume-actions .button {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 44px;
+    min-height: 44px;
+    font-size: 11.5px;
+    gap: 7px;
+  }
+  .resume-actions .button:last-child {
+    grid-column: 1 / -1;
+  }
 }
 .button-icon {
   display: grid;

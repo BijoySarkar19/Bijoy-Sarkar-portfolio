@@ -96,6 +96,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
       { url: "/favicon-192x192.png", sizes: "192x192", type: "image/png" },
       { url: "/favicon.ico", sizes: "48x48" },
@@ -196,6 +197,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     >
       <head>
         <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
         <link rel="icon" href="/favicon.ico" sizes="48x48" />

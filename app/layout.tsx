@@ -64,6 +64,12 @@ export const metadata: Metadata = {
         height: 630,
         alt: "Bijoy Sarkar — Software Engineer & AI Developer Portfolio",
       },
+      {
+        url: `${siteUrl}/bijoy-sarkar.jpg`,
+        width: 720,
+        height: 720,
+        alt: "Bijoy Sarkar — Software Engineer & AI Developer",
+      },
     ],
   },
   twitter: {
@@ -86,7 +92,19 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  icons: { icon: "/favicon.svg?v=2", shortcut: "/favicon.svg?v=2" },
+  icons: {
+    icon: [
+      { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/favicon.ico", sizes: "48x48" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  manifest: "/manifest.json",
   verification: {
     google: "google220d1e3d7cee1635",
   },
@@ -176,6 +194,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       }
     >
       <head>
+        <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+        <link rel="icon" href="/favicon.ico" sizes="48x48" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.json" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -188,10 +213,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   url: siteUrl,
                   name: "Bijoy Sarkar Portfolio",
                   alternateName: [
+                    "Bijoy Sarkar",
                     "bijoy sarkar portfolio",
                     "bijoy sarkar portfolio .vercel.app",
                     "bijoy-sarkar-portfolio.vercel.app",
                     "Bijoy Sarkar Official Website",
+                    "Bijoy Sarkar Developer Portfolio",
                   ],
                   description:
                     "Official portfolio of Bijoy Sarkar — Software Engineer and AI Developer.",
@@ -204,10 +231,16 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   "@type": "Person",
                   "@id": `${siteUrl}/#person`,
                   name: "Bijoy Sarkar",
+                  givenName: "Bijoy",
+                  familyName: "Sarkar",
                   alternateName: ["Bijoy Sarkar", "BijoySarkar19", "Bijoy Sarkar Portfolio"],
                   url: siteUrl,
-                  image: `${siteUrl}/opengraph-image`,
+                  image: `${siteUrl}/bijoy-sarkar.jpg`,
                   jobTitle: "Software Engineer & AI Developer",
+                  description:
+                    "Official portfolio and personal website of Bijoy Sarkar, Software Engineer and AI Developer based in Agartala, Tripura, India.",
+                  disambiguatingDescription:
+                    "Bijoy Sarkar is an Indian Software Engineer and AI Developer based in Agartala, Tripura, India, studying Computer Science & Engineering at ICFAI University Tripura (GitHub: BijoySarkar19). This is the official portfolio of Bijoy Sarkar, distinct from any individual named Bijoy Kumar Sarkar.",
                   worksFor: {
                     "@type": "Organization",
                     name: "Software Engineering & AI Systems",
@@ -241,6 +274,44 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                     "Python",
                     "FastAPI",
                     "Docker",
+                  ],
+                },
+                {
+                  "@type": "FAQPage",
+                  "@id": `${siteUrl}/#faq`,
+                  mainEntity: [
+                    {
+                      "@type": "Question",
+                      name: "What is the official portfolio website of Bijoy Sarkar?",
+                      acceptedAnswer: {
+                        "@type": "Answer",
+                        text: "The official portfolio website of Bijoy Sarkar is https://bijoy-sarkar-portfolio.vercel.app. It features his software engineering projects (including CivicLens Core and Rakshak-AI), education at ICFAI University Tripura, work experience, interactive intermission builds, and verified curriculum vitae.",
+                      },
+                    },
+                    {
+                      "@type": "Question",
+                      name: "Who is Bijoy Sarkar?",
+                      acceptedAnswer: {
+                        "@type": "Answer",
+                        text: "Bijoy Sarkar is a Software Engineer and AI Developer based in Agartala, Tripura, India, pursuing a B.Tech in Computer Science and Engineering at ICFAI University Tripura. He specializes in full-stack engineering, machine learning systems, Next.js, TypeScript, and Python. His official portfolio is accessible at https://bijoy-sarkar-portfolio.vercel.app.",
+                      },
+                    },
+                    {
+                      "@type": "Question",
+                      name: "Is Bijoy Sarkar the same as Bijoy Kumar Sarkar?",
+                      acceptedAnswer: {
+                        "@type": "Answer",
+                        text: "No. Bijoy Sarkar is a Software Engineer and AI Developer based in Agartala, Tripura, India studying at ICFAI University Tripura (GitHub: BijoySarkar19). His official portfolio is https://bijoy-sarkar-portfolio.vercel.app, which is completely distinct from any person named Bijoy Kumar Sarkar.",
+                      },
+                    },
+                    {
+                      "@type": "Question",
+                      name: "Where can I view Bijoy Sarkar's projects and resume?",
+                      acceptedAnswer: {
+                        "@type": "Answer",
+                        text: "You can explore Bijoy Sarkar's projects (CivicLens Core, Aether, Expense Tracker, Rakshak-AI) and verified curriculum vitae directly at https://bijoy-sarkar-portfolio.vercel.app.",
+                      },
+                    },
                   ],
                 },
               ],

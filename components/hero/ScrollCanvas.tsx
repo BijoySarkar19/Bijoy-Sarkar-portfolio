@@ -43,7 +43,7 @@ export function ScrollCanvas() {
     const root = document.documentElement;
 
     // Concurrency tuned to device capability so network/CPU is never overloaded
-    const maxConcurrent = isLowPower ? 4 : 8;
+    const maxConcurrent = isLowPower ? 3 : 6;
 
     let activeLoads = 0;
     let currentFrame = 0;
@@ -124,12 +124,15 @@ export function ScrollCanvas() {
 
     function drawClosest() {
       const wanted = Math.max(0, Math.min(FRAME_COUNT - 1, Math.round(currentFrame)));
-      if (draw(wanted)) return;
-      if (lastDrawn >= 0 && draw(lastDrawn)) return;
+      if (cache.has(wanted) && draw(wanted)) return;
+      if (lastDrawn >= 0 && cache.has(lastDrawn) && draw(lastDrawn)) return;
 
-      // Radiate search for the nearest loaded frame
+      // Radiate search for the nearest loaded frame - check cache first to avoid math
       for (let distance = 1; distance < FRAME_COUNT; distance += 1) {
-        if (draw(wanted - distance) || draw(wanted + distance)) return;
+        const lower = wanted - distance;
+        if (lower >= 0 && cache.has(lower) && draw(lower)) return;
+        const upper = wanted + distance;
+        if (upper < FRAME_COUNT && cache.has(upper) && draw(upper)) return;
       }
     }
 
@@ -190,7 +193,7 @@ export function ScrollCanvas() {
 
         image.onload = () => {
           if (!alive) return;
-          if (typeof image.decode === "function") {
+          if (!isLowPower && typeof image.decode === "function") {
             image.decode().then(onFinished).catch(onFinished);
           } else {
             onFinished();
@@ -251,21 +254,24 @@ export function ScrollCanvas() {
       previousTime = now;
 
       // Dynamic smoothing: faster convergence on low-power devices prevents frame lag backlog
-      const smoothing = isLowPower ? 20 : 28;
+      const smoothing = isLowPower ? 18 : 24;
       const amount = 1 - Math.exp(-elapsed / smoothing);
       currentFrame += (targetFrame - currentFrame) * amount;
 
       const diff = Math.abs(targetFrame - currentFrame);
-      if (diff < 0.005) {
+      const settleThreshold = isLowPower ? 0.08 : 0.02;
+      if (diff < settleThreshold) {
         currentFrame = targetFrame;
       }
 
-      requestNear(currentFrame, isLowPower ? 4 : 6, isLowPower ? 12 : 20);
+      if (Math.abs(currentFrame - lastRequestedCenter) >= 3.5) {
+        requestNear(currentFrame, isLowPower ? 3 : 5, isLowPower ? 8 : 16);
+      }
       drawClosest();
 
       const wanted = Math.round(currentFrame);
       // Auto-sleep render loop when settled at target frame to save battery & GPU
-      if (diff < 0.005 && lastDrawn === wanted) {
+      if (diff < settleThreshold && lastDrawn === wanted) {
         isAnimating = false;
         return;
       }

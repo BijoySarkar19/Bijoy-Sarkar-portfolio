@@ -73,10 +73,14 @@ export function BirthdayCelebration({ contactEmail = "bijoysarkar7252@gmail.com"
 
   function handleWishClick(e: React.MouseEvent) {
     e.preventDefault();
-    // Open Gmail web compose in a new tab, fallback to mailto if blocked
-    const win = window.open(gmailWebComposeUrl, "_blank", "noopener,noreferrer");
-    if (!win || win.closed || typeof win.closed === "undefined") {
+    const isMobile = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
       window.location.href = mailtoFallback;
+    } else {
+      const win = window.open(gmailWebComposeUrl, "_blank", "noopener,noreferrer");
+      if (!win || win.closed || typeof win.closed === "undefined") {
+        window.location.href = mailtoFallback;
+      }
     }
     handleDismiss();
   }

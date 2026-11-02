@@ -57,32 +57,46 @@ export function Navbar({
   }, [menuOpen]);
 
   useEffect(() => {
-    // Track sections in order
-    const trackedIds = ["home", ...navItems.map(({ id }) => id).filter((id) => id !== "home"), "contact"];
+    // Map on-page sections to their corresponding navbar items (e.g. #skills belongs under "About")
+    const sectionNavMapping: Record<string, string> = {
+      home: "home",
+      about: "about",
+      skills: "about",
+      projects: "projects",
+      resume: "resume",
+      games: "games",
+      contact: "contact",
+    };
+
+    const trackedSectionIds = ["home", "about", "skills", "projects", "resume", "games", "contact"];
+    const enabledNavIds = new Set(navItems.map((item) => item.id));
+    enabledNavIds.add("contact");
+    enabledNavIds.add("home");
 
     let ticking = false;
     const handleScroll = () => {
       const scrollY = window.scrollY;
       setScrolled(scrollY > 12);
 
-      // Top of page
+      // Top of page: home
       if (scrollY < 90) {
         setActive("home");
         return;
       }
 
       // Bottom of page: activate contact
-      if (window.innerHeight + scrollY >= document.documentElement.scrollHeight - 60) {
-        setActive("contact");
+      if (window.innerHeight + scrollY >= document.documentElement.scrollHeight - 70) {
+        if (contactEnabled) setActive("contact");
         return;
       }
 
-      // Check section bounding rects with focal reading zone
-      const focalOffset = 140;
+      // Dynamic focal reading line: 30% down the viewport, minimum 140px
+      const focalOffset = Math.max(140, Math.round(window.innerHeight * 0.3));
       let currentSection = "";
 
-      for (let i = trackedIds.length - 1; i >= 0; i--) {
-        const id = trackedIds[i];
+      // Check which section currently contains the focal reading line
+      for (let i = trackedSectionIds.length - 1; i >= 0; i--) {
+        const id = trackedSectionIds[i];
         const el = document.getElementById(id);
         if (!el) continue;
         const rect = el.getBoundingClientRect();
@@ -92,15 +106,15 @@ export function Navbar({
         }
       }
 
-      // Resilient fallback if between sections
+      // Resilient fallback if between sections or in gap
       if (!currentSection) {
         let minDistance = Infinity;
-        for (const id of trackedIds) {
+        for (const id of trackedSectionIds) {
           const el = document.getElementById(id);
           if (!el) continue;
           const rect = el.getBoundingClientRect();
           const dist = Math.abs(rect.top - focalOffset);
-          if (dist < minDistance && rect.bottom > 0) {
+          if (dist < minDistance && rect.bottom > 60) {
             minDistance = dist;
             currentSection = id;
           }
@@ -108,7 +122,10 @@ export function Navbar({
       }
 
       if (currentSection) {
-        setActive(currentSection);
+        const targetNavId = sectionNavMapping[currentSection] || currentSection;
+        if (enabledNavIds.has(targetNavId)) {
+          setActive(targetNavId);
+        }
       }
     };
 

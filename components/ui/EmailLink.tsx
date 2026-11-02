@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, ArrowUpRight, Check } from "lucide-react";
 
 interface EmailLinkProps {
@@ -15,9 +15,25 @@ export function EmailLink({
   showIcon = true,
 }: EmailLinkProps) {
   const [copied, setCopied] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const subject = "Hello Bijoy — Inquiry from Portfolio";
   const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+  const gmailWebUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}`;
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+      const isMobileUA = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+      const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || (Boolean(navigator.maxTouchPoints && navigator.maxTouchPoints > 0)));
+      const isSmallViewport = typeof window !== "undefined" && window.innerWidth <= 900;
+      setIsMobile(Boolean(isMobileUA || (isTouch && isSmallViewport)));
+    };
+
+    checkIsMobile();
+    window.addEventListener("resize", checkIsMobile);
+    return () => window.removeEventListener("resize", checkIsMobile);
+  }, []);
 
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
     // 1. Copy address to clipboard automatically so user always has it
@@ -28,24 +44,35 @@ export function EmailLink({
       }).catch(() => {});
     }
 
-    // 2. Direct native mail invocation:
-    // On Android: triggers the native intent resolver to open the Gmail app / default email inbox.
-    // On iOS (iPhone / iPad): triggers the native Apple Mail or Gmail app.
-    // On Windows / Mac / Linux: triggers the OS native default mail app.
-    // On Chromebook: Chrome OS routes mailto: directly to Gmail Web.
-    const isMobileDevice = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobileDevice) {
-      // Force direct navigation without creating an empty browser tab
+    // 2. On Mobile & Tablets:
+    // Directly navigate to mailto to open the native Gmail app / default email client
+    if (isMobile) {
+      e.preventDefault();
       window.location.href = mailtoUrl;
     }
+    // 3. On Laptops & Desktops:
+    // Let default browser navigation with target="_blank" open the Gmail Web compose tab
   }
+
+  // Device-adaptive destination:
+  // Mobile/Tablet -> mailto: directly triggers native Gmail app
+  // Laptop/PC/Mac -> Gmail Web compose URL in a new browser tab
+  const activeHref = isMobile ? mailtoUrl : gmailWebUrl;
+  const activeTarget = isMobile ? undefined : "_blank";
+  const activeRel = isMobile ? undefined : "noopener noreferrer";
 
   return (
     <a
       className={className}
-      href={mailtoUrl}
+      href={activeHref}
+      target={activeTarget}
+      rel={activeRel}
       onClick={handleClick}
-      title="Click to open your native email app (Gmail on Android, Mail on iOS/Mac/PC) and compose directly to Bijoy (also copies address to clipboard)"
+      title={
+        isMobile
+          ? "Tap to open Gmail app and compose directly to Bijoy (also copies address to clipboard)"
+          : "Click to open Gmail inbox in browser and compose directly to Bijoy (also copies address to clipboard)"
+      }
     >
       {showIcon && <Mail size={className.includes("footer") ? 13 : 15} />}
       <span>{email}</span>

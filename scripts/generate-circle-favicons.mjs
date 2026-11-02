@@ -3,32 +3,34 @@ import fs from "fs";
 import path from "path";
 
 async function main() {
-  const inputImage = path.resolve("public/bijoy-sarkar.jpg");
-  if (!fs.existsSync(inputImage)) {
-    console.error("public/bijoy-sarkar.jpg not found!");
+  const newPhotoPath = "C:/Users/bijoy/.gemini/antigravity/brain/f9259d80-5f4a-48a1-a4e2-ea561cfdcf99/.user_uploaded/media_1793653375037_081bf8b0.jpg";
+  if (!fs.existsSync(newPhotoPath)) {
+    console.error("New photo not found at", newPhotoPath);
     process.exit(1);
   }
 
-  // Base size for circular mask
+  // 1. Copy full photo to public/bijoy-sarkar.jpg
+  fs.copyFileSync(newPhotoPath, "public/bijoy-sarkar.jpg");
+  console.log("Updated public/bijoy-sarkar.jpg with new photo");
+
+  // 2. Crop centered face region
+  // Image is 768x1024. Head center is around x=390, y=480
+  const cropConfig = { left: 180, top: 270, width: 420, height: 420 };
   const baseSize = 512;
   const radius = baseSize / 2;
 
-  // SVG mask for a clean anti-aliased circle
-  // We can also add an optional subtle modern border/ring to ensure it pops on both dark and light browser backgrounds!
+  // SVG mask for clean anti-aliased circle
   const circleMaskSvg = `<svg width="${baseSize}" height="${baseSize}" viewBox="0 0 ${baseSize} ${baseSize}">
     <circle cx="${radius}" cy="${radius}" r="${radius}" fill="white" />
   </svg>`;
 
-  // Subtle sleek outer ring overlay
+  // Subtle sleek outer ring overlay in portfolio orange
   const ringSvg = `<svg width="${baseSize}" height="${baseSize}" viewBox="0 0 ${baseSize} ${baseSize}">
-    <circle cx="${radius}" cy="${radius}" r="${radius - 2}" fill="none" stroke="rgba(255, 94, 44, 0.45)" stroke-width="4" />
+    <circle cx="${radius}" cy="${radius}" r="${radius - 2.5}" fill="none" stroke="rgba(255, 94, 44, 0.55)" stroke-width="5" />
   </svg>`;
 
-  // 1. Crop face from original 720x720 photo ({ left: 140, top: 60, width: 440, height: 440 })
-  // 2. Resize to 512x512
-  // 3. Mask with circle
-  const baseCircle512 = await sharp(inputImage)
-    .extract({ left: 140, top: 60, width: 440, height: 440 })
+  const baseCircle512 = await sharp(newPhotoPath)
+    .extract(cropConfig)
     .resize(baseSize, baseSize, { fit: "cover" })
     .composite([
       {
@@ -43,8 +45,10 @@ async function main() {
     .png()
     .toBuffer();
 
+  // Save brand avatar
+  fs.writeFileSync("public/avatar.png", baseCircle512);
   fs.writeFileSync("public/favicon-512x512.png", baseCircle512);
-  console.log("Generated public/favicon-512x512.png");
+  console.log("Generated public/avatar.png & public/favicon-512x512.png");
 
   const sizes = [
     { name: "favicon-48x48.png", size: 48 },
@@ -65,8 +69,7 @@ async function main() {
     console.log(`Generated public/${item.name} (${item.size}x${item.size})`);
   }
 
-  // Also build multi-resolution favicon.ico containing 16x16, 32x32, 48x48
-  // Since favicon.ico can wrap PNGs directly:
+  // Multi-resolution favicon.ico
   const buf16 = await sharp(baseCircle512).resize(16, 16).png().toBuffer();
   const buf32 = await sharp(baseCircle512).resize(32, 32).png().toBuffer();
   const buf48 = await sharp(baseCircle512).resize(48, 48).png().toBuffer();
@@ -79,8 +82,8 @@ async function main() {
   fs.writeFileSync("public/favicon.ico", icoBuffer);
   console.log("Generated public/favicon.ico");
 
-  // Also save a preview in the artifacts directory so the user can see
-  const previewPath = "C:/Users/bijoy/.gemini/antigravity/brain/f9259d80-5f4a-48a1-a4e2-ea561cfdcf99/circular-favicon-preview.png";
+  // Save preview for inspection
+  const previewPath = "C:/Users/bijoy/.gemini/antigravity/brain/f9259d80-5f4a-48a1-a4e2-ea561cfdcf99/new-circle-favicon-preview.png";
   fs.writeFileSync(previewPath, baseCircle512);
   console.log("Saved preview to", previewPath);
 }

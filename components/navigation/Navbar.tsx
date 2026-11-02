@@ -177,16 +177,17 @@ export function Navbar({
           aria-label="Bijoy Sarkar, home"
           onClick={(e) => handleNavClick(e as any, "home")}
         >
-          <span className="brand-mark">BS</span>
+          <span className="brand-mark brand-avatar">
+            <img
+              src="/avatar.png"
+              alt="Bijoy Sarkar"
+              width={32}
+              height={32}
+              className="brand-avatar-img"
+            />
+          </span>
           <span className="brand-name">
-            <span className="brand-title-row">
-              Bijoy Sarkar
-              <span className="desktop-header-section-tag" aria-hidden="true">
-                <span className="tag-sep">/</span>
-                <span className="tag-label">{activeLabel}</span>
-              </span>
-            </span>
-            <small>Software Engineer</small>
+            Bijoy Sarkar<small>Software Engineer</small>
           </span>
         </Link>
 
@@ -199,7 +200,6 @@ export function Navbar({
               href={sectionHref(item.id)}
               onClick={(e) => handleNavClick(e, item.id)}
             >
-              {active === item.id && <span className="nav-link-dot" aria-hidden="true" />}
               {item.label}
             </a>
           ))}
@@ -215,20 +215,6 @@ export function Navbar({
             </span>
           </a>
         </nav>
-
-        {/* Interactive current section indicator for Mobile & Tablet Portrait */}
-        <button
-          type="button"
-          className="mobile-header-section-indicator"
-          onClick={() => setMenuOpen(true)}
-          aria-label={`Current section: ${activeLabel}. Tap to open navigation.`}
-          title="Current section (tap to navigate)"
-        >
-          <span className="indicator-pulse" />
-          <span className="indicator-num">{formattedIndex}</span>
-          <span className="indicator-name">{activeLabel}</span>
-          <ChevronRight size={12} className="indicator-arrow" />
-        </button>
 
         {/* Mobile menu toggle */}
         <button
@@ -262,7 +248,15 @@ export function Navbar({
         >
           <div className="mobile-nav-header">
             <div className="mobile-nav-brand">
-              <span className="brand-mark">BS</span>
+              <span className="brand-mark brand-avatar">
+                <img
+                  src="/avatar.png"
+                  alt="Bijoy Sarkar"
+                  width={32}
+                  height={32}
+                  className="brand-avatar-img"
+                />
+              </span>
               <span className="brand-name">
                 Bijoy Sarkar<small>Software Engineer</small>
               </span>

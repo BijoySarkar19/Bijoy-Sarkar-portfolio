@@ -24,7 +24,15 @@ export function Footer({
         <div className="footer-main">
           <div className="footer-identity">
             <Link className="brand-lockup" href="/#home" aria-label="Bijoy Sarkar, return to top">
-              <span className="brand-mark">BS</span>
+              <span className="brand-mark brand-avatar">
+                <img
+                  src="/avatar.png"
+                  alt="Bijoy Sarkar"
+                  width={32}
+                  height={32}
+                  className="brand-avatar-img"
+                />
+              </span>
               <span className="brand-name">
                 Bijoy Sarkar<small>Software Engineer &amp; AI Developer</small>
               </span>

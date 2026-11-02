@@ -3326,3 +3326,160 @@ html.light-mode .birthday-close-btn {
   0%, 100% { transform: scale(1); opacity: 0.9; }
   50% { transform: scale(1.2); opacity: 1; }
 }
+
+
+/* Interactive Header Navigation & Section Indicators */
+.brand-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.desktop-header-section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--orange);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.desktop-header-section-tag .tag-sep {
+  color: rgba(255, 255, 255, 0.28);
+  font-weight: 400;
+}
+.desktop-header-section-tag .tag-label {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(var(--orange-rgb), 0.12);
+  border: 1px solid rgba(var(--orange-rgb), 0.28);
+}
+.nav-link.is-active {
+  color: var(--white);
+  background: rgba(var(--orange-rgb), 0.12);
+  border-color: rgba(var(--orange-rgb), 0.35);
+  box-shadow: 0 0 16px rgba(var(--orange-rgb), 0.16);
+}
+.nav-link-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 8px var(--orange);
+  display: inline-block;
+  animation: nav-dot-pulse 1.8s ease-in-out infinite;
+}
+@keyframes nav-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0.65; }
+}
+
+.mobile-header-section-indicator {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(var(--orange-rgb), 0.1);
+  border: 1px solid rgba(var(--orange-rgb), 0.35);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobile-header-section-indicator:hover,
+.mobile-header-section-indicator:active {
+  transform: scale(0.97);
+  background: rgba(var(--orange-rgb), 0.18);
+  border-color: rgba(var(--orange-rgb), 0.55);
+}
+.indicator-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 8px var(--orange);
+  animation: nav-dot-pulse 1.8s ease-in-out infinite;
+}
+.indicator-num {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--orange);
+  opacity: 0.9;
+}
+.indicator-name {
+  color: var(--soft-white);
+  font-size: 11px;
+}
+.indicator-arrow {
+  color: var(--orange);
+  opacity: 0.75;
+}
+
+/* Symmetrical and Balanced Action Buttons */
+.hero-actions .button,
+.resume-actions .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 20px;
+  font-size: 12.5px;
+  font-weight: 650;
+  border-radius: 999px;
+  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+.button-icon {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+}
+.button-secondary .button-icon {
+  background: rgba(255, 255, 255, 0.08);
+}
+.button-secondary:hover .button-icon {
+  background: rgba(var(--orange-rgb), 0.22);
+}
+
+/* Silky Smooth Scroll Reveal Engine across all browsers */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 650ms cubic-bezier(0.16, 1, 0.3, 1), transform 650ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+[data-reveal].is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* Adaptive Breakpoints: Mobile & Tablet Portrait vs Desktop / Chromebook / MacBook / TV / Tablet Landscape */
+@media (max-width: 900px), (max-width: 1024px) and (orientation: portrait) {
+  .nav-links { display: none !important; }
+  .menu-toggle { display: grid !important; }
+  .mobile-header-section-indicator { display: inline-flex !important; }
+  .desktop-header-section-tag { display: none !important; }
+}
+
+@media (min-width: 901px) and (orientation: landscape), (min-width: 1025px) {
+  .nav-links { display: flex !important; }
+  .menu-toggle { display: none !important; }
+  .mobile-header-section-indicator { display: none !important; }
+  .desktop-header-section-tag { display: inline-flex !important; }
+}

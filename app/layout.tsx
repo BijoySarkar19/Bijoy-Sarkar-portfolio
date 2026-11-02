@@ -3,6 +3,7 @@ import { Navbar } from "@/components/navigation/Navbar";
 import { ScrollCanvas } from "@/components/hero/ScrollCanvas";
 import { CustomScrollbar } from "@/components/ui/CustomScrollbar";
 import { CleanCopyHandler } from "@/components/ui/CleanCopyHandler";
+import { ScrollRevealHandler } from "@/components/ui/ScrollRevealHandler";
 import { ScrollEdgeEffects } from "@/components/ui/ScrollEdgeEffects";
 import { BirthdayCelebration } from "@/components/ui/BirthdayCelebration";
 import { prisma } from "@/lib/prisma";
@@ -325,6 +326,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <ScrollEdgeEffects />
         <CustomScrollbar />
         <CleanCopyHandler />
+        <ScrollRevealHandler />
         <Navbar
           gamesEnabled={gamesEnabled}
           aboutEnabled={aboutEnabled}

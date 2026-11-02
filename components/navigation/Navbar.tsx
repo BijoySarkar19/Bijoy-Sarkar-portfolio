@@ -42,6 +42,11 @@ export function Navbar({
     return true;
   });
 
+  const activeItem = navItems.find((item) => item.id === active);
+  const activeLabel = active === "contact" ? "Contact" : (activeItem?.label || "Home");
+  const activeIndex = active === "contact" ? navItems.length + 1 : (navItems.findIndex((i) => i.id === active) + 1);
+  const formattedIndex = activeIndex > 0 ? String(activeIndex).padStart(2, "0") : "01";
+
   useEffect(() => {
     if (!menuOpen) {
       const activeEl = document.activeElement as HTMLElement | null;
@@ -52,26 +57,74 @@ export function Navbar({
   }, [menuOpen]);
 
   useEffect(() => {
-    const update = () => setScrolled(window.scrollY > 12);
-    update();
-    window.addEventListener("scroll", update, { passive: true });
+    // Track sections in order
+    const trackedIds = ["home", ...navItems.map(({ id }) => id).filter((id) => id !== "home"), "contact"];
 
-    // Include contact in tracked sections so navbar active underline accurately clears from games/resume
-    const trackedIds = [...navItems.map(({ id }) => id), "contact"];
-    const sections = trackedIds
-      .map((id) => document.getElementById(id))
-      .filter((element): element is HTMLElement => Boolean(element));
+    let ticking = false;
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setScrolled(scrollY > 12);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) setActive(visible.target.id);
-      },
-      { rootMargin: "-18% 0px -55% 0px", threshold: [0, 0.2, 0.5, 0.8] }
-    );
-    sections.forEach((section) => observer.observe(section));
+      // Top of page
+      if (scrollY < 90) {
+        setActive("home");
+        return;
+      }
+
+      // Bottom of page: activate contact
+      if (window.innerHeight + scrollY >= document.documentElement.scrollHeight - 60) {
+        setActive("contact");
+        return;
+      }
+
+      // Check section bounding rects with focal reading zone
+      const focalOffset = 140;
+      let currentSection = "";
+
+      for (let i = trackedIds.length - 1; i >= 0; i--) {
+        const id = trackedIds[i];
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= focalOffset && rect.bottom > focalOffset) {
+          currentSection = id;
+          break;
+        }
+      }
+
+      // Resilient fallback if between sections
+      if (!currentSection) {
+        let minDistance = Infinity;
+        for (const id of trackedIds) {
+          const el = document.getElementById(id);
+          if (!el) continue;
+          const rect = el.getBoundingClientRect();
+          const dist = Math.abs(rect.top - focalOffset);
+          if (dist < minDistance && rect.bottom > 0) {
+            minDistance = dist;
+            currentSection = id;
+          }
+        }
+      }
+
+      if (currentSection) {
+        setActive(currentSection);
+      }
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMenuOpen(false);
@@ -79,9 +132,9 @@ export function Navbar({
     window.addEventListener("keydown", closeOnEscape);
 
     return () => {
-      window.removeEventListener("scroll", update);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
       window.removeEventListener("keydown", closeOnEscape);
-      observer.disconnect();
     };
   }, [navItems]);
 
@@ -126,7 +179,14 @@ export function Navbar({
         >
           <span className="brand-mark">BS</span>
           <span className="brand-name">
-            Bijoy Sarkar<small>Software Engineer</small>
+            <span className="brand-title-row">
+              Bijoy Sarkar
+              <span className="desktop-header-section-tag" aria-hidden="true">
+                <span className="tag-sep">/</span>
+                <span className="tag-label">{activeLabel}</span>
+              </span>
+            </span>
+            <small>Software Engineer</small>
           </span>
         </Link>
 
@@ -139,6 +199,7 @@ export function Navbar({
               href={sectionHref(item.id)}
               onClick={(e) => handleNavClick(e, item.id)}
             >
+              {active === item.id && <span className="nav-link-dot" aria-hidden="true" />}
               {item.label}
             </a>
           ))}
@@ -154,6 +215,20 @@ export function Navbar({
             </span>
           </a>
         </nav>
+
+        {/* Interactive current section indicator for Mobile & Tablet Portrait */}
+        <button
+          type="button"
+          className="mobile-header-section-indicator"
+          onClick={() => setMenuOpen(true)}
+          aria-label={`Current section: ${activeLabel}. Tap to open navigation.`}
+          title="Current section (tap to navigate)"
+        >
+          <span className="indicator-pulse" />
+          <span className="indicator-num">{formattedIndex}</span>
+          <span className="indicator-name">{activeLabel}</span>
+          <ChevronRight size={12} className="indicator-arrow" />
+        </button>
 
         {/* Mobile menu toggle */}
         <button

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, ArrowUpRight, Check, Copy } from "lucide-react";
+import { Mail, ArrowUpRight, Check } from "lucide-react";
 
 interface EmailLinkProps {
   email?: string;
@@ -16,26 +16,36 @@ export function EmailLink({
 }: EmailLinkProps) {
   const [copied, setCopied] = useState(false);
 
-  const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=Hello%20Bijoy%20%E2%80%94%20Inquiry%20from%20Portfolio`;
+  const subject = "Hello Bijoy — Inquiry from Portfolio";
+  const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
 
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
-    // Attempt to copy address to clipboard for convenience
+    // 1. Copy address to clipboard automatically so user always has it
     if (navigator?.clipboard) {
       navigator.clipboard.writeText(email).then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2200);
       }).catch(() => {});
     }
+
+    // 2. Direct native mail invocation:
+    // On Android: triggers the native intent resolver to open the Gmail app / default email inbox.
+    // On iOS (iPhone / iPad): triggers the native Apple Mail or Gmail app.
+    // On Windows / Mac / Linux: triggers the OS native default mail app.
+    // On Chromebook: Chrome OS routes mailto: directly to Gmail Web.
+    const isMobileDevice = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobileDevice) {
+      // Force direct navigation without creating an empty browser tab
+      window.location.href = mailtoUrl;
+    }
   }
 
   return (
     <a
       className={className}
-      href={gmailComposeUrl}
-      target="_blank"
-      rel="noopener noreferrer"
+      href={mailtoUrl}
       onClick={handleClick}
-      title="Click to open your inbox and compose an email to Bijoy (also copies address to clipboard)"
+      title="Click to open your native email app (Gmail on Android, Mail on iOS/Mac/PC) and compose directly to Bijoy (also copies address to clipboard)"
     >
       {showIcon && <Mail size={className.includes("footer") ? 13 : 15} />}
       <span>{email}</span>

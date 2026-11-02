@@ -49,7 +49,7 @@ export function Hero({
                 View projects <span className="button-icon"><ArrowRight size={14} /></span>
               </a>
               <a className="button button-secondary" href={githubUrl} target="_blank" rel="noreferrer">
-                GitHub <SocialIcon name="github" size={14} />
+                GitHub <span className="button-icon"><SocialIcon name="github" size={13} /></span>
               </a>
             </div>
             <div className="hero-meta">

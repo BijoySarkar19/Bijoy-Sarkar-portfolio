@@ -200,15 +200,15 @@ export function ResumeViewer({
 
           <div className="resume-actions">
             <a className="button" href={currentPath} download={currentFilename}>
-              Download CV <Download size={14} />
+              Download CV <span className="button-icon"><Download size={13} /></span>
             </a>
             <a
               className="button button-secondary"
-              href="https://github.com/BijoySarkar19/Bijoy-cv"
+              href="https://github.com/BijoySarkar19/Bijoy_Sarkar_CV"
               target="_blank"
               rel="noopener noreferrer"
             >
-              View on GitHub <SocialIcon name="github" size={13} />
+              View on GitHub <span className="button-icon"><SocialIcon name="github" size={13} /></span>
             </a>
             <a
               className="button button-secondary"
@@ -216,7 +216,7 @@ export function ResumeViewer({
               target="_blank"
               rel="noopener noreferrer"
             >
-              Open in new tab <ExternalLink size={13} />
+              Open in new tab <span className="button-icon"><ExternalLink size={13} /></span>
             </a>
           </div>
         </div>

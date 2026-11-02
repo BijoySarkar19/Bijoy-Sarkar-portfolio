@@ -22,31 +22,34 @@ export function ScrollCanvas() {
     const canvasElement = canvasRef.current;
     if (!canvasElement) return;
 
-    // Use synchronized 2D context to prevent compositor tearing/distortion on scroll initiation
+    // Use synchronized 2D context with desynchronized hint for low-latency rendering
     const context = canvasElement.getContext("2d", { alpha: false, desynchronized: true });
     if (!context) return;
     const canvas = canvasElement;
     const ctx = context;
 
     // Detect low-power or mobile environments to adapt resolution & decoding pipeline
-    const isMobile = window.innerWidth < 768;
+    const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0));
+    const isMobileScreen = typeof window !== "undefined" && window.innerWidth < 900;
     const hardwareConcurrency = typeof navigator !== "undefined" ? navigator.hardwareConcurrency || 4 : 4;
-    const deviceMemory = typeof navigator !== "undefined" && "deviceMemory" in navigator ? (navigator as any).deviceMemory : 8;
-    const isLowPower = isMobile || hardwareConcurrency <= 4 || deviceMemory <= 4;
+    const isLowPower = isTouch || isMobileScreen || hardwareConcurrency <= 6;
 
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = isLowPower ? "medium" : "high";
+    ctx.imageSmoothingQuality = isLowPower ? "low" : "medium";
 
     const cache = new Map<number, HTMLImageElement>();
     const pending = new Map<number, HTMLImageElement>();
     const queue = new Set<number>();
     const root = document.documentElement;
-    const maxConcurrent = isLowPower ? 4 : 10;
+
+    // Concurrency tuned to device capability so network/CPU is never overloaded
+    const maxConcurrent = isLowPower ? 4 : 8;
 
     let activeLoads = 0;
     let currentFrame = 0;
     let targetFrame = 0;
     let lastDrawn = -1;
+    let lastRequestedCenter = -999;
     let frameId = 0;
     let isAnimating = false;
     let previousTime = 0;
@@ -63,9 +66,11 @@ export function ScrollCanvas() {
     }
 
     function resize() {
-      // Clamped DPR prevents GPU fillrate thrashing on high-density budget devices
-      const cap = isLowPower ? (isMobile ? 1.05 : 1.25) : (isMobile ? 1.4 : 1.8);
-      const ratio = Math.min(window.devicePixelRatio || 1, cap);
+      // Clamped DPR prevents GPU fillrate thrashing on budget devices & high-res mobile displays
+      const dpr = window.devicePixelRatio || 1;
+      const cap = isLowPower ? 1.0 : Math.min(dpr, 1.35);
+      const ratio = Math.max(0.85, Math.min(dpr, cap));
+
       const rect = canvas.getBoundingClientRect();
       const cssWidth = rect.width || window.innerWidth;
       const cssHeight = rect.height || window.innerHeight;
@@ -77,7 +82,7 @@ export function ScrollCanvas() {
         canvas.width = width;
         canvas.height = height;
         ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = isLowPower ? "medium" : "high";
+        ctx.imageSmoothingQuality = isLowPower ? "low" : "medium";
       }
 
       lastDrawn = -1;
@@ -121,6 +126,8 @@ export function ScrollCanvas() {
       const wanted = Math.max(0, Math.min(FRAME_COUNT - 1, Math.round(currentFrame)));
       if (draw(wanted)) return;
       if (lastDrawn >= 0 && draw(lastDrawn)) return;
+
+      // Radiate search for the nearest loaded frame
       for (let distance = 1; distance < FRAME_COUNT; distance += 1) {
         if (draw(wanted - distance) || draw(wanted + distance)) return;
       }
@@ -138,22 +145,35 @@ export function ScrollCanvas() {
           }
         }
         if (missing.length === 0) return;
+
         // Radiate outward from target frame
         missing.sort((a, b) => Math.abs(a - targetFrame) - Math.abs(b - targetFrame));
-        const batch = Math.min(isLowPower ? 4 : 8, missing.length);
+        const batch = Math.min(isLowPower ? 3 : 6, missing.length);
         for (let i = 0; i < batch; i++) {
           queue.add(missing[i]);
         }
         pump();
-      }, 75);
+      }, 100);
     }
 
     function pump() {
       while (alive && activeLoads < maxConcurrent && queue.size > 0) {
-        const next = [...queue].sort((a, b) => Math.abs(a - targetFrame) - Math.abs(b - targetFrame))[0];
-        queue.delete(next);
-        if (cache.has(next) || pending.has(next)) continue;
+        // Find queue item closest to target frame without heavy re-sorting
+        let bestFrame = -1;
+        let minDiff = Infinity;
+        for (const f of queue) {
+          const diff = Math.abs(f - targetFrame);
+          if (diff < minDiff) {
+            minDiff = diff;
+            bestFrame = f;
+          }
+        }
 
+        if (bestFrame === -1) break;
+        queue.delete(bestFrame);
+        if (cache.has(bestFrame) || pending.has(bestFrame)) continue;
+
+        const next = bestFrame;
         const image = new Image();
         image.decoding = "async";
         pending.set(next, image);
@@ -170,7 +190,6 @@ export function ScrollCanvas() {
 
         image.onload = () => {
           if (!alive) return;
-          // Use off-thread bitmap decoding to prevent main-thread frame drops
           if (typeof image.decode === "function") {
             image.decode().then(onFinished).catch(onFinished);
           } else {
@@ -192,9 +211,14 @@ export function ScrollCanvas() {
       }
     }
 
-    function requestNear(center: number, behind = 8, ahead = 20) {
+    function requestNear(center: number, behind = 6, ahead = 18) {
+      if (Math.abs(center - lastRequestedCenter) < 0.6) return;
+      lastRequestedCenter = center;
+
       const start = Math.max(0, Math.floor(center) - behind);
       const end = Math.min(FRAME_COUNT - 1, Math.ceil(center) + ahead);
+
+      // On low power, prioritize immediate keyframe targets first
       for (let index = start; index <= end; index += 1) {
         if (!cache.has(index) && !pending.has(index)) queue.add(index);
       }
@@ -214,7 +238,7 @@ export function ScrollCanvas() {
       const progress = Math.max(0, Math.min(1, window.scrollY / scrollable));
       targetFrame = progress * (FRAME_COUNT - 1);
       updateAtmosphere(progress);
-      requestNear(targetFrame, isLowPower ? 6 : 10, isLowPower ? 18 : 30);
+      requestNear(targetFrame, isLowPower ? 4 : 8, isLowPower ? 14 : 26);
       startAnimation();
     }
 
@@ -225,7 +249,9 @@ export function ScrollCanvas() {
       }
       const elapsed = previousTime ? Math.min(now - previousTime, 48) : 16;
       previousTime = now;
-      const smoothing = isLowPower ? 26 : 32;
+
+      // Dynamic smoothing: faster convergence on low-power devices prevents frame lag backlog
+      const smoothing = isLowPower ? 20 : 28;
       const amount = 1 - Math.exp(-elapsed / smoothing);
       currentFrame += (targetFrame - currentFrame) * amount;
 
@@ -234,11 +260,11 @@ export function ScrollCanvas() {
         currentFrame = targetFrame;
       }
 
-      requestNear(currentFrame, isLowPower ? 5 : 8, isLowPower ? 15 : 25);
+      requestNear(currentFrame, isLowPower ? 4 : 6, isLowPower ? 12 : 20);
       drawClosest();
 
       const wanted = Math.round(currentFrame);
-      // Auto-sleep render loop when settled at target frame to save battery & CPU
+      // Auto-sleep render loop when settled at target frame to save battery & GPU
       if (diff < 0.005 && lastDrawn === wanted) {
         isAnimating = false;
         return;
@@ -250,7 +276,7 @@ export function ScrollCanvas() {
     window.addEventListener("scroll", updateScroll, { passive: true });
     window.addEventListener("resize", resize, { passive: true });
     resize();
-    requestNear(0, 0, isLowPower ? 15 : 25);
+    requestNear(0, 0, isLowPower ? 12 : 22);
     updateScroll();
     startAnimation();
 

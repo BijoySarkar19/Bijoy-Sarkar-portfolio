@@ -28,6 +28,13 @@ export function ResumeViewer({
   const [isScrollVisible, setIsScrollVisible] = useState(true);
   const [isDraggingScroll, setIsDraggingScroll] = useState(false);
 
+  // Dynamic adaptive page tracking & jumping
+  const totalPages = Math.max(1, pages.length || pageCount || 1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageInputStr, setPageInputStr] = useState("1");
+  const [isPageInputFocused, setIsPageInputFocused] = useState(false);
+  const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
+
   const scrollHideTimerRef = useRef<NodeJS.Timeout | null>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -46,6 +53,42 @@ export function ResumeViewer({
   const handleZoomIn = () => setClampedZoom(zoom + 0.1);
   const handleZoomOut = () => setClampedZoom(zoom - 0.1);
   const handleZoomReset = () => setClampedZoom(1.0);
+
+  // Smooth jump to specific page
+  const jumpToPage = useCallback((targetPage: number) => {
+    const clamped = Math.max(1, Math.min(totalPages, targetPage));
+    setCurrentPage(clamped);
+    setPageInputStr(String(clamped));
+    const targetEl = pageRefs.current[clamped - 1];
+    const viewport = viewportRef.current;
+    if (targetEl && viewport) {
+      const targetTop = targetEl.offsetTop - viewport.offsetTop;
+      viewport.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+    }
+  }, [totalPages]);
+
+  // User typing page number: numeric digits only with native numpad on mobile/tablet
+  function handlePageInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const digitsOnly = e.target.value.replace(/\D/g, "");
+    setPageInputStr(digitsOnly);
+    const num = parseInt(digitsOnly, 10);
+    if (!isNaN(num) && num >= 1 && num <= totalPages) {
+      setCurrentPage(num);
+      jumpToPage(num);
+    }
+  }
+
+  function commitPageInput() {
+    setIsPageInputFocused(false);
+    const num = parseInt(pageInputStr, 10);
+    if (isNaN(num) || num < 1) {
+      jumpToPage(1);
+    } else if (num > totalPages) {
+      jumpToPage(totalPages);
+    } else {
+      jumpToPage(num);
+    }
+  }
 
   // User typing in zoom percentage: numeric digits only
   function handleZoomInputChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -103,6 +146,32 @@ export function ResumeViewer({
       }, 1500);
 
       updateThumbPosition();
+
+      // Automatically update current page when scrolling unless user is actively editing page input
+      if (!isPageInputFocused && viewportRef.current && pageRefs.current.length > 0) {
+        const viewport = viewportRef.current;
+        const vRect = viewport.getBoundingClientRect();
+        const midY = vRect.top + vRect.height * 0.35;
+        let detected = 1;
+
+        for (let i = 0; i < pageRefs.current.length; i++) {
+          const el = pageRefs.current[i];
+          if (!el) continue;
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= midY && rect.bottom > midY) {
+            detected = i + 1;
+            break;
+          }
+          if (rect.top > midY) {
+            detected = Math.max(1, i);
+            break;
+          }
+          detected = i + 1;
+        }
+
+        setCurrentPage(detected);
+        setPageInputStr(String(detected));
+      }
     }
 
     viewport.addEventListener("scroll", onScroll, { passive: true });
@@ -222,13 +291,39 @@ export function ResumeViewer({
         </div>
 
         <div className="resume-viewer" ref={viewerRef} data-reveal>
-          {/* Header Bar: Displays filename and zoom controls in ONE place (Total page number removed) */}
+          {/* Header Bar: Displays filename, adaptive page selector (1/3, 2/3), and zoom controls in ONE unified toolbar */}
           <div className="resume-viewer-head">
-            <span>
+            <span className="resume-viewer-filename">
               <FileText size={14} className="accent" /> {currentFilename}
             </span>
 
             <div className="resume-toolbar-controls">
+              {/* Adaptive Page Selector: 1/3, 2/3... editable input pops out native number keyboard on phones/tablets, denominator adapts to any page count */}
+              <div
+                className="resume-page-box"
+                title={`Page ${currentPage} of ${totalPages} — Type page number to jump`}
+              >
+                <span className="resume-page-tag">Page</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={Math.max(2, String(totalPages).length)}
+                  value={pageInputStr}
+                  onChange={handlePageInputChange}
+                  onFocus={() => setIsPageInputFocused(true)}
+                  onBlur={commitPageInput}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commitPageInput();
+                  }}
+                  className="resume-page-input"
+                  style={{ width: `${Math.max(18, String(totalPages).length * 10 + 2)}px` }}
+                  aria-label={`Current CV page number out of ${totalPages}`}
+                />
+                <span className="resume-page-slash">/</span>
+                <span className="resume-page-total">{totalPages}</span>
+              </div>
+
               {/* Zoom Out Button: decreases by 10% */}
               <button
                 type="button"
@@ -309,7 +404,14 @@ export function ResumeViewer({
               }}
             >
               {pages.map((pageSrc, index) => (
-                <div key={pageSrc} className="resume-page-wrapper">
+                <div
+                  key={pageSrc}
+                  className="resume-page-wrapper"
+                  ref={(el) => {
+                    pageRefs.current[index] = el;
+                  }}
+                  id={`resume-page-${index + 1}`}
+                >
                   <img
                     src={pageSrc}
                     alt={`Bijoy Sarkar CV Page ${index + 1}`}
@@ -318,6 +420,8 @@ export function ResumeViewer({
                     decoding="async"
                     draggable={false}
                   />
+                  {/* Subtle, non-intrusive security watermark across preview: visible in screenshot / screen recording */}
+                  <div className="resume-watermark" aria-hidden="true" />
                 </div>
               ))}
             </div>

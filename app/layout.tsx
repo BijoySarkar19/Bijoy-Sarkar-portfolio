@@ -95,15 +95,23 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.ico", sizes: "16x16 32x32", type: "image/x-icon" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/tab-icon.svg", type: "image/svg+xml" },
       { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
       { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
       { url: "/favicon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/favicon.svg", type: "image/svg+xml" },
     ],
     shortcut: "/favicon.ico",
     apple: [
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    other: [
+      {
+        rel: "search",
+        url: "/opensearch.xml",
+      },
     ],
   },
   manifest: "/manifest.json",
@@ -196,13 +204,25 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       }
     >
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        {/* Browser Tab & Omnibox Favicon — Light blue kurta circular portrait */}
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="16x16 32x32" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="icon" type="image/svg+xml" href="/tab-icon.svg" />
+
+        {/* Google Search Result Standard 48x48 Raster Favicon — Dark blue shirt portrait */}
         <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
         <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
+
+        {/* OpenSearch Auto-Discovery for Chrome, Firefox, Opera, Edge search suggestions */}
+        <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="Bijoy Sarkar Portfolio" />
+
+        {/* Microsoft Edge & Windows Tile Metadata */}
+        <meta name="msapplication-config" content="/browserconfig.xml" />
+        <meta name="msapplication-TileColor" content="#ff5e2c" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -242,7 +262,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   description:
                     "Official portfolio and personal website of Bijoy Sarkar, Software Engineer and AI Developer based in Agartala, Tripura, India.",
                   disambiguatingDescription:
-                    "Bijoy Sarkar is an Indian Software Engineer and AI Developer based in Agartala, Tripura, India, studying Computer Science & Engineering at ICFAI University Tripura (GitHub: BijoySarkar19). This is the official portfolio of Bijoy Sarkar, distinct from any individual named Bijoy Kumar Sarkar.",
+                    "Bijoy Sarkar is an Indian Software Engineer, AI Developer, and Full-Stack Developer based in Agartala, Tripura, India, pursuing a B.Tech in Computer Science and Engineering at ICFAI University Tripura (GitHub: BijoySarkar19). This is the official portfolio of Bijoy Sarkar (https://bijoy-sarkar-portfolio.vercel.app), distinct from Bengali folk saint/singer Bijoy Sarkar (1903–1985) and distinct from Quality Analyst Bijoy Kumar Sarkar.",
                   worksFor: {
                     "@type": "Organization",
                     name: "Software Engineering & AI Systems",
@@ -264,6 +284,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                     "https://x.com/bijoyy_19",
                     "https://www.instagram.com/bijoyysarkarr",
                     "https://facebook.com/share/1Cs44JBwnk/",
+                    "https://sites.google.com/view/bijoysarkar/home",
                   ],
                   knowsAbout: [
                     "Artificial Intelligence",

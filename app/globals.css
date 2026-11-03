@@ -456,9 +456,52 @@ img { display: block; max-width: 100%; }
 .resume-viewer { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: #080b14; box-shadow: 0 26px 72px rgb(0 0 0 / 0.28); position: relative; }
 .resume-viewer-head { display: flex; min-height: 40px; height: 40px; align-items: center; justify-content: space-between; gap: 12px; padding: 0 12px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 10px; background: rgba(8, 11, 20, 0.95); }
 .resume-viewer-head span:first-child,
-.resume-viewer-filename { display: inline-flex; align-items: center; gap: 8px; color: var(--soft-white); font-weight: 500; font-size: 11px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
-@media (max-width: 600px) {
-  .resume-viewer-filename { max-width: 90px; font-size: 10px; }
+.resume-viewer-filename { display: inline-flex; align-items: center; gap: 8px; color: var(--soft-white); font-weight: 500; font-size: 11px; min-width: 0; white-space: nowrap; max-width: 380px; }
+.resume-viewer-filename-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .resume-viewer-head {
+    height: auto;
+    min-height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  .resume-viewer-filename {
+    max-width: 100% !important;
+    width: 100%;
+    font-size: 11.5px;
+    font-weight: 600;
+    justify-content: flex-start;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+  }
+  .resume-viewer-filename-text {
+    overflow: visible;
+    white-space: normal;
+    word-break: break-all;
+  }
+  .resume-toolbar-controls {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .resume-page-box {
+    padding: 0 6px;
+    font-size: 10px;
+    height: 26px;
+  }
+  .resume-zoom-btn {
+    width: 26px;
+    height: 26px;
+  }
+  .resume-zoom-input-box {
+    height: 26px;
+    padding: 0 5px;
+  }
 }
 .resume-toolbar-controls { display: inline-flex; align-items: center; gap: 6px; }
 .resume-zoom-btn {

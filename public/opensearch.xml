@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>Bijoy Sarkar</ShortName>
+  <Description>Search projects, intelligent systems, and curriculum vitae of Bijoy Sarkar</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="48" height="48" type="image/png">https://bijoy-sarkar-portfolio.vercel.app/favicon-48x48.png</Image>
+  <Image width="16" height="16" type="image/x-icon">https://bijoy-sarkar-portfolio.vercel.app/favicon.ico</Image>
+  <Url type="text/html" method="get" template="https://bijoy-sarkar-portfolio.vercel.app/projects?q={searchTerms}"/>
+  <Url type="application/x-suggestions+json" method="get" template="https://bijoy-sarkar-portfolio.vercel.app/api/search-suggest?q={searchTerms}"/>
+</OpenSearchDescription>

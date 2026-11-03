@@ -293,8 +293,9 @@ export function ResumeViewer({
         <div className="resume-viewer" ref={viewerRef} data-reveal>
           {/* Header Bar: Displays filename, adaptive page selector (1/3, 2/3), and zoom controls in ONE unified toolbar */}
           <div className="resume-viewer-head">
-            <span className="resume-viewer-filename">
-              <FileText size={14} className="accent" /> {currentFilename}
+            <span className="resume-viewer-filename" title={currentFilename}>
+              <FileText size={14} className="accent shrink-0" />
+              <span className="resume-viewer-filename-text">{currentFilename}</span>
             </span>
 
             <div className="resume-toolbar-controls">

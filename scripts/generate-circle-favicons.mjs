@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 async function main() {
-  const newPhotoPath = "C:/Users/bijoy/.gemini/antigravity/brain/f9259d80-5f4a-48a1-a4e2-ea561cfdcf99/.user_uploaded/media_1793653375037_081bf8b0.jpg";
+  const newPhotoPath = "C:/Users/bijoy/.gemini/antigravity/brain/f9259d80-5f4a-48a1-a4e2-ea561cfdcf99/.user_uploaded/media_1793687738218_2cb6fabb.jpg";
   if (!fs.existsSync(newPhotoPath)) {
     console.error("New photo not found at", newPhotoPath);
     process.exit(1);
@@ -14,8 +14,8 @@ async function main() {
   console.log("Updated public/bijoy-sarkar.jpg with new photo");
 
   // 2. Crop centered face region
-  // Image is 768x1024. Head center is around x=390, y=480
-  const cropConfig = { left: 180, top: 270, width: 420, height: 420 };
+  // Image is 768x1024. Center is x=390, y=430 with 460x460 bounding square
+  const cropConfig = { left: 160, top: 200, width: 460, height: 460 };
   const baseSize = 512;
   const radius = baseSize / 2;
 
@@ -45,11 +45,12 @@ async function main() {
     .png()
     .toBuffer();
 
-  // Save brand avatar
+  // Save brand avatar & high-res PNGs
   fs.writeFileSync("public/avatar.png", baseCircle512);
   fs.writeFileSync("public/favicon-512x512.png", baseCircle512);
   console.log("Generated public/avatar.png & public/favicon-512x512.png");
 
+  // Standard sizes recommended by Google Search Central & Apple
   const sizes = [
     { name: "favicon-48x48.png", size: 48 },
     { name: "favicon.png", size: 48 },
@@ -69,7 +70,7 @@ async function main() {
     console.log(`Generated public/${item.name} (${item.size}x${item.size})`);
   }
 
-  // Multi-resolution favicon.ico
+  // Multi-resolution favicon.ico containing 16x16, 32x32, 48x48
   const buf16 = await sharp(baseCircle512).resize(16, 16).png().toBuffer();
   const buf32 = await sharp(baseCircle512).resize(32, 32).png().toBuffer();
   const buf48 = await sharp(baseCircle512).resize(48, 48).png().toBuffer();
@@ -81,6 +82,19 @@ async function main() {
   ]);
   fs.writeFileSync("public/favicon.ico", icoBuffer);
   console.log("Generated public/favicon.ico");
+
+  // Generate public/favicon.svg with embedded high-res base64 circular photo
+  const base64Png = baseCircle512.toString("base64");
+  const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <clipPath id="circleClip">
+      <circle cx="256" cy="256" r="256" />
+    </clipPath>
+  </defs>
+  <image href="data:image/png;base64,${base64Png}" width="512" height="512" clip-path="url(#circleClip)" />
+</svg>`;
+  fs.writeFileSync("public/favicon.svg", svgContent, "utf-8");
+  console.log("Generated public/favicon.svg with circular photo");
 
   // Save preview for inspection
   const previewPath = "C:/Users/bijoy/.gemini/antigravity/brain/f9259d80-5f4a-48a1-a4e2-ea561cfdcf99/new-circle-favicon-preview.png";

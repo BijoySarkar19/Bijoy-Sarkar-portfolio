@@ -95,10 +95,8 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "16x16 32x32", type: "image/x-icon" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/tab-icon.svg", type: "image/svg+xml" },
       { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
       { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
       { url: "/favicon-192x192.png", sizes: "192x192", type: "image/png" },
@@ -106,12 +104,6 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
     apple: [
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-    other: [
-      {
-        rel: "search",
-        url: "/opensearch.xml",
-      },
     ],
   },
   manifest: "/manifest.json",
@@ -204,19 +196,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       }
     >
       <head>
-        {/* Browser Tab & Omnibox Favicon — Light blue kurta circular portrait */}
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="16x16 32x32" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-        <link rel="icon" type="image/svg+xml" href="/tab-icon.svg" />
-
-        {/* Google Search Result Standard 48x48 Raster Favicon — Dark blue shirt portrait */}
-        <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
-        <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/manifest.json" />
-
         {/* OpenSearch Auto-Discovery for Chrome, Firefox, Opera, Edge search suggestions */}
         <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="Bijoy Sarkar Portfolio" />
 

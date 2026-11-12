@@ -164,7 +164,7 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
         </div>
       </div>
       <div className="image-previews" aria-label="Image previews">
-        {previewPaths.map((path, index) => <div className="image-preview" key={`${index}-${path}`}><Image src={path || "/favicon.svg"} alt={`${index === 0 ? "Hero" : `Supporting ${index}`} preview`} width={400} height={300} unoptimized onError={(event) => { event.currentTarget.src = "/favicon.svg"; }} /></div>)}
+        {previewPaths.map((path, index) => <div className="image-preview" key={`${index}-${path}`}><Image src={path || "/favicon-192x192.png"} alt={`${index === 0 ? "Hero" : `Supporting ${index}`} preview`} width={400} height={300} unoptimized onError={(event) => { event.currentTarget.src = "/favicon-192x192.png"; }} /></div>)}
       </div>
       <p className="admin-form-help">The three image files are stored with each project. Use relative paths for images placed in the public folder.</p>
       <div className="form-bottom">

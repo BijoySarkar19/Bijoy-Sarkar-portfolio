@@ -2,6 +2,7 @@ import Link from "next/link";
 import { socialLinks as defaultSocialLinks } from "@/lib/portfolio-data";
 import { SocialIcon, SocialIconName } from "@/components/ui/SocialIcon";
 import { EmailLink } from "@/components/ui/EmailLink";
+import { DynamicCopyright } from "@/components/ui/DynamicCopyright";
 
 export interface SocialLinkItem {
   label: string;
@@ -70,7 +71,7 @@ export function Footer({
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© 2026 Bijoy Sarkar. All rights reserved.</span>
+          <DynamicCopyright />
           <span>Built with curiosity and care.</span>
         </div>
       </div>

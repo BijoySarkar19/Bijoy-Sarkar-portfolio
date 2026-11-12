@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="1200" height="320" role="img" aria-label="Bijoy Sarkar — Portfolio and Intelligent Systems Showcase">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#05070d" />
+      <stop offset="55%" stop-color="#0b1022" />
+      <stop offset="100%" stop-color="#140c24" />
+    </linearGradient>
+    <radialGradient id="orangeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff5e2c" stop-opacity="0.32" />
+      <stop offset="65%" stop-color="#ff5e2c" stop-opacity="0.06" />
+      <stop offset="100%" stop-color="#ff5e2c" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="accentLine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff5e2c" stop-opacity="0" />
+      <stop offset="50%" stop-color="#ff5e2c" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#ff8a5b" stop-opacity="0" />
+    </linearGradient>
+    <pattern id="cyberGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1" />
+    </pattern>
+    <clipPath id="cardClip">
+      <rect x="1" y="1" width="1198" height="318" rx="18" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#cardClip)">
+    <!-- Base & Subtle Grid -->
+    <rect width="1200" height="320" fill="url(#bgGrad)" />
+    <rect width="1200" height="320" fill="url(#cyberGrid)" />
+
+    <!-- Animated Ambient Glow Orbs -->
+    <circle cx="960" cy="140" r="240" fill="url(#orangeGlow)">
+      <animate attributeName="cx" values="940;990;940" dur="8s" repeatCount="indefinite" />
+      <animate attributeName="cy" values="130;170;130" dur="8s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="220" cy="260" r="190" fill="url(#orangeGlow)">
+      <animate attributeName="opacity" values="0.4;0.75;0.4" dur="6s" repeatCount="indefinite" />
+    </circle>
+
+    <!-- Animated Vertical Scanline Beam -->
+    <rect x="-120" y="0" width="120" height="320" fill="url(#accentLine)" opacity="0.06">
+      <animate attributeName="x" values="-140;1260" dur="6.5s" repeatCount="indefinite" />
+    </rect>
+
+    <!-- Left Orbital Telemetry Emblem -->
+    <g transform="translate(155, 160)">
+      <circle r="78" fill="none" stroke="rgba(255,94,44,0.22)" stroke-width="1.5" stroke-dasharray="10 8">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="20s" repeatCount="indefinite" />
+      </circle>
+      <circle r="60" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2" stroke-dasharray="28 12">
+        <animateTransform attributeName="transform" type="rotate" from="360" to="0" dur="14s" repeatCount="indefinite" />
+      </circle>
+      <circle r="44" fill="rgba(255,94,44,0.08)" stroke="#ff5e2c" stroke-width="1.8">
+        <animate attributeName="stroke-opacity" values="0.5;1;0.5" dur="2.6s" repeatCount="indefinite" />
+      </circle>
+      <!-- Orbiting Dot -->
+      <g>
+        <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="6s" repeatCount="indefinite" />
+        <circle cx="78" cy="0" r="4.5" fill="#ff5e2c" />
+      </g>
+      <text x="0" y="9" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="26" font-weight="800" letter-spacing="-1">BS</text>
+      <rect x="20" y="6" width="8" height="3" rx="1.5" fill="#ff5e2c">
+        <animate attributeName="opacity" values="1;0.15;1" dur="1.2s" repeatCount="indefinite" />
+      </rect>
+    </g>
+
+    <!-- Main Typography & Telemetry Header -->
+    <g transform="translate(278, 86)">
+      <!-- Live Pill -->
+      <rect x="0" y="0" width="290" height="26" rx="13" fill="rgba(255,94,44,0.12)" stroke="rgba(255,94,44,0.45)" stroke-width="1" />
+      <circle cx="16" cy="13" r="4" fill="#ff5e2c">
+        <animate attributeName="opacity" values="1;0.25;1" dur="1.5s" repeatCount="indefinite" />
+      </circle>
+      <text x="29" y="17" fill="#ffb096" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" font-weight="700" letter-spacing="1.2">PORTFOLIO OS · SYSTEM ONLINE</text>
+
+      <!-- Title -->
+      <text x="0" y="76" fill="#ffffff" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="48" font-weight="800" letter-spacing="-1.5">Bijoy Sarkar</text>
+
+      <!-- Role Line -->
+      <text x="0" y="110" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="18.5" font-weight="500">
+        Software Engineer &amp; AI Developer · <tspan fill="#ff7d54" font-weight="700">Intelligent Systems</tspan> · Agartala, India
+      </text>
+
+      <!-- Feature Chips -->
+      <g transform="translate(0, 134)" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" font-weight="600">
+        <rect x="0" y="0" width="166" height="28" rx="7" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.14)" />
+        <text x="14" y="18" fill="#e2e8f0">300-Frame Scroll Canvas</text>
+
+        <rect x="178" y="0" width="144" height="28" rx="7" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.14)" />
+        <text x="192" y="18" fill="#e2e8f0">AI &amp; ML Architecture</text>
+
+        <rect x="334" y="0" width="152" height="28" rx="7" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.14)" />
+        <text x="348" y="18" fill="#e2e8f0">Admin CMS + Undo IST</text>
+
+        <rect x="498" y="0" width="148" height="28" rx="7" fill="rgba(255,94,44,0.14)" stroke="rgba(255,94,44,0.4)" />
+        <text x="512" y="18" fill="#ffd2c2">Next.js 16 · Docker</text>
+      </g>
+    </g>
+
+    <!-- Right-side Animated Signal Bars -->
+    <g transform="translate(1070, 118)" fill="#ff5e2c">
+      <rect x="0" y="34" width="6" height="46" rx="3" opacity="0.55">
+        <animate attributeName="height" values="24;64;24" dur="1.7s" repeatCount="indefinite" />
+        <animate attributeName="y" values="56;16;56" dur="1.7s" repeatCount="indefinite" />
+      </rect>
+      <rect x="14" y="18" width="6" height="62" rx="3" opacity="0.8">
+        <animate attributeName="height" values="58;20;58" dur="1.4s" repeatCount="indefinite" />
+        <animate attributeName="y" values="22;60;22" dur="1.4s" repeatCount="indefinite" />
+      </rect>
+      <rect x="28" y="8" width="6" height="72" rx="3" opacity="1">
+        <animate attributeName="height" values="30;74;30" dur="1.9s" repeatCount="indefinite" />
+        <animate attributeName="y" values="50;6;50" dur="1.9s" repeatCount="indefinite" />
+      </rect>
+      <rect x="42" y="28" width="6" height="52" rx="3" opacity="0.7">
+        <animate attributeName="height" values="52;18;52" dur="1.5s" repeatCount="indefinite" />
+        <animate attributeName="y" values="28;62;28" dur="1.5s" repeatCount="indefinite" />
+      </rect>
+      <rect x="56" y="42" width="6" height="38" rx="3" opacity="0.45">
+        <animate attributeName="height" values="22;56;22" dur="2.1s" repeatCount="indefinite" />
+        <animate attributeName="y" values="58;24;58" dur="2.1s" repeatCount="indefinite" />
+      </rect>
+    </g>
+
+    <!-- Bottom Animated Telemetry Line -->
+    <rect x="40" y="302" width="1120" height="2" fill="rgba(255,255,255,0.08)" rx="1" />
+    <rect x="40" y="302" width="240" height="2" fill="url(#accentLine)" rx="1">
+      <animate attributeName="x" values="40;920;40" dur="5s" repeatCount="indefinite" />
+    </rect>
+  </g>
+
+  <!-- Outer Crisp Frame -->
+  <rect x="1" y="1" width="1198" height="318" rx="18" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5" />
+</svg>

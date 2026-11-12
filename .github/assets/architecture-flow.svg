@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 280" width="1200" height="280" role="img" aria-label="Portfolio Architecture and Data Flow">
+  <defs>
+    <linearGradient id="archBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#060911" />
+      <stop offset="100%" stop-color="#0d1326" />
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.06)" />
+      <stop offset="100%" stop-color="rgba(255,255,255,0.02)" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="280" rx="16" fill="url(#archBg)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" />
+
+  <!-- Connecting Paths -->
+  <path id="path1" d="M 335 140 L 445 140" stroke="rgba(255,94,44,0.35)" stroke-width="2" fill="none" stroke-dasharray="5 5" />
+  <path id="path2" d="M 755 110 L 865 82" stroke="rgba(255,94,44,0.35)" stroke-width="2" fill="none" stroke-dasharray="5 5" />
+  <path id="path3" d="M 755 170 L 865 198" stroke="rgba(56,189,248,0.35)" stroke-width="2" fill="none" stroke-dasharray="5 5" />
+
+  <!-- Animated Signal Packets -->
+  <circle r="5" fill="#ff5e2c">
+    <animateMotion dur="2s" repeatCount="indefinite">
+      <mpath href="#path1" />
+    </animateMotion>
+  </circle>
+  <circle r="4.5" fill="#ff7d54">
+    <animateMotion dur="2.2s" repeatCount="indefinite">
+      <mpath href="#path2" />
+    </animateMotion>
+  </circle>
+  <circle r="4.5" fill="#38bdf8">
+    <animateMotion dur="2.5s" repeatCount="indefinite">
+      <mpath href="#path3" />
+    </animateMotion>
+  </circle>
+
+  <!-- Node 1: Frontend Experience -->
+  <g transform="translate(45, 48)">
+    <rect width="290" height="184" rx="14" fill="url(#boxGrad)" stroke="rgba(255,255,255,0.16)" stroke-width="1.2" />
+    <rect x="0" y="0" width="290" height="4" rx="2" fill="#ff5e2c" opacity="0.85" />
+    <text x="20" y="34" fill="#ff7d54" font-family="ui-monospace, Menlo, monospace" font-size="11" font-weight="700" letter-spacing="1">01 · CLIENT EXPERIENCE</text>
+    <text x="20" y="62" fill="#ffffff" font-family="system-ui, sans-serif" font-size="17" font-weight="700">Interactive Showcase UI</text>
+    <g fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12.5">
+      <text x="20" y="92">• 300-Frame LERP Scroll Canvas</text>
+      <text x="20" y="114">• CV Viewer (10%–500% Zoom + Numpad)</text>
+      <text x="20" y="136">• 2048 &amp; Signal Pairs + Web Audio</text>
+      <text x="20" y="158">• Cmd Palette (Ctrl+K) &amp; Terminal (~)</text>
+    </g>
+  </g>
+
+  <!-- Node 2: Edge Middleware & API Engine -->
+  <g transform="translate(445, 48)">
+    <rect width="310" height="184" rx="14" fill="url(#boxGrad)" stroke="rgba(255,94,44,0.45)" stroke-width="1.3" />
+    <circle cx="288" cy="24" r="4" fill="#22c55e">
+      <animate attributeName="opacity" values="1;0.3;1" dur="1.4s" repeatCount="indefinite" />
+    </circle>
+    <text x="20" y="34" fill="#ffb096" font-family="ui-monospace, Menlo, monospace" font-size="11" font-weight="700" letter-spacing="1">02 · NEXT.JS 16 EDGE &amp; API</text>
+    <text x="20" y="62" fill="#ffffff" font-family="system-ui, sans-serif" font-size="17" font-weight="700">Security &amp; Validation Core</text>
+    <g fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="12.5">
+      <text x="20" y="92">• proxy.ts Admin JWT Edge Gatekeeper</text>
+      <text x="20" y="114">• SHA-256 IP Sliding-Window Limiter</text>
+      <text x="20" y="136">• Zod Schemas &amp; cleanText Sanitizer</text>
+      <text x="20" y="158">• OpenSearch + Bing IndexNow Endpoints</text>
+    </g>
+  </g>
+
+  <!-- Node 3A: Database & Audit Engine -->
+  <g transform="translate(865, 32)">
+    <rect width="290" height="98" rx="12" fill="url(#boxGrad)" stroke="rgba(255,94,44,0.35)" stroke-width="1.2" />
+    <text x="18" y="28" fill="#ff7d54" font-family="ui-monospace, Menlo, monospace" font-size="10.5" font-weight="700" letter-spacing="1">03 · PERSISTENCE &amp; CMS</text>
+    <text x="18" y="52" fill="#ffffff" font-family="system-ui, sans-serif" font-size="15.5" font-weight="700">Prisma 7 + SQLite + Undo</text>
+    <text x="18" y="75" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">IST Audit Snapshots &amp; 1-Click Rollback</text>
+  </g>
+
+  <!-- Node 3B: External Integrations -->
+  <g transform="translate(865, 150)">
+    <rect width="290" height="98" rx="12" fill="url(#boxGrad)" stroke="rgba(56,189,248,0.35)" stroke-width="1.2" />
+    <text x="18" y="28" fill="#7dd3fc" font-family="ui-monospace, Menlo, monospace" font-size="10.5" font-weight="700" letter-spacing="1">04 · CLOUD TELEMETRY</text>
+    <text x="18" y="52" fill="#ffffff" font-family="system-ui, sans-serif" font-size="15.5" font-weight="700">Google Sheets &amp; Gmail Dispatch</text>
+    <text x="18" y="75" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">Webhook Sync, CSV Log &amp; Alert Delivery</text>
+  </g>
+</svg>

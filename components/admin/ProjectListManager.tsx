@@ -16,6 +16,7 @@ export interface AdminProjectItem {
   githubUrl: string | null;
   liveUrl: string | null;
   updatedAt: string;
+  image1?: string;
 }
 
 export function ProjectListManager({ initialProjects }: { initialProjects: AdminProjectItem[] }) {
@@ -67,7 +68,14 @@ export function ProjectListManager({ initialProjects }: { initialProjects: Admin
       setProjects((prev) =>
         prev.map((p) => {
           if (p.id !== id) return p;
-          if (action === "toggle_ongoing") return { ...p, isOngoing: !p.isOngoing };
+          if (action === "toggle_ongoing") {
+            const nextOngoing = !p.isOngoing;
+            let image1 = p.image1;
+            if (!nextOngoing && image1 && (image1.includes("ongoing-project-cover") || image1.includes("ongoing-coder"))) {
+              image1 = "";
+            }
+            return { ...p, isOngoing: nextOngoing, image1 };
+          }
           if (action === "toggle_featured_home") return { ...p, featuredOnHome: !p.featuredOnHome };
           if (action === "toggle_published") return { ...p, published: !p.published };
           if (action === "apply_ongoing_artwork") return { ...p, image1: "/images/ongoing-project-cover.webp" };

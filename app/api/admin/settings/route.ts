@@ -142,6 +142,29 @@ export async function POST(request: Request) {
       }
     }
 
+    // Automatically sync ongoing default image to all active development projects in DB
+    if (currentMap.ongoingDefaultImage) {
+      try {
+        const ongoingProjects = await prisma.project.findMany({
+          where: { isOngoing: true },
+        });
+        for (const proj of ongoingProjects) {
+          if (
+            !proj.image1 ||
+            proj.image1.includes("ongoing-project-cover") ||
+            proj.image1.includes("ongoing-coder")
+          ) {
+            await prisma.project.update({
+              where: { id: proj.id },
+              data: { image1: currentMap.ongoingDefaultImage },
+            });
+          }
+        }
+      } catch (projErr) {
+        console.warn("Could not sync ongoingDefaultImage to ongoing projects:", projErr);
+      }
+    }
+
     let auditLogId: string | undefined = undefined;
     try {
       const auditEntry = await logAuditEvent({
@@ -170,11 +193,40 @@ export async function POST(request: Request) {
       console.warn("Could not save /tmp/settings-store.json:", storeErr);
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       settings: { ...previousMap, ...currentMap },
       auditLogId,
     });
+
+    const activeAccent = currentMap.themeAccent || previousMap.themeAccent;
+    if (activeAccent) {
+      response.cookies.set("portfolio_theme_accent", activeAccent, {
+        path: "/",
+        maxAge: 31536000,
+        sameSite: "lax",
+      });
+    }
+
+    const activeMode = currentMap.themeMode || previousMap.themeMode;
+    if (activeMode) {
+      response.cookies.set("portfolio_theme_mode", activeMode, {
+        path: "/",
+        maxAge: 31536000,
+        sameSite: "lax",
+      });
+    }
+
+    const activeOngoingImg = currentMap.ongoingDefaultImage || previousMap.ongoingDefaultImage;
+    if (activeOngoingImg) {
+      response.cookies.set("portfolio_ongoing_image", activeOngoingImg, {
+        path: "/",
+        maxAge: 31536000,
+        sameSite: "lax",
+      });
+    }
+
+    return response;
   } catch (error) {
     console.error("Failed to update site settings:", error);
     return NextResponse.json({ error: "Failed to save settings." }, { status: 500 });

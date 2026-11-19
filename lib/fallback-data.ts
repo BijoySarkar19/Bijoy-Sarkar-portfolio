@@ -294,7 +294,7 @@ export const FALLBACK_PROJECTS: FallbackProject[] = [
     title: "SentinelEdge",
     description: "Privacy-First Edge-to-Cloud Video & Incident Intelligence Platform",
     longDescription: "A high-performance edge-to-cloud intelligence platform engineered for real-time video stream ingestion, on-device neural incident detection, privacy-preserving redaction at the edge, and secure telemetry synchronization to distributed cloud clusters. Built for mission-critical situational awareness with sub-second alerting and zero-trust data protection.",
-    image1: "/images/ongoing-project-cover.webp",
+    image1: "/images/ongoing-project-cover-violet.webp",
     image2: "",
     image3: "",
     techStack: ["Edge AI", "Computer Vision", "FastAPI", "PyTorch", "WebRTC", "Docker", "Zero-Trust"],

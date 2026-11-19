@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Save,
   Undo2,
@@ -22,6 +22,7 @@ import {
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { DEFAULT_DEGREES, type DegreeItem } from "@/lib/degrees";
+import { applyThemeVariables } from "@/components/ui/ClientThemeSync";
 
 export interface SiteSettingsMap {
   heroTitle?: string;
@@ -125,8 +126,60 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
     return DEFAULT_DEGREES;
   });
 
+  useEffect(() => {
+    const activeAccent = settings.themeAccent || "#ff5e2c";
+    const activeMode = settings.themeMode || "dark";
+    applyThemeVariables(activeAccent, activeMode);
+  }, [settings.themeAccent, settings.themeMode]);
+
+  function getMatchingOngoingCover(accent: string): string {
+    const hex = accent.toLowerCase().trim();
+    if (hex === "#9d4edd" || hex.includes("violet") || hex.includes("purple")) return "/images/ongoing-project-cover-violet.webp";
+    if (hex === "#00b4d8" || hex.includes("blue")) return "/images/ongoing-project-cover-blue.webp";
+    if (hex === "#00f5d4" || hex.includes("emerald") || hex.includes("green")) return "/images/ongoing-project-cover-emerald.webp";
+    if (hex === "#e63946" || hex.includes("red") || hex.includes("crimson")) return "/images/ongoing-project-cover-red.webp";
+    return "/images/ongoing-project-cover-orange.webp";
+  }
+
   function handleChange(key: string, value: string) {
-    setSettings((prev) => ({ ...prev, [key]: value }));
+    setSettings((prev) => {
+      const next = { ...prev, [key]: value };
+
+      if (key === "themeAccent") {
+        applyThemeVariables(value, next.themeMode);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("site_theme_accent", value);
+            document.cookie = `portfolio_theme_accent=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
+            window.dispatchEvent(new CustomEvent("portfolio-theme-change", { detail: { accent: value, mode: next.themeMode } }));
+          } catch {}
+        }
+        // Automatically switch ongoing artwork to match selected accent theme
+        const currentCover = prev.ongoingDefaultImage || "";
+        if (!currentCover || currentCover.includes("ongoing-project-cover")) {
+          next.ongoingDefaultImage = getMatchingOngoingCover(value);
+        }
+      }
+
+      if (key === "themeMode") {
+        applyThemeVariables(next.themeAccent || "#ff5e2c", value);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("site_theme_mode", value);
+            document.cookie = `portfolio_theme_mode=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
+            window.dispatchEvent(new CustomEvent("portfolio-theme-change", { detail: { accent: next.themeAccent, mode: value } }));
+          } catch {}
+        }
+      }
+
+      if (key === "ongoingDefaultImage" && typeof window !== "undefined") {
+        try {
+          document.cookie = `portfolio_ongoing_image=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
+        } catch {}
+      }
+
+      return next;
+    });
   }
 
   function handleAddDegree() {
@@ -188,27 +241,25 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
         setSettings(data.settings);
       }
 
-      // Immediately preview theme mode and accent on client
-      if (typeof document !== "undefined") {
-        if (settings.themeMode === "light") {
-          document.documentElement.classList.add("light-mode");
-          document.documentElement.setAttribute("data-theme", "light");
-        } else {
-          document.documentElement.classList.remove("light-mode");
-          document.documentElement.setAttribute("data-theme", "dark");
-        }
-        if (settings.themeAccent) {
-          document.documentElement.style.setProperty("--theme-accent", settings.themeAccent);
-          document.documentElement.style.setProperty("--orange", settings.themeAccent);
-        }
-      }
+      // Immediately apply theme variables across whole document
+      const activeAccent = settings.themeAccent || "#ff5e2c";
+      const activeMode = settings.themeMode || "dark";
+      applyThemeVariables(activeAccent, activeMode);
 
       setLastAuditId(data.auditLogId || null);
 
       if (typeof window !== "undefined") {
         try {
+          localStorage.setItem("site_theme_accent", activeAccent);
+          localStorage.setItem("site_theme_mode", activeMode);
           localStorage.setItem("admin_site_settings", JSON.stringify(data.settings || payload));
           localStorage.setItem("admin_degrees_list", JSON.stringify(degrees));
+          document.cookie = `portfolio_theme_accent=${encodeURIComponent(activeAccent)}; path=/; max-age=31536000; SameSite=Lax`;
+          document.cookie = `portfolio_theme_mode=${encodeURIComponent(activeMode)}; path=/; max-age=31536000; SameSite=Lax`;
+          if (settings.ongoingDefaultImage) {
+            document.cookie = `portfolio_ongoing_image=${encodeURIComponent(settings.ongoingDefaultImage)}; path=/; max-age=31536000; SameSite=Lax`;
+          }
+          window.dispatchEvent(new CustomEvent("portfolio-theme-change", { detail: { accent: activeAccent, mode: activeMode } }));
         } catch {}
       }
 
@@ -1054,67 +1105,52 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                 </div>
 
                 <div style={{ flex: 1, minWidth: 260 }}>
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-                    <button
-                      type="button"
-                      onClick={() => handleChange("ongoingDefaultImage", "/images/ongoing-project-cover.webp")}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "7px 14px",
-                        borderRadius: 8,
-                        border:
-                          (settings.ongoingDefaultImage || "/images/ongoing-project-cover.webp") ===
-                          "/images/ongoing-project-cover.webp"
-                            ? "2px solid var(--orange)"
-                            : "1px solid var(--line)",
-                        background:
-                          (settings.ongoingDefaultImage || "/images/ongoing-project-cover.webp") ===
-                          "/images/ongoing-project-cover.webp"
-                            ? "rgba(var(--orange-rgb), 0.15)"
-                            : "rgba(255, 255, 255, 0.04)",
-                        color: "#fff",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      ☀️ Full-Box White BG (Zero Black Parts)
-                      {(settings.ongoingDefaultImage || "/images/ongoing-project-cover.webp") ===
-                        "/images/ongoing-project-cover.webp" && (
-                        <Check size={12} style={{ color: "var(--orange)" }} />
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleChange("ongoingDefaultImage", "/images/ongoing-project-cover-orange.webp")}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "7px 14px",
-                        borderRadius: 8,
-                        border:
-                          settings.ongoingDefaultImage === "/images/ongoing-project-cover-orange.webp"
-                            ? "2px solid var(--orange)"
-                            : "1px solid var(--line)",
-                        background:
-                          settings.ongoingDefaultImage === "/images/ongoing-project-cover-orange.webp"
-                            ? "rgba(var(--orange-rgb), 0.15)"
-                            : "rgba(255, 255, 255, 0.04)",
-                        color: "#fff",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      ⚡ Full-Bleed Orange Theme
-                      {settings.ongoingDefaultImage === "/images/ongoing-project-cover-orange.webp" && (
-                        <Check size={12} style={{ color: "var(--orange)" }} />
-                      )}
-                    </button>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+                    {[
+                      { name: "Neon Violet Preset", file: "/images/ongoing-project-cover-violet.webp", hex: "#9d4edd" },
+                      { name: "Cyber Orange Preset", file: "/images/ongoing-project-cover-orange.webp", hex: "#ff5e2c" },
+                      { name: "Electric Blue Preset", file: "/images/ongoing-project-cover-blue.webp", hex: "#00b4d8" },
+                      { name: "Matrix Emerald Preset", file: "/images/ongoing-project-cover-emerald.webp", hex: "#00f5d4" },
+                      { name: "Crimson Red Preset", file: "/images/ongoing-project-cover-red.webp", hex: "#e63946" },
+                      { name: "Full-Box White (Original)", file: "/images/ongoing-project-cover.webp", hex: "#ffffff" },
+                    ].map((art) => {
+                      const isSelected =
+                        (settings.ongoingDefaultImage || "/images/ongoing-project-cover-violet.webp") === art.file;
+                      return (
+                        <button
+                          key={art.file}
+                          type="button"
+                          onClick={() => handleChange("ongoingDefaultImage", art.file)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            padding: "6px 12px",
+                            borderRadius: 8,
+                            border: isSelected ? "2px solid var(--orange)" : "1px solid var(--line)",
+                            background: isSelected ? "rgba(var(--orange-rgb), 0.16)" : "rgba(255, 255, 255, 0.04)",
+                            color: isSelected ? "var(--white)" : "var(--silver)",
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            transition: "all 180ms ease",
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 9,
+                              height: 9,
+                              borderRadius: "50%",
+                              background: art.hex,
+                              boxShadow: isSelected ? `0 0 8px ${art.hex}` : "none",
+                              border: art.hex === "#ffffff" ? "1px solid #888" : "none",
+                            }}
+                          />
+                          <span>{art.name}</span>
+                          {isSelected && <Check size={11} style={{ color: "var(--orange)" }} />}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   <div className="field">

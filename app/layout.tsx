@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
+import { existsSync, readFileSync } from "node:fs";
 import { Navbar } from "@/components/navigation/Navbar";
 import { ScrollCanvas } from "@/components/hero/ScrollCanvas";
 import { CustomScrollbar } from "@/components/ui/CustomScrollbar";
@@ -6,6 +8,7 @@ import { CleanCopyHandler } from "@/components/ui/CleanCopyHandler";
 import { ScrollRevealHandler } from "@/components/ui/ScrollRevealHandler";
 import { ScrollEdgeEffects } from "@/components/ui/ScrollEdgeEffects";
 import { BirthdayCelebration } from "@/components/ui/BirthdayCelebration";
+import { ClientThemeSync } from "@/components/ui/ClientThemeSync";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/site-url";
 import "@/app/globals.css";
@@ -174,6 +177,25 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     console.error("Failed to load settings in RootLayout:", err);
   }
 
+  // Cross-route fallback store in /tmp
+  try {
+    const storePath = "/tmp/settings-store.json";
+    if (existsSync(storePath)) {
+      const stored = JSON.parse(readFileSync(storePath, "utf-8"));
+      if (stored.themeAccent) themeAccent = stored.themeAccent;
+      if (stored.themeMode) themeMode = stored.themeMode;
+    }
+  } catch {}
+
+  // Request cookies provide immediate sync across serverless instances
+  try {
+    const cookieStore = await cookies();
+    const cookieAccent = cookieStore.get("portfolio_theme_accent")?.value;
+    const cookieMode = cookieStore.get("portfolio_theme_mode")?.value;
+    if (cookieAccent) themeAccent = cookieAccent;
+    if (cookieMode) themeMode = cookieMode;
+  } catch {}
+
   const rgb = hexToRgb(themeAccent);
   const isLight = themeMode === "light";
 
@@ -196,6 +218,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       }
     >
       <head>
+        {/* Instant zero-flicker theme synchronization script */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=document.cookie.match(/portfolio_theme_accent=([^;]+)/);var a=m?decodeURIComponent(m[1]):(localStorage.getItem('site_theme_accent')||'');if(!a){var s=localStorage.getItem('admin_site_settings');if(s){var p=JSON.parse(s);if(p.themeAccent)a=p.themeAccent;}}if(a){document.documentElement.style.setProperty('--theme-accent',a);document.documentElement.style.setProperty('--orange',a);var c=a.replace('#','');if(c.length===6){var r=parseInt(c.substring(0,2),16),g=parseInt(c.substring(2,4),16),b=parseInt(c.substring(4,6),16);document.documentElement.style.setProperty('--orange-rgb',r+','+g+','+b);document.documentElement.style.setProperty('--orange-glow','rgba('+r+','+g+','+b+',0.45)');document.documentElement.style.setProperty('--orange-soft','rgba('+r+','+g+','+b+',0.15)');}}var modeM=document.cookie.match(/portfolio_theme_mode=([^;]+)/);var mode=modeM?decodeURIComponent(modeM[1]):(localStorage.getItem('site_theme_mode')||'');if(mode==='light'){document.documentElement.classList.add('light-mode');document.documentElement.setAttribute('data-theme','light');}}catch(e){}})()`,
+          }}
+        />
+
         {/* OpenSearch Auto-Discovery for Chrome, Firefox, Opera, Edge search suggestions */}
         <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="Bijoy Sarkar Portfolio" />
 
@@ -322,6 +351,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         />
       </head>
       <body suppressHydrationWarning>
+        <ClientThemeSync initialAccent={themeAccent} initialMode={themeMode} />
         <ScrollCanvas />
         <div className="canvas-atmosphere" aria-hidden="true" />
         <ScrollEdgeEffects />

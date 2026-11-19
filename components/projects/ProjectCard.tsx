@@ -7,11 +7,55 @@ import { SocialIcon } from "@/components/ui/SocialIcon";
 
 export function ProjectCard({ project, index }: { project: PortfolioProject; index: number }) {
   const github = externalUrl(project.githubUrl);
+  const isOngoingCover =
+    project.isOngoing &&
+    (!project.image1 ||
+      project.image1.includes("ongoing-project-cover") ||
+      project.image1.includes("ongoing-coder"));
+
   return (
     <article className="project-card" data-reveal>
       <Link href={`/projects/${project.slug}`} aria-label={`View ${project.title}`}>
-        <div className="project-image-frame">
-          <Image className="project-image" src={project.image1} alt={`${project.title} project preview`} fill priority={index === 0} unoptimized sizes="(max-width: 440px) 90vw, (max-width: 700px) 45vw, (max-width: 1100px) 30vw, 380px" />
+        <div className="project-image-frame" style={isOngoingCover ? { background: "#ffffff" } : undefined}>
+          {isOngoingCover ? (
+            <div
+              className="ongoing-dynamic-coder"
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                backgroundColor: "#ffffff",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: "var(--orange)",
+                  WebkitMaskImage: "url('/images/ongoing-coder-silhouette.png')",
+                  maskImage: "url('/images/ongoing-coder-silhouette.png')",
+                  WebkitMaskSize: "cover",
+                  maskSize: "cover",
+                  WebkitMaskPosition: "center",
+                  maskPosition: "center",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskRepeat: "no-repeat",
+                }}
+              />
+            </div>
+          ) : (
+            <Image
+              className="project-image"
+              src={project.image1}
+              alt={`${project.title} project preview`}
+              fill
+              priority={index === 0}
+              unoptimized
+              sizes="(max-width: 440px) 90vw, (max-width: 700px) 45vw, (max-width: 1100px) 30vw, 380px"
+            />
+          )}
           <span className="project-image-label">Project preview · {String(index + 1).padStart(2, "0")}</span>
         </div>
       </Link>

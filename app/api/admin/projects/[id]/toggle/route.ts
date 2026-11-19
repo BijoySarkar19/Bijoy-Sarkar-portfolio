@@ -51,13 +51,48 @@ export async function POST(request: Request, { params }: RouteContext) {
         if (countMainHome >= 5) nextFeatured = false;
       }
 
+      const isOngoingCover = (s?: string | null) =>
+        Boolean(s && (s.includes("ongoing-project-cover") || s.includes("ongoing-coder")));
+
+      const updateData: {
+        isOngoing: boolean;
+        featuredOnHome: boolean;
+        image1?: string;
+        image2?: string;
+        image3?: string;
+        imagesJson?: string;
+      } = {
+        isOngoing: nextOngoing,
+        featuredOnHome: nextFeatured,
+      };
+
+      if (!nextOngoing) {
+        // Automatically remove default currently doing project images when moving to main project group
+        if (isOngoingCover(project.image1)) updateData.image1 = "";
+        if (isOngoingCover(project.image2)) updateData.image2 = "";
+        if (isOngoingCover(project.image3)) updateData.image3 = "";
+        try {
+          const list = JSON.parse(project.imagesJson || "[]");
+          if (Array.isArray(list)) {
+            const filtered = list.filter((img: string) => !isOngoingCover(img));
+            updateData.imagesJson = JSON.stringify(filtered);
+          }
+        } catch {}
+      } else {
+        // If moving back to ongoing and image1 is empty, assign ongoing default artwork
+        if (!project.image1 || project.image1.trim() === "") {
+          const setting = await prisma.siteSetting.findUnique({ where: { key: "ongoingDefaultImage" } });
+          updateData.image1 = setting?.value || "/images/ongoing-project-cover-violet.webp";
+        }
+      }
+
       updatedProject = await prisma.project.update({
         where: { id },
-        data: { isOngoing: nextOngoing, featuredOnHome: nextFeatured },
+        data: updateData,
       });
       auditSummary = nextOngoing
         ? `Marked "${project.title}" as Currently Working Project${nextFeatured ? " (automatically featured on Home)" : ""}`
-        : `Deployed "${project.title}" from Currently Working to Main Projects section`;
+        : `Deployed "${project.title}" from Currently Working to Main Projects section (cleared ongoing placeholder artwork)`;
     } else if (action === "toggle_featured_home") {
       const nextFeatured = !project.featuredOnHome;
 

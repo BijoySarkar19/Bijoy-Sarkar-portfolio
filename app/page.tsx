@@ -13,6 +13,7 @@ import { toPortfolioProject, type PortfolioProject } from "@/lib/projects";
 import { FALLBACK_PROJECTS } from "@/lib/fallback-data";
 import { experiences as fallbackExperiences, skillGroups as fallbackSkillGroups } from "@/lib/portfolio-data";
 import { existsSync, readFileSync } from "fs";
+import { cookies } from "next/headers";
 import { join } from "path";
 
 export const dynamic = "force-dynamic";
@@ -94,6 +95,16 @@ export default async function HomePage() {
   } catch (err) {
     console.warn("Could not read /tmp/settings-store.json on HomePage:", err);
   }
+
+  try {
+    const cookieStore = await cookies();
+    const cAccent = cookieStore.get("portfolio_theme_accent")?.value;
+    if (cAccent) settingsMap.themeAccent = cAccent;
+    const cMode = cookieStore.get("portfolio_theme_mode")?.value;
+    if (cMode) settingsMap.themeMode = cMode;
+    const cOngoing = cookieStore.get("portfolio_ongoing_image")?.value;
+    if (cOngoing) settingsMap.ongoingDefaultImage = cOngoing;
+  } catch {}
 
   // Resolve projects: use DB if available, otherwise resilient fallback dataset
   let featuredProjects: PortfolioProject[] = [];

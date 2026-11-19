@@ -109,21 +109,33 @@ export function ProjectForm({
     if (!slugEdited) setSlug(slugify(value));
   }
 
+  function isOngoingPlaceholder(path?: string | null): boolean {
+    if (!path) return false;
+    return path.includes("ongoing-project-cover") || path.includes("ongoing-coder");
+  }
+
   function handleOngoingToggle(checked: boolean) {
     setIsOngoing(checked);
     if (checked) {
       setFeaturedOnHome(true);
       // For ongoing projects, default to 1 image using the configured default ongoing image
-      setImages([defaultOngoingImage]);
+      setImages([defaultOngoingImage || "/images/ongoing-project-cover-violet.webp"]);
     } else {
-      // Re-populate with finished project default slot count if empty
-      if (images.length === 1 && images[0] === defaultOngoingImage) {
-        const count = Math.max(1, Math.min(10, defaultImageCount));
+      // When moving from ongoing to main: automatically remove default ongoing images!
+      const cleaned = images.filter((img) => !isOngoingPlaceholder(img));
+      const count = Math.max(1, Math.min(10, defaultImageCount));
+      if (cleaned.length === 0) {
         const newSlots: string[] = [""];
         for (let i = 1; i < count; i++) {
           newSlots.push("");
         }
         setImages(newSlots);
+      } else {
+        const slots = [...cleaned];
+        while (slots.length < count) {
+          slots.push("");
+        }
+        setImages(slots);
       }
     }
   }
@@ -175,13 +187,16 @@ export function ProjectForm({
 
     const isOngoingVal = form.get("isOngoing") === "on";
     const validImages = images.map((s) => s.trim()).filter(Boolean);
+    const nonOngoingImages = isOngoingVal
+      ? validImages
+      : validImages.filter((s) => !isOngoingPlaceholder(s));
 
-    if (validImages.length === 0) {
+    if (nonOngoingImages.length === 0) {
       setMessageType("error");
       setMessage(
         isOngoingVal
-          ? "Currently doing projects require at least 1 image (e.g. /images/ongoing-project-cover.webp)."
-          : "Finished projects must have at least 1 image. Please fill in the first image slot."
+          ? "Currently doing projects require at least 1 image (e.g. /images/ongoing-project-cover-violet.webp)."
+          : "Finished projects must have at least 1 real project screenshot. Please enter an image path."
       );
       setPending(false);
       return;
@@ -192,10 +207,10 @@ export function ProjectForm({
       slug: String(form.get("slug") ?? ""),
       description: String(form.get("description") ?? ""),
       longDescription: String(form.get("longDescription") ?? ""),
-      image1: validImages[0] || "",
-      image2: isOngoingVal ? "" : validImages[1] || "",
-      image3: isOngoingVal ? "" : validImages[2] || "",
-      images: isOngoingVal ? [validImages[0]] : validImages,
+      image1: nonOngoingImages[0] || "",
+      image2: isOngoingVal ? "" : nonOngoingImages[1] || "",
+      image3: isOngoingVal ? "" : nonOngoingImages[2] || "",
+      images: isOngoingVal ? [nonOngoingImages[0]] : nonOngoingImages,
       techStack: parseList(form.get("techStack")),
       features: String(form.get("features") ?? "")
         .split("\n")

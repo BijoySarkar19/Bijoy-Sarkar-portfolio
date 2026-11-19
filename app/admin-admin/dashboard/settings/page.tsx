@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { AdminNavigation } from "@/components/admin/AdminNavigation";
 import { SettingsManager } from "@/components/admin/SettingsManager";
 import { existsSync, readFileSync } from "node:fs";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,17 @@ export default async function AdminSettingsPage() {
   } catch (err) {
     console.warn("Could not read /tmp/settings-store.json:", err);
   }
+
+  // Session cookies for immediate cross-container theme consistency
+  try {
+    const cookieStore = await cookies();
+    const cAccent = cookieStore.get("portfolio_theme_accent")?.value;
+    if (cAccent) settingsMap.themeAccent = cAccent;
+    const cMode = cookieStore.get("portfolio_theme_mode")?.value;
+    if (cMode) settingsMap.themeMode = cMode;
+    const cOngoing = cookieStore.get("portfolio_ongoing_image")?.value;
+    if (cOngoing) settingsMap.ongoingDefaultImage = cOngoing;
+  } catch {}
 
   return (
     <main>

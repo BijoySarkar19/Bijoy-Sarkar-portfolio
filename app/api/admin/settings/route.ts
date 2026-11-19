@@ -109,6 +109,9 @@ export async function POST(request: Request) {
       "contactSubtitle",
       // Degrees & Education
       "degreesList",
+      // Project Artwork & Gallery Settings
+      "ongoingDefaultImage",
+      "defaultProjectImageCount",
     ];
 
     for (const key of allowedKeys) {

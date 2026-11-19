@@ -20,6 +20,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { DEFAULT_DEGREES, type DegreeItem } from "@/lib/degrees";
 
 export interface SiteSettingsMap {
@@ -44,6 +45,9 @@ export interface SiteSettingsMap {
   googleSheetsWebhookUrl?: string;
   themeAccent?: string;
   themeMode?: string;
+  // Project Artwork & Gallery Defaults
+  ongoingDefaultImage?: string;
+  defaultProjectImageCount?: string;
   // Section Visibility Toggles
   heroEnabled?: string;
   aboutEnabled?: string;
@@ -990,6 +994,195 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                 onChange={(e) => handleChange("discordUrl", e.target.value)}
                 placeholder="https://discord.gg/... (Optional)"
               />
+            </div>
+          </div>
+
+          {/* Project Artwork & Gallery Configuration */}
+          <div className="admin-card">
+            <div className="admin-card-heading">
+              <div>
+                <p className="section-kicker">Projects &amp; Gallery Defaults</p>
+                <h3>Project Artwork &amp; Default Image Settings</h3>
+              </div>
+            </div>
+
+            {/* Default Ongoing Project Image */}
+            <div style={{ marginTop: 16 }}>
+              <label style={{ display: "block", color: "var(--soft-white)", fontSize: 13, marginBottom: 6, fontWeight: 600 }}>
+                Default Artwork for Currently Doing / Active Development Projects
+              </label>
+              <p style={{ margin: "0 0 14px", fontSize: 12, color: "var(--muted)" }}>
+                This image is automatically used as the default cover for ongoing projects. Full-box zero-black-parts white background and alternative themes are selectable below.
+              </p>
+
+              <div style={{ display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 16 }}>
+                <div
+                  style={{
+                    width: 135,
+                    height: 180,
+                    position: "relative",
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    border: "2px solid var(--orange)",
+                    boxShadow: "0 8px 24px rgba(255, 94, 44, 0.25)",
+                    background: "#ffffff",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Image
+                    src={settings.ongoingDefaultImage || "/images/ongoing-project-cover.webp"}
+                    alt="Current Default Ongoing Artwork"
+                    fill
+                    unoptimized
+                    style={{ objectFit: "cover" }}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      bottom: 6,
+                      left: 6,
+                      background: "rgba(0,0,0,0.85)",
+                      color: "var(--orange)",
+                      fontSize: "9px",
+                      padding: "2px 5px",
+                      borderRadius: 4,
+                      fontWeight: 700,
+                    }}
+                  >
+                    ACTIVE DEFAULT
+                  </span>
+                </div>
+
+                <div style={{ flex: 1, minWidth: 260 }}>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+                    <button
+                      type="button"
+                      onClick={() => handleChange("ongoingDefaultImage", "/images/ongoing-project-cover.webp")}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "7px 14px",
+                        borderRadius: 8,
+                        border:
+                          (settings.ongoingDefaultImage || "/images/ongoing-project-cover.webp") ===
+                          "/images/ongoing-project-cover.webp"
+                            ? "2px solid var(--orange)"
+                            : "1px solid var(--line)",
+                        background:
+                          (settings.ongoingDefaultImage || "/images/ongoing-project-cover.webp") ===
+                          "/images/ongoing-project-cover.webp"
+                            ? "rgba(var(--orange-rgb), 0.15)"
+                            : "rgba(255, 255, 255, 0.04)",
+                        color: "#fff",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      ☀️ Full-Box White BG (Zero Black Parts)
+                      {(settings.ongoingDefaultImage || "/images/ongoing-project-cover.webp") ===
+                        "/images/ongoing-project-cover.webp" && (
+                        <Check size={12} style={{ color: "var(--orange)" }} />
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleChange("ongoingDefaultImage", "/images/ongoing-project-cover-orange.webp")}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "7px 14px",
+                        borderRadius: 8,
+                        border:
+                          settings.ongoingDefaultImage === "/images/ongoing-project-cover-orange.webp"
+                            ? "2px solid var(--orange)"
+                            : "1px solid var(--line)",
+                        background:
+                          settings.ongoingDefaultImage === "/images/ongoing-project-cover-orange.webp"
+                            ? "rgba(var(--orange-rgb), 0.15)"
+                            : "rgba(255, 255, 255, 0.04)",
+                        color: "#fff",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      ⚡ Full-Bleed Orange Theme
+                      {settings.ongoingDefaultImage === "/images/ongoing-project-cover-orange.webp" && (
+                        <Check size={12} style={{ color: "var(--orange)" }} />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="setting-ongoingDefaultImage">Artwork File Path or Image URL</label>
+                    <input
+                      id="setting-ongoingDefaultImage"
+                      value={settings.ongoingDefaultImage ?? "/images/ongoing-project-cover.webp"}
+                      onChange={(e) => handleChange("ongoingDefaultImage", e.target.value)}
+                      placeholder="/images/ongoing-project-cover.webp"
+                      style={{ fontFamily: "monospace", fontSize: 13 }}
+                    />
+                    <span className="field-hint">
+                      Relative path in public/ or HTTPS image URL. Automatically applied to all currently working projects.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Default Image Count for Finished Projects */}
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+              <label style={{ display: "block", color: "var(--soft-white)", fontSize: 13, marginBottom: 6, fontWeight: 600 }}>
+                Default Number Count of Images for Projects (e.g. 3 to 4 or 3 to 2)
+              </label>
+              <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--muted)" }}>
+                When creating a new project, this sets how many image input slots are created by default. You can always add or remove slots on any project.
+              </p>
+
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                {[1, 2, 3, 4, 5, 6].map((count) => {
+                  const isSelected = (settings.defaultProjectImageCount ?? "3") === String(count);
+                  return (
+                    <button
+                      key={count}
+                      type="button"
+                      onClick={() => handleChange("defaultProjectImageCount", String(count))}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "7px 14px",
+                        borderRadius: 8,
+                        border: isSelected ? "2px solid var(--orange)" : "1px solid var(--line)",
+                        background: isSelected ? "rgba(var(--orange-rgb), 0.18)" : "rgba(255, 255, 255, 0.04)",
+                        color: isSelected ? "var(--orange)" : "#fff",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {count} {count === 1 ? "Image" : "Images"}
+                      {isSelected && <Check size={12} />}
+                    </button>
+                  );
+                })}
+
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginLeft: 10 }}>
+                  <span style={{ fontSize: 12, color: "var(--muted)" }}>Custom:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={settings.defaultProjectImageCount ?? "3"}
+                    onChange={(e) => handleChange("defaultProjectImageCount", e.target.value)}
+                    style={{ width: 65, padding: "5px 8px", fontSize: 13, textAlign: "center" }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

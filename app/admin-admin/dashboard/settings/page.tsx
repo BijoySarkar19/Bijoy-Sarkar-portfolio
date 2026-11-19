@@ -60,6 +60,8 @@ export default async function AdminSettingsPage() {
         showOnHome: true,
       },
     ]),
+    ongoingDefaultImage: "/images/ongoing-project-cover.webp",
+    defaultProjectImageCount: "3",
   };
 
   try {

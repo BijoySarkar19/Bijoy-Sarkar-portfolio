@@ -11,7 +11,7 @@ export function ProjectCard({ project, index }: { project: PortfolioProject; ind
     <article className="project-card" data-reveal>
       <Link href={`/projects/${project.slug}`} aria-label={`View ${project.title}`}>
         <div className="project-image-frame">
-          <Image className="project-image" src={project.image1} alt={`${project.title} project preview`} fill priority={index === 0} sizes="(max-width: 440px) 90vw, (max-width: 700px) 45vw, (max-width: 1100px) 30vw, 380px" />
+          <Image className="project-image" src={project.image1} alt={`${project.title} project preview`} fill priority={index === 0} unoptimized sizes="(max-width: 440px) 90vw, (max-width: 700px) 45vw, (max-width: 1100px) 30vw, 380px" />
           <span className="project-image-label">Project preview · {String(index + 1).padStart(2, "0")}</span>
         </div>
       </Link>

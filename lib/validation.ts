@@ -31,6 +31,7 @@ export const projectInputSchema = z.object({
   image1: imageReference,
   image2: optionalImageReference,
   image3: optionalImageReference,
+  images: z.array(imageReference).optional(),
   techStack: z.array(z.string().trim().min(1).max(40)).min(1).max(16),
   features: z.array(z.string().trim().min(1).max(220)).max(12),
   githubUrl: externalWebUrl.nullable().optional(),

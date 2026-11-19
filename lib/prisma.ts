@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS "Project" (
     "image1" TEXT NOT NULL,
     "image2" TEXT NOT NULL,
     "image3" TEXT NOT NULL,
+    "imagesJson" TEXT NOT NULL DEFAULT '[]',
     "techStack" TEXT NOT NULL DEFAULT '[]',
     "features" TEXT NOT NULL DEFAULT '[]',
     "githubUrl" TEXT,
@@ -105,6 +106,17 @@ function ensureSqliteSchema(dbPath: string) {
   try {
     const db = new Database(dbPath);
     db.exec(SCHEMA_DDL);
+    try {
+      db.exec(`ALTER TABLE "Project" ADD COLUMN "imagesJson" TEXT NOT NULL DEFAULT '[]'`);
+    } catch {
+      // Column already exists
+    }
+    try {
+      db.prepare(`INSERT OR IGNORE INTO "SiteSetting" ("key", "value", "updatedAt") VALUES (?, ?, CURRENT_TIMESTAMP)`).run("ongoingDefaultImage", "/images/ongoing-project-cover.webp");
+      db.prepare(`INSERT OR IGNORE INTO "SiteSetting" ("key", "value", "updatedAt") VALUES (?, ?, CURRENT_TIMESTAMP)`).run("defaultProjectImageCount", "3");
+    } catch {
+      // Ignore
+    }
     db.close();
   } catch (err) {
     console.warn("Schema initialization error:", err);

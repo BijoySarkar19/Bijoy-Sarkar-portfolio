@@ -33,15 +33,29 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   const parsed = projectInputSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Please correct the project fields.", fields: parsed.error.flatten().fieldErrors }, { status: 422 });
 
+  const rawImages = parsed.data.images && parsed.data.images.length > 0
+    ? parsed.data.images
+    : [parsed.data.image1, parsed.data.image2, parsed.data.image3].filter(Boolean) as string[];
+
+  const images = parsed.data.isOngoing ? [rawImages[0] || parsed.data.image1] : rawImages;
+
   const data = {
-    ...parsed.data,
     title: cleanText(parsed.data.title),
+    slug: parsed.data.slug,
     description: cleanText(parsed.data.description),
     longDescription: cleanText(parsed.data.longDescription),
+    image1: images[0] || parsed.data.image1,
+    image2: images[1] || "",
+    image3: images[2] || "",
+    imagesJson: JSON.stringify(images),
     techStack: JSON.stringify(parsed.data.techStack.map(cleanText)),
     features: JSON.stringify(parsed.data.features.map(cleanText)),
     githubUrl: parsed.data.githubUrl || null,
     liveUrl: parsed.data.liveUrl || null,
+    published: parsed.data.published,
+    isOngoing: parsed.data.isOngoing,
+    featuredOnHome: parsed.data.featuredOnHome,
+    sortOrder: parsed.data.sortOrder,
   };
 
   try {

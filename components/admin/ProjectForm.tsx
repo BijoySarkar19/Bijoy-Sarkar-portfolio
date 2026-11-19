@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Save, Sparkles, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Check, Save, Sparkles, Image as ImageIcon, Plus, Trash2, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -15,6 +15,7 @@ export interface ProjectFormInitial {
   image1: string;
   image2: string;
   image3: string;
+  images?: string[];
   techStack: string[];
   features: string[];
   githubUrl: string | null;
@@ -33,6 +34,7 @@ const emptyProject: ProjectFormInitial = {
   image1: "/images/ongoing-project-cover.webp",
   image2: "",
   image3: "",
+  images: [],
   techStack: [],
   features: [],
   githubUrl: null,
@@ -53,7 +55,15 @@ function slugify(value: string) {
     .slice(0, 120);
 }
 
-export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
+export function ProjectForm({
+  initial,
+  defaultOngoingImage = "/images/ongoing-project-cover.webp",
+  defaultImageCount = 3,
+}: {
+  initial?: ProjectFormInitial;
+  defaultOngoingImage?: string;
+  defaultImageCount?: number;
+}) {
   const router = useRouter();
   const project = initial ?? emptyProject;
   const [title, setTitle] = useState(project.title);
@@ -66,10 +76,29 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
   const [messageType, setMessageType] = useState<"success" | "error">("error");
   const [description, setDescription] = useState(project.description);
 
-  // Default images for ongoing vs finished projects
-  const [image1, setImage1] = useState(project.image1 || (project.isOngoing ? "/images/ongoing-project-cover.webp" : ""));
-  const [image2, setImage2] = useState(project.isOngoing ? "" : project.image2 || "");
-  const [image3, setImage3] = useState(project.isOngoing ? "" : project.image3 || "");
+  // Dynamic images state
+  const [images, setImages] = useState<string[]>(() => {
+    if (initial?.images && initial.images.length > 0) {
+      return [...initial.images];
+    }
+    if (initial) {
+      const list = [initial.image1, initial.image2, initial.image3]
+        .map((s) => (typeof s === "string" ? s.trim() : ""))
+        .filter(Boolean);
+      return list.length > 0 ? list : ["/images/ongoing-project-cover.webp"];
+    }
+    // New project initialization:
+    if (project.isOngoing) {
+      return [defaultOngoingImage];
+    }
+    // Use configured defaultProjectImageCount (e.g. 3, 4, 2)
+    const initialSlots: string[] = [];
+    const count = Math.max(1, Math.min(10, defaultImageCount));
+    for (let i = 0; i < count; i++) {
+      initialSlots.push("");
+    }
+    return initialSlots;
+  });
 
   const isEditing = Boolean(project.id);
   const techValue = useMemo(() => project.techStack.join(", "), [project.techStack]);
@@ -83,20 +112,53 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
   function handleOngoingToggle(checked: boolean) {
     setIsOngoing(checked);
     if (checked) {
-      // Currently doing projects rule: strictly 1 image (Active Development Orange Coder)
       setFeaturedOnHome(true);
-      if (!image1 || (image1.startsWith("/projects/") && !image1.includes("sentineledge") && !image1.includes("ongoing"))) {
-        setImage1("/images/ongoing-project-cover.webp");
+      // For ongoing projects, default to 1 image using the configured default ongoing image
+      setImages([defaultOngoingImage]);
+    } else {
+      // Re-populate with finished project default slot count if empty
+      if (images.length === 1 && images[0] === defaultOngoingImage) {
+        const count = Math.max(1, Math.min(10, defaultImageCount));
+        const newSlots: string[] = [""];
+        for (let i = 1; i < count; i++) {
+          newSlots.push("");
+        }
+        setImages(newSlots);
       }
-      setImage2("");
-      setImage3("");
     }
   }
 
-  function applyOngoingPreset() {
-    setImage1("/images/ongoing-project-cover.webp");
-    setImage2("");
-    setImage3("");
+  // Dynamic Image Slots Handlers
+  function updateImageAt(index: number, value: string) {
+    setImages((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  }
+
+  function addImageSlot() {
+    setImages((prev) => [...prev, ""]);
+  }
+
+  function removeImageSlot(index: number) {
+    setImages((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((_, i) => i !== index);
+    });
+  }
+
+  function applyPreset(path: string) {
+    setImages([path]);
+  }
+
+  function resetToDefaultCount() {
+    const count = Math.max(1, Math.min(10, defaultImageCount));
+    const next: string[] = [];
+    for (let i = 0; i < count; i++) {
+      next.push(images[i] || "");
+    }
+    setImages(next);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -112,19 +174,14 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
         .filter(Boolean);
 
     const isOngoingVal = form.get("isOngoing") === "on";
-    const img1 = String(form.get("image1") ?? image1).trim();
-    const img2 = isOngoingVal ? "" : String(form.get("image2") ?? image2).trim();
-    const img3 = isOngoingVal ? "" : String(form.get("image3") ?? image3).trim();
+    const validImages = images.map((s) => s.trim()).filter(Boolean);
 
-    // Validation rules:
-    // 1. Finished projects (Real Life Problems): 1 to 3 images, cannot be 0.
-    // 2. Currently doing projects: strictly 1 image (the active development artwork).
-    if (!img1) {
+    if (validImages.length === 0) {
       setMessageType("error");
       setMessage(
         isOngoingVal
-          ? "Currently doing projects require the Active Development image (/images/ongoing-project-cover.webp)."
-          : "Finished projects must have at least 1 hero image (and up to 3 images max)."
+          ? "Currently doing projects require at least 1 image (e.g. /images/ongoing-project-cover.webp)."
+          : "Finished projects must have at least 1 image. Please fill in the first image slot."
       );
       setPending(false);
       return;
@@ -135,9 +192,10 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
       slug: String(form.get("slug") ?? ""),
       description: String(form.get("description") ?? ""),
       longDescription: String(form.get("longDescription") ?? ""),
-      image1: img1,
-      image2: img2,
-      image3: img3,
+      image1: validImages[0] || "",
+      image2: isOngoingVal ? "" : validImages[1] || "",
+      image3: isOngoingVal ? "" : validImages[2] || "",
+      images: isOngoingVal ? [validImages[0]] : validImages,
       techStack: parseList(form.get("techStack")),
       features: String(form.get("features") ?? "")
         .split("\n")
@@ -177,10 +235,7 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
     }
   }
 
-  // Determine active preview images
-  const activePreviews = isOngoing
-    ? [image1 || "/images/ongoing-project-cover.webp"]
-    : [image1, image2, image3].filter(Boolean);
+  const activePreviews = images.filter((s) => Boolean(s.trim()));
 
   return (
     <form className="admin-form" onSubmit={submit}>
@@ -321,92 +376,35 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
           </label>
         </div>
 
-        {/* Artwork & Image Section */}
-        {isOngoing ? (
-          /* Currently Doing Project: Strictly ONE Image (Active Development Orange Coder Artwork) */
+        {/* Dynamic Project Images Section */}
+        <div
+          className="field full-width"
+          style={{
+            background: isOngoing
+              ? "linear-gradient(135deg, rgba(255, 94, 44, 0.1) 0%, rgba(15, 23, 38, 0.85) 100%)"
+              : "rgba(15, 23, 42, 0.4)",
+            border: isOngoing ? "1px solid rgba(255, 94, 44, 0.35)" : "1px solid var(--line)",
+            borderRadius: "12px",
+            padding: "20px",
+            marginTop: "6px",
+          }}
+        >
           <div
-            className="field full-width"
             style={{
-              background: "linear-gradient(135deg, rgba(255, 94, 44, 0.1) 0%, rgba(15, 23, 38, 0.85) 100%)",
-              border: "1px solid rgba(255, 94, 44, 0.35)",
-              borderRadius: "10px",
-              padding: "18px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 12,
+              marginBottom: 16,
+              paddingBottom: 12,
+              borderBottom: "1px solid var(--line)",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexWrap: "wrap",
-                gap: 12,
-                marginBottom: 14,
-              }}
-            >
-              <div>
-                <span
-                  style={{
-                    color: "var(--orange)",
-                    fontWeight: 700,
-                    fontSize: "12px",
-                    letterSpacing: "0.08em",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
-                  <Sparkles size={13} /> CURRENTLY DOING PROJECT · STRICTLY 1 IMAGE
-                </span>
-                <h4 style={{ margin: "4px 0 2px", fontSize: "15px", color: "var(--white)" }}>
-                  Active Development Cyber Coder Artwork
-                </h4>
-                <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)" }}>
-                  All currently doing projects strictly feature 1 single image using this glowing orange coder artwork.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className="button button-secondary"
-                style={{
-                  borderColor: "var(--orange)",
-                  color: "var(--white)",
-                  fontSize: "12px",
-                  padding: "6px 12px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-                onClick={applyOngoingPreset}
-              >
-                <Sparkles size={12} style={{ color: "var(--orange)" }} /> Reset to Default Artwork
-              </button>
-            </div>
-
-            <label htmlFor="image1" style={{ fontSize: "13px", color: "var(--white)", fontWeight: 600 }}>
-              Primary Image Path (1 of 1)
-            </label>
-            <input
-              id="image1"
-              name="image1"
-              value={image1}
-              onChange={(e) => setImage1(e.target.value)}
-              required
-              maxLength={500}
-              placeholder="/images/ongoing-project-cover.webp"
-              style={{ borderColor: "rgba(255, 94, 44, 0.4)", fontFamily: "monospace", fontSize: "13px" }}
-            />
-            <span className="field-counter" style={{ color: "var(--orange)" }}>
-              ✓ Exactly 1 image active for this project. Supporting images 2 & 3 are omitted.
-            </span>
-          </div>
-        ) : (
-          /* Finished Projects (Real Life Problems): 1 to 3 Images (never 0, max 3) */
-          <div className="field full-width" style={{ marginTop: 6 }}>
-            <div style={{ marginBottom: 10 }}>
+            <div>
               <span
                 style={{
-                  color: "var(--accent)",
+                  color: isOngoing ? "var(--orange)" : "var(--accent)",
                   fontWeight: 700,
                   fontSize: "12px",
                   letterSpacing: "0.08em",
@@ -415,56 +413,173 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
                   gap: 6,
                 }}
               >
-                <ImageIcon size={13} /> REAL PROBLEMS / FINISHED PROJECT · 1 TO 3 IMAGES
+                {isOngoing ? <Sparkles size={13} /> : <ImageIcon size={13} />}
+                {isOngoing
+                  ? "CURRENTLY DOING PROJECT · COVER IMAGE"
+                  : `PROJECT GALLERY IMAGES · DYNAMIC (${images.length} SLOTS)`}
               </span>
-              <p style={{ margin: "2px 0 0", fontSize: "12px", color: "var(--muted)" }}>
-                Permanent finished projects must have at least 1 image and at most 3 images (1 hero + up to 2 supporting detail captures).
+              <h4 style={{ margin: "4px 0 2px", fontSize: "15px", color: "var(--white)" }}>
+                {isOngoing ? "Active Development Artwork" : "Manage Project Images (Add / Remove Freely)"}
+              </h4>
+              <p style={{ margin: 0, fontSize: "12px", color: "var(--muted)" }}>
+                {isOngoing
+                  ? "Default high-contrast orange coder covers the full box with zero black edges/corners."
+                  : "Add or remove image slots as needed (e.g. 2, 3, 4, 5+ images). Image 1 serves as the main card preview."}
               </p>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div>
-                <label htmlFor="image1">Hero image (Required — Image 1 of up to 3)</label>
-                <input
-                  id="image1"
-                  name="image1"
-                  value={image1}
-                  onChange={(e) => setImage1(e.target.value)}
-                  required
-                  maxLength={500}
-                  placeholder="/projects/your-project/01.webp"
-                />
-                <span className="field-counter">Mandatory overview screenshot inside public/.</span>
-              </div>
-
-              <div>
-                <label htmlFor="image2">Supporting image 1 (Optional — Image 2 of 3)</label>
-                <input
-                  id="image2"
-                  name="image2"
-                  value={image2}
-                  onChange={(e) => setImage2(e.target.value)}
-                  maxLength={500}
-                  placeholder="/projects/your-project/02.webp (leave empty if only 1 image)"
-                />
-                <span className="field-counter">Optional architectural or detail capture.</span>
-              </div>
-
-              <div>
-                <label htmlFor="image3">Supporting image 2 (Optional — Image 3 of 3)</label>
-                <input
-                  id="image3"
-                  name="image3"
-                  value={image3}
-                  onChange={(e) => setImage3(e.target.value)}
-                  maxLength={500}
-                  placeholder="/projects/your-project/03.webp (leave empty if only 1 or 2 images)"
-                />
-                <span className="field-counter">Optional telemetry or secondary screen. Maximum 3 images total.</span>
-              </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {isOngoing ? (
+                <>
+                  <button
+                    type="button"
+                    className="button button-secondary"
+                    style={{ fontSize: "11px", padding: "5px 10px" }}
+                    onClick={() => applyPreset(defaultOngoingImage)}
+                  >
+                    ⚡ Default Artwork
+                  </button>
+                  <button
+                    type="button"
+                    className="button button-secondary"
+                    style={{ fontSize: "11px", padding: "5px 10px" }}
+                    onClick={() => applyPreset("/images/ongoing-project-cover.webp")}
+                  >
+                    ☀️ Full-Box White BG
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="button button-secondary"
+                    style={{ fontSize: "11px", padding: "5px 10px" }}
+                    onClick={resetToDefaultCount}
+                    title={`Reset slots to default count (${defaultImageCount})`}
+                  >
+                    <RotateCcw size={11} /> Reset ({defaultImageCount})
+                  </button>
+                  <button
+                    type="button"
+                    className="button"
+                    style={{
+                      fontSize: "11px",
+                      padding: "5px 12px",
+                      background: "rgba(var(--orange-rgb), 0.2)",
+                      borderColor: "var(--orange)",
+                      color: "#fff",
+                    }}
+                    onClick={addImageSlot}
+                  >
+                    <Plus size={12} /> Add Image Slot
+                  </button>
+                </>
+              )}
             </div>
           </div>
-        )}
+
+          {/* Dynamic Image Inputs List */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {images.map((imgSrc, idx) => (
+              <div
+                key={`slot-${idx}`}
+                style={{
+                  display: "flex",
+                  gap: 12,
+                  alignItems: "flex-end",
+                  background: "rgba(0, 0, 0, 0.25)",
+                  padding: "12px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <label
+                    htmlFor={`image-slot-${idx}`}
+                    style={{
+                      fontSize: "12px",
+                      color: idx === 0 ? "var(--orange)" : "var(--soft-white)",
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      marginBottom: 6,
+                    }}
+                  >
+                    <span>
+                      {idx === 0
+                        ? "Image 1 (Main Hero / Card Cover — Required)"
+                        : `Image ${idx + 1} (Supporting Gallery Capture)`}
+                    </span>
+                    {idx === 0 && <span style={{ color: "var(--orange)" }}>*</span>}
+                  </label>
+                  <input
+                    id={`image-slot-${idx}`}
+                    value={imgSrc}
+                    onChange={(e) => updateImageAt(idx, e.target.value)}
+                    required={idx === 0}
+                    placeholder={
+                      isOngoing
+                        ? "/images/ongoing-project-cover.webp"
+                        : `/projects/your-project/0${idx + 1}.webp`
+                    }
+                    style={{
+                      fontFamily: "monospace",
+                      fontSize: "13px",
+                      borderColor: idx === 0 ? "rgba(255, 94, 44, 0.4)" : undefined,
+                    }}
+                  />
+                </div>
+
+                {!isOngoing && images.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeImageSlot(idx)}
+                    className="button button-secondary"
+                    style={{
+                      color: "#ff6b6b",
+                      borderColor: "rgba(255, 107, 107, 0.3)",
+                      padding: "9px 12px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: "12px",
+                      flexShrink: 0,
+                    }}
+                    title={`Delete image slot ${idx + 1}`}
+                  >
+                    <Trash2 size={13} />
+                    <span>Remove</span>
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {!isOngoing && (
+            <div style={{ marginTop: 14 }}>
+              <button
+                type="button"
+                onClick={addImageSlot}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  border: "1px dashed rgba(255, 94, 44, 0.6)",
+                  background: "rgba(var(--orange-rgb), 0.08)",
+                  color: "var(--orange)",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                <Plus size={14} /> Add Another Image Slot (e.g. expand to {images.length + 1} images)
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className="field">
           <label htmlFor="project-github">GitHub URL</label>
@@ -499,22 +614,24 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
         </div>
       </div>
 
-      {/* Image Preview Area */}
+      {/* Live Image Previews Area */}
       <div style={{ marginTop: 20 }}>
         <p style={{ fontSize: "12px", color: "var(--muted)", marginBottom: 8, fontWeight: 600 }}>
-          {isOngoing ? "ACTIVE DEVELOPMENT PREVIEW (1 IMAGE)" : `GALLERY PREVIEWS (${activePreviews.length} OF MAX 3 IMAGES)`}
+          {isOngoing
+            ? "ACTIVE DEVELOPMENT PREVIEW (1 IMAGE)"
+            : `GALLERY PREVIEWS (${activePreviews.length} OF ${images.length} SLOTS ACTIVE)`}
         </p>
         <div className="image-previews" aria-label="Image previews">
           {activePreviews.map((path, index) => (
-            <div className="image-preview" key={`${index}-${path}`}>
+            <div className="image-preview" key={`${index}-${path}`} style={{ position: "relative" }}>
               <Image
-                src={path || "/images/ongoing-project-cover.webp"}
+                src={path || defaultOngoingImage}
                 alt={`${index === 0 ? "Hero" : `Supporting ${index}`} preview`}
                 width={400}
                 height={300}
                 unoptimized
                 onError={(event) => {
-                  event.currentTarget.src = "/images/ongoing-project-cover.webp";
+                  event.currentTarget.src = defaultOngoingImage;
                 }}
               />
               <span
@@ -522,13 +639,14 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
                   position: "absolute",
                   bottom: 6,
                   left: 6,
-                  background: "rgba(0,0,0,0.75)",
+                  background: "rgba(0,0,0,0.85)",
                   color: isOngoing ? "var(--orange)" : "var(--white)",
                   fontSize: "10px",
                   padding: "2px 6px",
                   borderRadius: 4,
                   fontWeight: 600,
                   fontFamily: "monospace",
+                  border: isOngoing ? "1px solid rgba(255, 94, 44, 0.4)" : "1px solid rgba(255,255,255,0.2)",
                 }}
               >
                 {isOngoing ? "01/01 · ONGOING ARTWORK" : `0${index + 1}/0${activePreviews.length}`}
@@ -543,7 +661,8 @@ export function ProjectForm({ initial }: { initial?: ProjectFormInitial }) {
           <ArrowLeft size={13} /> Cancel
         </Link>
         <button className="button" type="submit" disabled={pending}>
-          {pending ? "Saving…" : isEditing ? "Save changes" : "Create project"} {pending ? <Check size={14} /> : <Save size={14} />}
+          {pending ? "Saving…" : isEditing ? "Save changes" : "Create project"}{" "}
+          {pending ? <Check size={14} /> : <Save size={14} />}
         </button>
       </div>
     </form>

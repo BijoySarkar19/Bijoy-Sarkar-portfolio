@@ -1,9 +1,10 @@
 import type { Project } from "@/generated/prisma/client";
 
-export interface PortfolioProject extends Omit<Project, "techStack" | "features"> {
+export interface PortfolioProject extends Omit<Project, "techStack" | "features" | "imagesJson"> {
   techStack: string[];
   features: string[];
   images: string[];
+  imagesJson?: string;
 }
 
 function parseStringList(value: string): string[] {
@@ -15,18 +16,28 @@ function parseStringList(value: string): string[] {
   }
 }
 
-export function toPortfolioProject(project: Project): PortfolioProject {
-  // Currently Doing projects: strictly 1 image (Active Development orange coder artwork)
-  // Finished projects (Real Life Problems): 1 to 3 images (minimum 1, maximum 3)
-  const validImages = [project.image1, project.image2, project.image3]
-    .map((img) => (typeof img === "string" ? img.trim() : ""))
-    .filter(Boolean);
+export function toPortfolioProject(project: Project & { imagesJson?: string | null }): PortfolioProject {
+  let images: string[] = [];
 
-  const images = project.isOngoing
-    ? [project.image1 || "/images/ongoing-project-cover.webp"]
-    : validImages.length > 0
-    ? validImages.slice(0, 3)
-    : [project.image1];
+  if (project.isOngoing) {
+    // Currently Doing projects: strictly 1 image (Active Development orange coder artwork)
+    images = [project.image1 || "/images/ongoing-project-cover.webp"];
+  } else {
+    // Finished projects (Real Life Problems): use dynamic images from imagesJson if available
+    if (project.imagesJson) {
+      const parsed = parseStringList(project.imagesJson);
+      if (parsed.length > 0) {
+        images = parsed;
+      }
+    }
+    // Fall back to image1, image2, image3
+    if (images.length === 0) {
+      const validImages = [project.image1, project.image2, project.image3]
+        .map((img) => (typeof img === "string" ? img.trim() : ""))
+        .filter(Boolean);
+      images = validImages.length > 0 ? validImages : [project.image1];
+    }
+  }
 
   return {
     ...project,

@@ -7,17 +7,31 @@ import { SocialIcon } from "@/components/ui/SocialIcon";
 
 export function ProjectCard({ project, index }: { project: PortfolioProject; index: number }) {
   const github = externalUrl(project.githubUrl);
-  const isOngoingCover =
+  const isOngoingWithoutPhoto = project.isOngoing && (!project.image1 || project.image1.trim() === "");
+  const isFullBleedCover = project.isOngoing && Boolean(project.image1?.includes("fullbleed"));
+  const isWhiteCover =
     project.isOngoing &&
-    (!project.image1 ||
-      project.image1.includes("ongoing-project-cover") ||
-      project.image1.includes("ongoing-coder"));
+    Boolean(
+      project.image1 &&
+        (project.image1.includes("ongoing-project-cover") ||
+          project.image1.includes("ongoing-coder")) &&
+        !isFullBleedCover
+    );
 
   return (
     <article className="project-card" data-reveal>
       <Link href={`/projects/${project.slug}`} aria-label={`View ${project.title}`}>
-        <div className="project-image-frame" style={isOngoingCover ? { background: "#ffffff" } : undefined}>
-          {isOngoingCover ? (
+        <div
+          className="project-image-frame"
+          style={
+            isWhiteCover
+              ? { background: "#ffffff" }
+              : isOngoingWithoutPhoto
+              ? { background: "rgb(12 16 32 / 0.85)" }
+              : undefined
+          }
+        >
+          {isWhiteCover ? (
             <div
               className="ongoing-dynamic-coder"
               style={{
@@ -44,6 +58,27 @@ export function ProjectCard({ project, index }: { project: PortfolioProject; ind
                   maskRepeat: "no-repeat",
                 }}
               />
+            </div>
+          ) : isOngoingWithoutPhoto ? (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 16,
+                textAlign: "center",
+                border: "1px dashed rgba(var(--orange-rgb), 0.35)",
+              }}
+            >
+              <span style={{ color: "var(--orange)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
+                ⚡ ACTIVE DEVELOPMENT
+              </span>
+              <span style={{ color: "var(--muted)", fontSize: 11, fontStyle: "italic" }}>
+                Upcoming on his way
+              </span>
             </div>
           ) : (
             <Image
@@ -73,8 +108,30 @@ export function ProjectCard({ project, index }: { project: PortfolioProject; ind
         <p>{project.description}</p>
         <div className="project-tech">{project.techStack.slice(0, 4).map((tech) => <span className="tag" key={tech}>{tech}</span>)}</div>
         <div className="project-card-links">
-          <Link className="project-link" href={`/projects/${project.slug}`}>Explore project <ArrowUpRight className="project-arrow" size={13} /></Link>
-          {github ? <a className="project-link project-github" href={github} target="_blank" rel="noreferrer" aria-label={`Open ${project.title} on GitHub`}><SocialIcon name="github" size={13} /></a> : null}
+          <Link className="project-link" href={`/projects/${project.slug}`}>
+            Explore project <ArrowUpRight className="project-arrow" size={13} />
+          </Link>
+          {github ? (
+            <a
+              className="project-link project-github"
+              href={github}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`Open ${project.title} on GitHub`}
+              title="Open GitHub repository"
+            >
+              <SocialIcon name="github" size={13} />
+            </a>
+          ) : project.isOngoing ? (
+            <Link
+              className="project-link project-github"
+              href="/404"
+              aria-label={`${project.title} GitHub repository under active development (404)`}
+              title="GitHub repository under active development (Opens 404)"
+            >
+              <SocialIcon name="github" size={13} />
+            </Link>
+          ) : null}
         </div>
       </div>
     </article>

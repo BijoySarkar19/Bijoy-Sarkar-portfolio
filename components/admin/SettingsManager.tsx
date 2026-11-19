@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Save,
   Undo2,
@@ -18,6 +18,9 @@ import {
   Layers,
   Sparkles,
   BookOpen,
+  Upload,
+  EyeOff,
+  RotateCcw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -126,19 +129,73 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
     return DEFAULT_DEGREES;
   });
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingArtwork, setUploadingArtwork] = useState(false);
+
   useEffect(() => {
     const activeAccent = settings.themeAccent || "#ff5e2c";
     const activeMode = settings.themeMode || "dark";
     applyThemeVariables(activeAccent, activeMode);
   }, [settings.themeAccent, settings.themeMode]);
 
-  function getMatchingOngoingCover(accent: string): string {
+  function getMatchingOngoingCover(accent: string, isFullBleed?: boolean): string {
     const hex = accent.toLowerCase().trim();
-    if (hex === "#9d4edd" || hex.includes("violet") || hex.includes("purple")) return "/images/ongoing-project-cover-violet.webp";
-    if (hex === "#00b4d8" || hex.includes("blue")) return "/images/ongoing-project-cover-blue.webp";
-    if (hex === "#00f5d4" || hex.includes("emerald") || hex.includes("green")) return "/images/ongoing-project-cover-emerald.webp";
-    if (hex === "#e63946" || hex.includes("red") || hex.includes("crimson")) return "/images/ongoing-project-cover-red.webp";
-    return "/images/ongoing-project-cover-orange.webp";
+    const fullbleed =
+      typeof isFullBleed === "boolean"
+        ? isFullBleed
+        : Boolean((settings.ongoingDefaultImage || "").includes("fullbleed"));
+
+    let colorName = "orange";
+    if (hex === "#9d4edd" || hex.includes("violet") || hex.includes("purple")) colorName = "violet";
+    else if (hex === "#00b4d8" || hex.includes("blue")) colorName = "blue";
+    else if (hex === "#00f5d4" || hex.includes("emerald") || hex.includes("green")) colorName = "emerald";
+    else if (hex === "#e63946" || hex.includes("red") || hex.includes("crimson")) colorName = "red";
+
+    return fullbleed
+      ? `/images/ongoing-project-cover-fullbleed-${colorName}.webp`
+      : `/images/ongoing-project-cover-${colorName}.webp`;
+  }
+
+  async function handleCustomPhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Instant local preview
+    const localUrl = URL.createObjectURL(file);
+    handleChange("ongoingDefaultImage", localUrl);
+
+    setUploadingArtwork(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload-artwork", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to upload image");
+      handleChange("ongoingDefaultImage", data.url);
+      setMessage({
+        text: `Custom photo "${file.name}" uploaded and set as default ongoing artwork!`,
+        type: "success",
+      });
+    } catch (err) {
+      setMessage({
+        text: err instanceof Error ? err.message : "Image upload failed.",
+        type: "error",
+      });
+    } finally {
+      setUploadingArtwork(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  function handleRemovePhoto() {
+    handleChange("ongoingDefaultImage", "");
+    setMessage({
+      text: "Ongoing project default photo removed. Projects will show the clean 'Upcoming on his way' indicator unless an image is set.",
+      type: "success",
+    });
   }
 
   function handleChange(key: string, value: string) {
@@ -154,10 +211,11 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
             window.dispatchEvent(new CustomEvent("portfolio-theme-change", { detail: { accent: value, mode: next.themeMode } }));
           } catch {}
         }
-        // Automatically switch ongoing artwork to match selected accent theme
+        // Automatically switch ongoing artwork to match selected accent theme (preserving Style 1 or Style 2)
         const currentCover = prev.ongoingDefaultImage || "";
-        if (!currentCover || currentCover.includes("ongoing-project-cover")) {
-          next.ongoingDefaultImage = getMatchingOngoingCover(value);
+        if (currentCover && currentCover.includes("ongoing-project-cover")) {
+          const isFullBleed = currentCover.includes("fullbleed");
+          next.ongoingDefaultImage = getMatchingOngoingCover(value, isFullBleed);
         }
       }
 
@@ -1067,104 +1125,317 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
               </p>
 
               <div style={{ display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 16 }}>
-                <div
-                  style={{
-                    width: 135,
-                    height: 180,
-                    position: "relative",
-                    borderRadius: 12,
-                    overflow: "hidden",
-                    border: "2px solid var(--orange)",
-                    boxShadow: "0 8px 24px rgba(255, 94, 44, 0.25)",
-                    background: "#ffffff",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Image
-                    src={settings.ongoingDefaultImage || "/images/ongoing-project-cover.webp"}
-                    alt="Current Default Ongoing Artwork"
-                    fill
-                    unoptimized
-                    style={{ objectFit: "cover" }}
-                  />
-                  <span
+                {/* Active Artwork Thumbnail Preview Box */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 145, flexShrink: 0 }}>
+                  <div
                     style={{
-                      position: "absolute",
-                      bottom: 6,
-                      left: 6,
-                      background: "rgba(0,0,0,0.85)",
-                      color: "var(--orange)",
-                      fontSize: "9px",
-                      padding: "2px 5px",
-                      borderRadius: 4,
-                      fontWeight: 700,
+                      width: 145,
+                      height: 190,
+                      position: "relative",
+                      borderRadius: 12,
+                      overflow: "hidden",
+                      border: settings.ongoingDefaultImage ? "2px solid var(--orange)" : "2px dashed var(--line)",
+                      boxShadow: settings.ongoingDefaultImage ? "0 8px 24px rgba(var(--orange-rgb), 0.25)" : "none",
+                      background: settings.ongoingDefaultImage?.includes("fullbleed") ? "var(--orange)" : "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    ACTIVE DEFAULT
-                  </span>
+                    {settings.ongoingDefaultImage ? (
+                      <>
+                        <Image
+                          src={settings.ongoingDefaultImage}
+                          alt="Current Default Ongoing Artwork"
+                          fill
+                          unoptimized
+                          style={{ objectFit: "cover" }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute",
+                            bottom: 6,
+                            left: 6,
+                            background: "rgba(0,0,0,0.85)",
+                            color: "var(--orange)",
+                            fontSize: "9px",
+                            padding: "2px 6px",
+                            borderRadius: 4,
+                            fontWeight: 700,
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          ACTIVE DEFAULT
+                        </span>
+                      </>
+                    ) : (
+                      <div style={{ padding: 12, textAlign: "center", color: "var(--muted)" }}>
+                        <EyeOff size={26} style={{ opacity: 0.6, marginBottom: 6 }} />
+                        <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "var(--white)" }}>No Photo Set</p>
+                        <p style={{ margin: "4px 0 0", fontSize: 9, opacity: 0.8 }}>Will show &quot;Upcoming on his way&quot;</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Remove Photo or Restore Default Button */}
+                  <div style={{ width: "100%", marginTop: 8 }}>
+                    {settings.ongoingDefaultImage ? (
+                      <button
+                        type="button"
+                        onClick={handleRemovePhoto}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 5,
+                          width: "100%",
+                          padding: "6px 10px",
+                          borderRadius: 8,
+                          border: "1px solid rgba(239, 68, 68, 0.4)",
+                          background: "rgba(239, 68, 68, 0.08)",
+                          color: "#ef4444",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          transition: "all 180ms ease",
+                        }}
+                        title="Remove current default photo (clears image from ongoing projects)"
+                      >
+                        <Trash2 size={12} /> Remove Photo
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleChange(
+                            "ongoingDefaultImage",
+                            getMatchingOngoingCover(settings.themeAccent || "#ff5e2c", false)
+                          )
+                        }
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 5,
+                          width: "100%",
+                          padding: "6px 10px",
+                          borderRadius: 8,
+                          border: "1px solid var(--orange)",
+                          background: "rgba(var(--orange-rgb), 0.12)",
+                          color: "var(--orange)",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          transition: "all 180ms ease",
+                        }}
+                      >
+                        <RotateCcw size={12} /> Restore Default
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <div style={{ flex: 1, minWidth: 260 }}>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-                    {[
-                      { name: "Neon Violet Preset", file: "/images/ongoing-project-cover-violet.webp", hex: "#9d4edd" },
-                      { name: "Cyber Orange Preset", file: "/images/ongoing-project-cover-orange.webp", hex: "#ff5e2c" },
-                      { name: "Electric Blue Preset", file: "/images/ongoing-project-cover-blue.webp", hex: "#00b4d8" },
-                      { name: "Matrix Emerald Preset", file: "/images/ongoing-project-cover-emerald.webp", hex: "#00f5d4" },
-                      { name: "Crimson Red Preset", file: "/images/ongoing-project-cover-red.webp", hex: "#e63946" },
-                      { name: "Full-Box White (Original)", file: "/images/ongoing-project-cover.webp", hex: "#ffffff" },
-                    ].map((art) => {
-                      const isSelected =
-                        (settings.ongoingDefaultImage || "/images/ongoing-project-cover-violet.webp") === art.file;
+                {/* Artwork Controls: Styles, Presets, Custom Upload */}
+                <div style={{ flex: 1, minWidth: 280 }}>
+                  <label style={{ display: "block", color: "var(--soft-white)", fontSize: 12, marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    Choose Artwork Style (Both change dynamically with website color)
+                  </label>
+
+                  {/* The Two Photo Options */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 10, marginBottom: 14 }}>
+                    {/* Option 1: White Background Style */}
+                    {(() => {
+                      const isWhiteActive = Boolean(
+                        settings.ongoingDefaultImage &&
+                          !settings.ongoingDefaultImage.includes("fullbleed") &&
+                          (settings.ongoingDefaultImage.includes("ongoing-project-cover") ||
+                            settings.ongoingDefaultImage.includes("ongoing-coder"))
+                      );
                       return (
                         <button
-                          key={art.file}
                           type="button"
-                          onClick={() => handleChange("ongoingDefaultImage", art.file)}
+                          onClick={() =>
+                            handleChange(
+                              "ongoingDefaultImage",
+                              getMatchingOngoingCover(settings.themeAccent || "#ff5e2c", false)
+                            )
+                          }
                           style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 6,
-                            padding: "6px 12px",
-                            borderRadius: 8,
-                            border: isSelected ? "2px solid var(--orange)" : "1px solid var(--line)",
-                            background: isSelected ? "rgba(var(--orange-rgb), 0.16)" : "rgba(255, 255, 255, 0.04)",
-                            color: isSelected ? "var(--white)" : "var(--silver)",
-                            fontSize: 11,
-                            fontWeight: 600,
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-start",
+                            gap: 4,
+                            padding: "10px 14px",
+                            borderRadius: 10,
+                            border: isWhiteActive ? "2px solid var(--orange)" : "1px solid var(--line)",
+                            background: isWhiteActive
+                              ? "rgba(var(--orange-rgb), 0.15)"
+                              : "var(--panel, rgba(255, 255, 255, 0.04))",
                             cursor: "pointer",
+                            textAlign: "left",
                             transition: "all 180ms ease",
                           }}
                         >
-                          <span
-                            style={{
-                              width: 9,
-                              height: 9,
-                              borderRadius: "50%",
-                              background: art.hex,
-                              boxShadow: isSelected ? `0 0 8px ${art.hex}` : "none",
-                              border: art.hex === "#ffffff" ? "1px solid #888" : "none",
-                            }}
-                          />
-                          <span>{art.name}</span>
-                          {isSelected && <Check size={11} style={{ color: "var(--orange)" }} />}
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: isWhiteActive ? "var(--orange)" : "var(--white)" }}>
+                              ☀️ Option 1: White Background
+                            </span>
+                            {isWhiteActive && <Check size={14} style={{ color: "var(--orange)" }} />}
+                          </div>
+                          <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                            Clean white box, coder silhouette rendered in website accent
+                          </span>
                         </button>
                       );
-                    })}
+                    })()}
+
+                    {/* Option 2: Full-Bleed Theme Background Style */}
+                    {(() => {
+                      const isFullBleedActive = Boolean(settings.ongoingDefaultImage?.includes("fullbleed"));
+                      return (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleChange(
+                              "ongoingDefaultImage",
+                              getMatchingOngoingCover(settings.themeAccent || "#ff5e2c", true)
+                            )
+                          }
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-start",
+                            gap: 4,
+                            padding: "10px 14px",
+                            borderRadius: 10,
+                            border: isFullBleedActive ? "2px solid var(--orange)" : "1px solid var(--line)",
+                            background: isFullBleedActive
+                              ? "rgba(var(--orange-rgb), 0.15)"
+                              : "var(--panel, rgba(255, 255, 255, 0.04))",
+                            cursor: "pointer",
+                            textAlign: "left",
+                            transition: "all 180ms ease",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: isFullBleedActive ? "var(--orange)" : "var(--white)" }}>
+                              ⚡ Option 2: Full-Bleed Theme
+                            </span>
+                            {isFullBleedActive && <Check size={14} style={{ color: "var(--orange)" }} />}
+                          </div>
+                          <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                            Full website color background with dark obsidian coder
+                          </span>
+                        </button>
+                      );
+                    })()}
                   </div>
 
-                  <div className="field">
-                    <label htmlFor="setting-ongoingDefaultImage">Artwork File Path or Image URL</label>
-                    <input
-                      id="setting-ongoingDefaultImage"
-                      value={settings.ongoingDefaultImage ?? "/images/ongoing-project-cover.webp"}
-                      onChange={(e) => handleChange("ongoingDefaultImage", e.target.value)}
-                      placeholder="/images/ongoing-project-cover.webp"
-                      style={{ fontFamily: "monospace", fontSize: 13 }}
-                    />
-                    <span className="field-hint">
-                      Relative path in public/ or HTTPS image URL. Automatically applied to all currently working projects.
+                  {/* Preset Color Variations for Selected Style */}
+                  <div style={{ marginBottom: 14 }}>
+                    <span style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 8 }}>
+                      Select Preset Color Theme:
                     </span>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      {[
+                        { name: "Neon Violet", key: "violet", hex: "#9d4edd" },
+                        { name: "Cyber Orange", key: "orange", hex: "#ff5e2c" },
+                        { name: "Electric Blue", key: "blue", hex: "#00b4d8" },
+                        { name: "Matrix Emerald", key: "emerald", hex: "#00f5d4" },
+                        { name: "Crimson Red", key: "red", hex: "#e63946" },
+                      ].map((c) => {
+                        const isFullBleed = Boolean(settings.ongoingDefaultImage?.includes("fullbleed"));
+                        const targetFile = isFullBleed
+                          ? `/images/ongoing-project-cover-fullbleed-${c.key}.webp`
+                          : `/images/ongoing-project-cover-${c.key}.webp`;
+                        const isSelected = settings.ongoingDefaultImage === targetFile;
+
+                        return (
+                          <button
+                            key={c.key}
+                            type="button"
+                            onClick={() => handleChange("ongoingDefaultImage", targetFile)}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              padding: "6px 12px",
+                              borderRadius: 8,
+                              border: isSelected ? "2px solid var(--orange)" : "1px solid var(--line)",
+                              background: isSelected
+                                ? "rgba(var(--orange-rgb), 0.16)"
+                                : "var(--panel, rgba(255, 255, 255, 0.04))",
+                              color: isSelected ? "var(--orange)" : "var(--white)",
+                              fontSize: 11,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              transition: "all 180ms ease",
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: 9,
+                                height: 9,
+                                borderRadius: "50%",
+                                background: c.hex,
+                                boxShadow: isSelected ? `0 0 8px ${c.hex}` : "none",
+                              }}
+                            />
+                            <span>{c.name}</span>
+                            {isSelected && <Check size={11} style={{ color: "var(--orange)" }} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Custom Photo Upload & Path Input */}
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "var(--soft-white)" }}>
+                        Custom Photo (Upload or URL with Live Preview)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingArtwork}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "6px 14px",
+                          borderRadius: 8,
+                          border: "1px solid var(--orange)",
+                          background: "rgba(var(--orange-rgb), 0.12)",
+                          color: "var(--orange)",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Upload size={12} /> {uploadingArtwork ? "Uploading..." : "Upload Custom Photo"}
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+                        style={{ display: "none" }}
+                        onChange={handleCustomPhotoUpload}
+                      />
+                    </div>
+
+                    <div className="field" style={{ margin: 0 }}>
+                      <input
+                        id="setting-ongoingDefaultImage"
+                        value={settings.ongoingDefaultImage ?? ""}
+                        onChange={(e) => handleChange("ongoingDefaultImage", e.target.value)}
+                        placeholder="Upload an image or enter /images/... or https://..."
+                        style={{ fontFamily: "monospace", fontSize: 13, color: "var(--white)" }}
+                      />
+                      <span className="field-hint">
+                        Supports local device uploads, paths in public/, or any HTTPS image URL. Preview updates live as you type.
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1194,11 +1465,14 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                         padding: "7px 14px",
                         borderRadius: 8,
                         border: isSelected ? "2px solid var(--orange)" : "1px solid var(--line)",
-                        background: isSelected ? "rgba(var(--orange-rgb), 0.18)" : "rgba(255, 255, 255, 0.04)",
-                        color: isSelected ? "var(--orange)" : "#fff",
+                        background: isSelected
+                          ? "rgba(var(--orange-rgb), 0.18)"
+                          : "var(--panel, rgba(255, 255, 255, 0.04))",
+                        color: isSelected ? "var(--orange)" : "var(--white)",
                         fontSize: 12,
                         fontWeight: 700,
                         cursor: "pointer",
+                        transition: "all 180ms ease",
                       }}
                     >
                       {count} {count === 1 ? "Image" : "Images"}
@@ -1208,14 +1482,24 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                 })}
 
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginLeft: 10 }}>
-                  <span style={{ fontSize: 12, color: "var(--muted)" }}>Custom:</span>
+                  <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600 }}>Custom:</span>
                   <input
                     type="number"
                     min="1"
                     max="10"
                     value={settings.defaultProjectImageCount ?? "3"}
                     onChange={(e) => handleChange("defaultProjectImageCount", e.target.value)}
-                    style={{ width: 65, padding: "5px 8px", fontSize: 13, textAlign: "center" }}
+                    style={{
+                      width: 65,
+                      padding: "6px 8px",
+                      fontSize: 13,
+                      textAlign: "center",
+                      borderRadius: 8,
+                      border: "1px solid var(--line)",
+                      background: "var(--surface)",
+                      color: "var(--white)",
+                      fontWeight: 700,
+                    }}
                   />
                 </div>
               </div>

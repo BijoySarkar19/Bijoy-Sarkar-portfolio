@@ -11,19 +11,30 @@ export function ProjectGallery({ project }: { project: PortfolioProject }) {
       aria-label={`${project.title} image gallery`}
     >
       {project.images.map((src, index) => {
-        const isOngoingCover =
+        const isOngoingWithoutPhoto = project.isOngoing && (!src || src.trim() === "");
+        const isFullBleedCover = project.isOngoing && Boolean(src?.includes("fullbleed"));
+        const isWhiteCover =
           project.isOngoing &&
-          (!src ||
-            src.includes("ongoing-project-cover") ||
-            src.includes("ongoing-coder"));
+          Boolean(
+            src &&
+              (src.includes("ongoing-project-cover") ||
+                src.includes("ongoing-coder")) &&
+              !isFullBleedCover
+          );
 
         return (
           <figure
             className={isSingle ? "gallery-hero gallery-single-hero" : index === 0 ? "gallery-hero" : "gallery-support"}
             key={`${src}-${index}`}
-            style={isOngoingCover ? { background: "#ffffff", overflow: "hidden" } : undefined}
+            style={
+              isWhiteCover
+                ? { background: "#ffffff", overflow: "hidden" }
+                : isOngoingWithoutPhoto
+                ? { background: "rgb(12 16 32 / 0.85)", overflow: "hidden" }
+                : undefined
+            }
           >
-            {isOngoingCover ? (
+            {isWhiteCover ? (
               <div
                 style={{
                   position: "absolute",
@@ -51,6 +62,27 @@ export function ProjectGallery({ project }: { project: PortfolioProject }) {
                     maskRepeat: "no-repeat",
                   }}
                 />
+              </div>
+            ) : isOngoingWithoutPhoto ? (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 24,
+                  textAlign: "center",
+                  border: "1px dashed rgba(var(--orange-rgb), 0.35)",
+                }}
+              >
+                <span style={{ color: "var(--orange)", fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 8 }}>
+                  ⚡ ACTIVE DEVELOPMENT
+                </span>
+                <span style={{ color: "var(--muted)", fontSize: 12, fontStyle: "italic" }}>
+                  Upcoming on his way
+                </span>
               </div>
             ) : (
               <Image

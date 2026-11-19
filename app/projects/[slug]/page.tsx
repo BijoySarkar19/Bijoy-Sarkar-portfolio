@@ -61,8 +61,20 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
             <p className="section-lede">{project.description}</p>
             <div className="detail-tech">{project.techStack.map((technology) => <span className="tag" key={technology}>{technology}</span>)}</div>
             <div className="detail-actions">
-              {github ? <a className="button" href={github} target="_blank" rel="noopener noreferrer"><SocialIcon name="github" size={14} /> GitHub <ArrowUpRight size={13} /></a> : null}
-              {live ? <a className="button button-secondary" href={live} target="_blank" rel="noopener noreferrer"><Globe2 size={14} /> Live demo <ArrowUpRight size={13} /></a> : null}
+              {github ? (
+                <a className="button" href={github} target="_blank" rel="noopener noreferrer">
+                  <SocialIcon name="github" size={14} /> GitHub <ArrowUpRight size={13} />
+                </a>
+              ) : project.isOngoing ? (
+                <Link className="button" href="/404" title="GitHub repository under active development (Opens 404)">
+                  <SocialIcon name="github" size={14} /> GitHub <ArrowUpRight size={13} />
+                </Link>
+              ) : null}
+              {live ? (
+                <a className="button button-secondary" href={live} target="_blank" rel="noopener noreferrer">
+                  <Globe2 size={14} /> Live demo <ArrowUpRight size={13} />
+                </a>
+              ) : null}
             </div>
           </header>
           <ProjectGallery project={project} />
@@ -75,7 +87,32 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
             <aside className="detail-aside">
               <p className="section-kicker">What it does</p>
               <ul className="feature-list">{project.features.map((feature) => <li key={feature}><Check size={14} />{feature}</li>)}</ul>
-              {github || live ? <div className="detail-aside-links">{github ? <a href={github} target="_blank" rel="noopener noreferrer">Source code <ArrowUpRight size={13} /></a> : null}{live ? <a href={live} target="_blank" rel="noopener noreferrer">Live project <ArrowUpRight size={13} /></a> : null}</div> : <p className="detail-private-note">Project links are being prepared.</p>}
+              {github || live ? (
+                <div className="detail-aside-links">
+                  {github ? (
+                    <a href={github} target="_blank" rel="noopener noreferrer">
+                      Source code <ArrowUpRight size={13} />
+                    </a>
+                  ) : project.isOngoing ? (
+                    <Link href="/404" title="Source code under active development (Opens 404)">
+                      Source code <ArrowUpRight size={13} />
+                    </Link>
+                  ) : null}
+                  {live ? (
+                    <a href={live} target="_blank" rel="noopener noreferrer">
+                      Live project <ArrowUpRight size={13} />
+                    </a>
+                  ) : null}
+                </div>
+              ) : project.isOngoing ? (
+                <div className="detail-aside-links">
+                  <Link href="/404" title="Source code under active development (Opens 404)">
+                    Source code <ArrowUpRight size={13} />
+                  </Link>
+                </div>
+              ) : (
+                <p className="detail-private-note">Project links are being prepared.</p>
+              )}
             </aside>
           </div>
           <div className="detail-back"><Link className="button button-secondary" href="/#projects"><ArrowLeft size={14} /> Back to projects</Link></div>

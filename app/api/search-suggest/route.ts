@@ -15,6 +15,7 @@ const STATIC_SUGGESTIONS: SuggestionItem[] = [
   { term: "Bijoy Sarkar CV & Resume", desc: "Verified curriculum vitae, education, and technical experience", path: "/#resume" },
   { term: "Bijoy Sarkar About", desc: "Background at ICFAI University Tripura, core skills & stack", path: "/#about" },
   { term: "Bijoy Sarkar Contact", desc: "Direct inquiry, email, and social profiles", path: "/#contact" },
+    { term: "SentinelEdge", desc: "Privacy-First edge-to-cloud video and incident intelligence platform", path: "/projects/sentineledge" },
   { term: "CivicLens Core", desc: "Automated road distress analysis and civic infrastructure intelligence", path: "/projects/civiclens-core" },
   { term: "Rakshak-AI", desc: "Defense-grade perimeter intelligence and multimodal threat detection", path: "/projects/rakshak-ai" },
   { term: "Aether Intelligent Workspace", desc: "Modern developer environment with contextual intelligence", path: "/projects/aether" },

@@ -17,8 +17,33 @@ if (!existsSync(databasePath)) {
 } else {
   try {
     const database = new Database(databasePath);
-    // Ensure CivicLens Core is active in Currently Working (1/2)
-    database.prepare(`UPDATE Project SET featuredOnHome = 1 WHERE slug = 'civiclens-core' AND isOngoing = 1`).run();
+    // Ensure CivicLens Core is deployed to Main Projects (Real problems) with WebP screenshots and repository
+    database.prepare(`
+      UPDATE Project
+      SET isOngoing = 0,
+          featuredOnHome = 1,
+          sortOrder = 2,
+          image1 = '/projects/civiclens-core/01.webp',
+          image2 = '/projects/civiclens-core/02.webp',
+          image3 = '/projects/civiclens-core/03.webp',
+          githubUrl = 'https://github.com/BijoySarkar19/CivicLens-Core'
+      WHERE slug = 'civiclens-core'
+    `).run();
+
+    // Ensure SentinelEdge is active in Currently Working
+    const hasSentinel = database.prepare("SELECT id FROM Project WHERE slug = 'sentineledge'").get();
+    if (hasSentinel) {
+      database.prepare(`
+        UPDATE Project
+        SET isOngoing = 1,
+            featuredOnHome = 1,
+            sortOrder = 1,
+            image1 = '/projects/sentineledge/01.webp',
+            image2 = '/projects/sentineledge/02.webp',
+            image3 = '/projects/sentineledge/03.webp'
+        WHERE slug = 'sentineledge'
+      `).run();
+    }
     database.close();
   } catch {}
 }

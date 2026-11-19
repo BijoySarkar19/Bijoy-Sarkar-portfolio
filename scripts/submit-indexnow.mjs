@@ -8,6 +8,7 @@ const urlList = [
   `https://${host}/`,
   `https://${host}/projects`,
   `https://${host}/projects/civiclens-core`,
+  `https://${host}/projects/sentineledge`,
   `https://${host}/projects/rakshak-ai`,
   `https://${host}/projects/aether`,
   `https://${host}/projects/expense-tracker`,

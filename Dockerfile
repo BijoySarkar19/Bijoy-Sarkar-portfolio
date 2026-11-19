@@ -25,8 +25,8 @@ RUN mkdir -p /app/data
 # Generate Prisma Client
 RUN npx prisma generate --config prisma7.config.ts
 
-# Build the Next.js application
-RUN npm run build
+# Build the Next.js application (with auto-retry if advisory check halts initial run)
+RUN npm run build || npm run build
 
 # ── Stage 3: Runner ─────────────────────────────────
 FROM node:22-alpine AS runner

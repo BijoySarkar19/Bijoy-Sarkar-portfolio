@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" fill="none">
+    <defs>
+      <linearGradient id="bg3" x1="0" y1="0" x2="1280" y2="720" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#080c14" />
+        <stop offset="0.5" stop-color="#0e1728" />
+        <stop offset="1" stop-color="#06090e" />
+      </linearGradient>
+      <radialGradient id="alertGlow" cx="0" cy="0" r="1" gradientTransform="translate(640 180) rotate(90) scale(450 600)" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#ff5e2c" stop-opacity="0.14" />
+        <stop offset="1" stop-color="#ff5e2c" stop-opacity="0" />
+      </radialGradient>
+      <pattern id="grid3" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M40 0H0V40" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1" />
+      </pattern>
+    </defs>
+
+    <rect width="1280" height="720" fill="url(#bg3)" />
+    <rect width="1280" height="720" fill="url(#alertGlow)" />
+    <rect width="1280" height="720" fill="url(#grid3)" />
+
+    <!-- Top Navigation -->
+    <rect x="40" y="32" width="1200" height="64" rx="14" fill="#0f1726" fill-opacity="0.85" stroke="#1f2d45" stroke-width="1.5" />
+    <text x="64" y="68" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="16" font-weight="700" letter-spacing="1.2">SENTINELEDGE · CLUSTER MONITOR &amp; INCIDENT MATRIX</text>
+    <rect x="1080" y="48" width="140" height="32" rx="8" fill="#142132" stroke="#253552" />
+    <text x="1094" y="69" fill="#38bdf8" font-family="monospace" font-size="11" font-weight="600">8 NODES ACTIVE</text>
+
+    <!-- Node Matrix Grid: 4 Nodes -->
+    <g transform="translate(40, 120)">
+      <!-- Node 1 -->
+      <rect x="0" y="0" width="285" height="180" rx="12" fill="#0d1524" stroke="#10b981" stroke-opacity="0.5" stroke-width="1.5" />
+      <circle cx="24" cy="28" r="5" fill="#10b981" />
+      <text x="38" y="32" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="13" font-weight="700">NODE 01 · INDUSTRIAL GATEWAY</text>
+      <text x="24" y="62" fill="#94a3b8" font-family="monospace" font-size="11">CAMERAS: 4 FEEDS · 240 FPS</text>
+      <text x="24" y="82" fill="#94a3b8" font-family="monospace" font-size="11">INFERENCE: 11.8ms</text>
+      <text x="24" y="102" fill="#94a3b8" font-family="monospace" font-size="11">MEMORY: 3.4GB / 8GB</text>
+      <rect x="24" y="124" width="237" height="32" rx="6" fill="#091b15" stroke="#10b981" stroke-opacity="0.3" />
+      <text x="36" y="144" fill="#34d399" font-family="monospace" font-size="10" font-weight="600">✓ OPTIMAL · ZERO ALERTS</text>
+
+      <!-- Node 2 -->
+      <rect x="305" y="0" width="285" height="180" rx="12" fill="#0d1524" stroke="#ff5e2c" stroke-width="1.5" />
+      <circle cx="329" cy="28" r="5" fill="#ff5e2c" />
+      <text x="343" y="32" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="13" font-weight="700">NODE 02 · PERIMETER NORTH</text>
+      <text x="329" y="62" fill="#94a3b8" font-family="monospace" font-size="11">CAMERAS: 2 FEEDS · 120 FPS</text>
+      <text x="329" y="82" fill="#94a3b8" font-family="monospace" font-size="11">INFERENCE: 13.2ms</text>
+      <text x="329" y="102" fill="#94a3b8" font-family="monospace" font-size="11">MEMORY: 4.1GB / 8GB</text>
+      <rect x="329" y="124" width="237" height="32" rx="6" fill="#22110c" stroke="#ff5e2c" stroke-opacity="0.4" />
+      <text x="341" y="144" fill="#ff7a50" font-family="monospace" font-size="10" font-weight="700">⚠ INCIDENT DISPATCHED (01:08:14)</text>
+
+      <!-- Node 3 -->
+      <rect x="610" y="0" width="285" height="180" rx="12" fill="#0d1524" stroke="#1f2d45" stroke-width="1.5" />
+      <circle cx="634" cy="28" r="5" fill="#10b981" />
+      <text x="648" y="32" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="13" font-weight="700">NODE 03 · WAREHOUSE DOCK</text>
+      <text x="634" y="62" fill="#94a3b8" font-family="monospace" font-size="11">CAMERAS: 6 FEEDS · 360 FPS</text>
+      <text x="634" y="82" fill="#94a3b8" font-family="monospace" font-size="11">INFERENCE: 14.6ms</text>
+      <text x="634" y="102" fill="#94a3b8" font-family="monospace" font-size="11">MEMORY: 5.2GB / 8GB</text>
+      <rect x="634" y="124" width="237" height="32" rx="6" fill="#091b15" stroke="#10b981" stroke-opacity="0.3" />
+      <text x="646" y="144" fill="#34d399" font-family="monospace" font-size="10" font-weight="600">✓ OPTIMAL · 100% REDACTED</text>
+
+      <!-- Node 4 -->
+      <rect x="915" y="0" width="285" height="180" rx="12" fill="#0d1524" stroke="#1f2d45" stroke-width="1.5" />
+      <circle cx="939" cy="28" r="5" fill="#10b981" />
+      <text x="953" y="32" fill="#ffffff" font-family="-apple-system, sans-serif" font-size="13" font-weight="700">NODE 04 · TRANSIT CORRIDOR</text>
+      <text x="939" y="62" fill="#94a3b8" font-family="monospace" font-size="11">CAMERAS: 3 FEEDS · 180 FPS</text>
+      <text x="939" y="82" fill="#94a3b8" font-family="monospace" font-size="11">INFERENCE: 12.1ms</text>
+      <text x="939" y="102" fill="#94a3b8" font-family="monospace" font-size="11">MEMORY: 3.8GB / 8GB</text>
+      <rect x="939" y="124" width="237" height="32" rx="6" fill="#091b15" stroke="#10b981" stroke-opacity="0.3" />
+      <text x="951" y="144" fill="#34d399" font-family="monospace" font-size="10" font-weight="600">✓ OPTIMAL · SYNCED</text>
+    </g>
+
+    <!-- Incident Timeline Chart & Analytics -->
+    <rect x="40" y="324" width="1200" height="360" rx="14" fill="#0c1322" stroke="#1f2d45" stroke-width="1.5" />
+    <rect x="40" y="324" width="1200" height="46" rx="14" fill="#111c2e" />
+    <text x="64" y="352" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="700">REAL-TIME INCIDENT RESOLUTION TIMELINE &amp; TELEMETRY</text>
+
+    <!-- Synthetic Chart Area -->
+    <path d="M70 540 Q 200 480, 340 510 T 600 440 T 850 490 T 1150 420" fill="none" stroke="#00f2fe" stroke-width="3" stroke-linecap="round" />
+    <path d="M70 580 Q 200 560, 340 570 T 600 520 T 850 560 T 1150 500" fill="none" stroke="#ff5e2c" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4" />
+    
+    <!-- Chart Data Points -->
+    <circle cx="600" cy="440" r="6" fill="#00f2fe" />
+    <circle cx="600" cy="440" r="12" stroke="#00f2fe" stroke-opacity="0.3" stroke-width="1.5" />
+    <text x="600" y="420" fill="#38bdf8" font-family="monospace" font-size="10" font-weight="700" text-anchor="middle">PEAK 840 FPS</text>
+
+    <circle cx="850" cy="560" r="6" fill="#ff5e2c" />
+    <circle cx="850" cy="560" r="12" stroke="#ff5e2c" stroke-opacity="0.3" stroke-width="1.5" />
+    <text x="850" y="590" fill="#ff7a50" font-family="monospace" font-size="10" font-weight="700" text-anchor="middle">INCIDENT RESOLVED</text>
+
+    <!-- Bottom Chart Legend -->
+    <rect x="70" y="630" width="16" height="4" rx="2" fill="#00f2fe" />
+    <text x="94" y="636" fill="#94a3b8" font-family="monospace" font-size="11">Neural Ingest Throughput (FPS)</text>
+
+    <rect x="360" y="630" width="16" height="4" rx="2" fill="#ff5e2c" />
+    <text x="384" y="636" fill="#94a3b8" font-family="monospace" font-size="11">Incident Verification Latency (ms)</text>
+
+    <text x="1170" y="636" fill="#64748b" font-family="monospace" font-size="11" text-anchor="end">Live Telemetry Synchronized</text>
+  </svg>

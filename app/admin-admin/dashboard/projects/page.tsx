@@ -3,7 +3,6 @@ import { Plus } from "lucide-react";
 import { AdminNavigation } from "@/components/admin/AdminNavigation";
 import { ProjectListManager } from "@/components/admin/ProjectListManager";
 import { prisma } from "@/lib/prisma";
-
 import { FALLBACK_PROJECTS } from "@/lib/fallback-data";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +19,7 @@ export default async function AdminProjectsPage() {
     githubUrl: string | null;
     liveUrl: string | null;
     updatedAt: string;
+    image1?: string;
   }> = [];
 
   try {
@@ -38,6 +38,7 @@ export default async function AdminProjectsPage() {
       githubUrl: p.githubUrl,
       liveUrl: p.liveUrl,
       updatedAt: p.updatedAt.toISOString(),
+      image1: p.image1,
     }));
   } catch (err) {
     console.warn("Prisma error caught on AdminProjectsPage:", err);
@@ -55,6 +56,7 @@ export default async function AdminProjectsPage() {
       githubUrl: p.githubUrl,
       liveUrl: p.liveUrl,
       updatedAt: new Date().toISOString(),
+      image1: p.image1,
     }));
   }
 

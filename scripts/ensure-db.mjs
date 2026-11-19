@@ -38,9 +38,9 @@ if (!existsSync(databasePath)) {
         SET isOngoing = 1,
             featuredOnHome = 1,
             sortOrder = 1,
-            image1 = '/projects/sentineledge/01.webp',
-            image2 = '/projects/sentineledge/02.webp',
-            image3 = '/projects/sentineledge/03.webp'
+            image1 = '/images/ongoing-project-cover.webp',
+            image2 = '',
+            image3 = ''
         WHERE slug = 'sentineledge'
       `).run();
     }

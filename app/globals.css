@@ -3650,3 +3650,7 @@ html.light-mode .birthday-close-btn {
   .nav-links { display: flex !important; }
   .menu-toggle { display: none !important; }
 }
+
+/* Single Image Layout for Currently Doing Projects & 1-image Showcases */
+.gallery-grid.gallery-single-grid { display: block !important; margin-top: 42px; }
+.gallery-grid.gallery-single-grid .gallery-single-hero { width: 100% !important; grid-row: auto !important; aspect-ratio: 16 / 9; min-height: clamp(320px, 50vw, 640px) !important; border: 1px solid rgba(255, 94, 44, 0.35); box-shadow: 0 10px 40px rgba(255, 94, 44, 0.08); }

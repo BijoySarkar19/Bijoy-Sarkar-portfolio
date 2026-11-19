@@ -24,7 +24,7 @@ export async function POST(request: Request, { params }: RouteContext) {
 
   try {
     const body = await request.json();
-    const { action } = body as { action: "toggle_ongoing" | "toggle_featured_home" | "toggle_published" };
+    const { action } = body as { action: "toggle_ongoing" | "toggle_featured_home" | "toggle_published" | "apply_ongoing_artwork" };
 
     const project = await prisma.project.findUnique({ where: { id } });
     if (!project) {
@@ -103,6 +103,16 @@ export async function POST(request: Request, { params }: RouteContext) {
       auditSummary = nextPublished
         ? `Published project "${project.title}"`
         : `Unpublished project "${project.title}" to draft mode`;
+    } else if (action === "apply_ongoing_artwork") {
+      updatedProject = await prisma.project.update({
+        where: { id },
+        data: {
+          image1: "/images/ongoing-project-cover.webp",
+          image2: "/images/ongoing-project-detail.webp",
+          image3: "/images/ongoing-project-terminal.webp",
+        },
+      });
+      auditSummary = `Applied Cyber Coder Orange Artwork preset to "${project.title}"`;
     } else {
       return NextResponse.json({ error: "Invalid action." }, { status: 400 });
     }

@@ -29,7 +29,7 @@ export function ProjectListManager({ initialProjects }: { initialProjects: Admin
   const ongoingHomeCount = projects.filter((p) => p.isOngoing && p.featuredOnHome && p.published).length;
   const totalOngoingCount = projects.filter((p) => p.isOngoing).length;
 
-  async function handleToggle(id: string, action: "toggle_ongoing" | "toggle_featured_home" | "toggle_published") {
+  async function handleToggle(id: string, action: "toggle_ongoing" | "toggle_featured_home" | "toggle_published" | "apply_ongoing_artwork") {
     // Client-side guard rails enforcing 5 main projects and 2 ongoing projects limits
     if (action === "toggle_featured_home") {
       const target = projects.find((p) => p.id === id);
@@ -70,6 +70,7 @@ export function ProjectListManager({ initialProjects }: { initialProjects: Admin
           if (action === "toggle_ongoing") return { ...p, isOngoing: !p.isOngoing };
           if (action === "toggle_featured_home") return { ...p, featuredOnHome: !p.featuredOnHome };
           if (action === "toggle_published") return { ...p, published: !p.published };
+          if (action === "apply_ongoing_artwork") return { ...p, image1: "/images/ongoing-project-cover.webp" };
           return p;
         })
       );

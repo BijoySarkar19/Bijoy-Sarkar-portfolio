@@ -10,6 +10,14 @@ const imageReference = z.string().trim().min(1).max(500).refine(
   (value) => value.startsWith("/") && !value.startsWith("//") && !value.split("/").includes(".."),
   "Use a local image path inside the public folder.",
 );
+const optionalImageReference = z.union([
+  z.literal(""),
+  z.string().trim().max(500).refine(
+    (value) => value === "" || (value.startsWith("/") && !value.startsWith("//") && !value.split("/").includes("..")),
+    "Use a local image path inside the public folder."
+  ),
+]).default("");
+
 const externalWebUrl = z.union([
   z.literal(""),
   z.url().refine((value) => value.startsWith("https://") || value.startsWith("http://"), "Use an HTTP or HTTPS URL."),
@@ -21,8 +29,8 @@ export const projectInputSchema = z.object({
   description: z.string().trim().min(10).max(320),
   longDescription: z.string().trim().min(20).max(5000),
   image1: imageReference,
-  image2: imageReference,
-  image3: imageReference,
+  image2: optionalImageReference,
+  image3: optionalImageReference,
   techStack: z.array(z.string().trim().min(1).max(40)).min(1).max(16),
   features: z.array(z.string().trim().min(1).max(220)).max(12),
   githubUrl: externalWebUrl.nullable().optional(),

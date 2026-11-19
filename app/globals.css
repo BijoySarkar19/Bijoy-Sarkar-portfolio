@@ -418,8 +418,8 @@ img { display: block; max-width: 100%; }
 .project-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: rgb(5 7 13 / 0.75); transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease; }
 .project-card:hover { transform: translateY(-5px); border-color: rgba(var(--orange-rgb), 0.58); box-shadow: 0 18px 48px rgb(0 0 0 / 0.34), 0 0 24px rgba(var(--orange-rgb), 0.08); }
 .project-image-frame { position: relative; aspect-ratio: 3 / 4; overflow: hidden; background: #080b14; }
-.project-image-frame::after { position: absolute; inset: 42% 0 0; pointer-events: none; background: linear-gradient(180deg, transparent, rgb(0 0 0 / 0.72)); content: ""; }
-.project-image { object-fit: cover; filter: grayscale(1); transform: scale(1.001); transition: filter 480ms ease, transform 700ms cubic-bezier(.2,.7,.2,1); }
+.project-image-frame::after { position: absolute; inset: 70% 0 0; pointer-events: none; background: linear-gradient(180deg, transparent, rgb(0 0 0 / 0.35)); content: ""; }
+.project-image { object-fit: cover; filter: none; transform: scale(1.001); transition: transform 700ms cubic-bezier(.2,.7,.2,1); }
 .project-card:hover .project-image { filter: grayscale(0); transform: scale(1.04); }
 .project-image-label { position: absolute; z-index: 1; top: 13px; left: 13px; display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid rgb(255 255 255 / 0.18); border-radius: 999px; background: rgb(0 0 0 / 0.48); color: #fff; font-size: 9px; backdrop-filter: blur(10px); }
 .project-image-label::before { width: 5px; height: 5px; border-radius: 50%; background: var(--orange); content: ""; }

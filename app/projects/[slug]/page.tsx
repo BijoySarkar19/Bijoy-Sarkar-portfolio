@@ -56,7 +56,15 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         <div className="section-wrap">
           <Link className="back-link" href="/#projects"><ArrowLeft size={14} /> Back to projects</Link>
           <header className="detail-hero" data-reveal>
-            <p className="section-kicker">Selected work · {String(project.sortOrder).padStart(2, "0")}</p>
+            <p className="section-kicker">
+              {project.isOngoing ? (
+                <span style={{ color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5, fontWeight: 700 }}>
+                  ⚡ Active Development · Currently Working
+                </span>
+              ) : (
+                `Selected work · ${String(project.sortOrder).padStart(2, "0")}`
+              )}
+            </p>
             <h1 className="section-title">{project.title}</h1>
             <p className="section-lede">{project.description}</p>
             <div className="detail-tech">{project.techStack.map((technology) => <span className="tag" key={technology}>{technology}</span>)}</div>

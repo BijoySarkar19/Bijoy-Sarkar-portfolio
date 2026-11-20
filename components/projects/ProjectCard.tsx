@@ -91,7 +91,9 @@ export function ProjectCard({ project, index }: { project: PortfolioProject; ind
               sizes="(max-width: 440px) 90vw, (max-width: 700px) 45vw, (max-width: 1100px) 30vw, 380px"
             />
           )}
-          <span className="project-image-label">Project preview · {String(index + 1).padStart(2, "0")}</span>
+          <span className="project-image-label">
+            {project.isOngoing ? "⚡ Active Development" : `Project preview · ${String(index + 1).padStart(2, "0")}`}
+          </span>
         </div>
       </Link>
       <div className="project-info">
@@ -101,7 +103,7 @@ export function ProjectCard({ project, index }: { project: PortfolioProject; ind
               ⚡ CURRENTLY WORKING
             </span>
           ) : (
-            <span>{String(index + 1).padStart(2, "0")} / FEATURED PROJECT</span>
+            <span>{String(index + 1).padStart(2, "0")} / {project.featuredOnHome ? "FEATURED PROJECT" : "DIRECTORY PROJECT"}</span>
           )}
         </div>
         <h3>{project.title}</h3>

@@ -23,4 +23,6 @@ My_photo_portfolio/
 My_photo_portfolio2/
 crop_*.jpg
 test_head.jpg
+k8s/secret.yaml
+k8s/*.local.yaml
 

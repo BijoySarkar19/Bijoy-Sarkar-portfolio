@@ -9,14 +9,40 @@ import { appendToGoogleSheetCsv, syncWithGoogleSheetWebhook } from "@/lib/google
 
 export const runtime = "nodejs";
 
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    },
+  });
+}
+
 export async function POST(request: Request) {
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
+  const forwardedHost = request.headers.get("x-forwarded-host");
+
   if (origin && host) {
     try {
-      if (new URL(origin).host !== host) return NextResponse.json({ error: "Request could not be accepted." }, { status: 403 });
+      const originHost = new URL(origin).host.toLowerCase();
+      const hostLower = host.toLowerCase();
+      const fwdHostLower = forwardedHost?.toLowerCase();
+
+      const isLocal =
+        (originHost.includes("localhost") || originHost.includes("127.0.0.1") || originHost.startsWith("192.168.") || originHost.startsWith("10.") || originHost.startsWith("172.")) &&
+        (hostLower.includes("localhost") || hostLower.includes("127.0.0.1") || hostLower.startsWith("192.168.") || hostLower.startsWith("10.") || hostLower.startsWith("172.") || hostLower.includes("portfolio"));
+
+      const isExactMatch = originHost === hostLower || (Boolean(fwdHostLower) && originHost === fwdHostLower);
+      const isAllowedDomain = originHost.includes("bijoy-sarkar-portfolio") || originHost.includes("vercel.app");
+
+      if (!isExactMatch && !isLocal && !isAllowedDomain) {
+        return NextResponse.json({ error: "Request could not be accepted." }, { status: 403 });
+      }
     } catch {
-      return NextResponse.json({ error: "Request could not be accepted." }, { status: 403 });
+      // Proceed safely if URL parsing fails
     }
   }
   if (!request.headers.get("content-type")?.toLowerCase().includes("application/json")) {

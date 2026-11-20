@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-deployment
+  namespace: portfolio
+  labels:
+    app.kubernetes.io/name: bijoy-sarkar-portfolio
+    app: bijoy-portfolio
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: bijoy-portfolio
+  template:
+    metadata:
+      labels:
+        app: bijoy-portfolio
+        app.kubernetes.io/name: bijoy-sarkar-portfolio
+    spec:
+      containers:
+        - name: portfolio
+          image: bijoy-sarkar-portfolio:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              node scripts/ensure-db.mjs && \
+              npx prisma db push --config prisma7.config.ts && \
+              npx prisma db seed --config prisma7.config.ts && \
+              exec npm run start
+          ports:
+            - containerPort: 4173
+              name: http
+          envFrom:
+            - configMapRef:
+                name: portfolio-config
+            - secretRef:
+                name: portfolio-secrets
+          volumeMounts:
+            - name: data-volume
+              mountPath: /app/data
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4173
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4173
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 2
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: portfolio-data-pvc

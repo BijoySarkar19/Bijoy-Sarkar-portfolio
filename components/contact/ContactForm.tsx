@@ -189,8 +189,16 @@ export function ContactForm() {
         }),
       });
 
-      const result = (await response.json()) as ContactResponse;
-      if (!response.ok) throw new Error(result.error ?? "Something went wrong. Please try again.");
+      let result: ContactResponse = {};
+      try {
+        result = (await response.json()) as ContactResponse;
+      } catch {
+        result = { error: `Server response error (${response.status}). Please try again.` };
+      }
+
+      if (!response.ok) {
+        throw new Error(result.error ?? "Something went wrong. Please try again.");
+      }
 
       form.reset();
       setPhoneNumber("");
@@ -201,7 +209,13 @@ export function ContactForm() {
       setStatusMessage(result.message ?? "Message sent successfully.");
     } catch (error) {
       setState("error");
-      setStatusMessage(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+      let msg = "Something went wrong. Please try again.";
+      if (error instanceof TypeError && error.message.toLowerCase().includes("fetch")) {
+        msg = "Unable to connect to server. Please ensure the application server is running and try again.";
+      } else if (error instanceof Error) {
+        msg = error.message;
+      }
+      setStatusMessage(msg);
     }
   }
 

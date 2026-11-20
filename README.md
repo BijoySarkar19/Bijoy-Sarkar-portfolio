@@ -14,6 +14,7 @@
 [![Prisma](https://img.shields.io/badge/Prisma-7.10.1-0b1020?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![SQLite](https://img.shields.io/badge/SQLite-better--sqlite3-0b1020?style=for-the-badge&logo=sqlite&logoColor=003b57)](https://www.sqlite.org/)
 [![Docker](https://img.shields.io/badge/Docker-Multi--Stage-0b1020?style=for-the-badge&logo=docker&logoColor=2496ed)](https://www.docker.com/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-1.37.0-326ce5?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 
 [![Live Production](https://img.shields.io/badge/Production-bijoy--sarkar--portfolio.vercel.app-ff5e2c?style=for-the-badge&logo=vercel&logoColor=white)](https://bijoy-sarkar-portfolio.vercel.app)
 [![Admin CMS](https://img.shields.io/badge/Admin_CMS-Protected-16a34a?style=for-the-badge&logo=shield&logoColor=white)](https://bijoy-sarkar-portfolio.vercel.app/admin-admin)
@@ -30,7 +31,8 @@
   <a href="#-security-hardening--defense-in-depth">Security</a> •
   <a href="#-api--route-reference">API Reference</a> •
   <a href="#-getting-started">Getting Started</a> •
-  <a href="#-docker-deployment">Docker</a>
+  <a href="#-docker-deployment">Docker</a> •
+  <a href="#-kubernetes-orchestration">Kubernetes</a>
 </p>
 
 </div>
@@ -127,11 +129,14 @@ flowchart LR
 
 ---
 
-### 5. 📱 Contact Validation, Smart Email Routing & Google Sheets Sync
+### 5. 📱 Contact Validation, Smart Email Routing, Google Sheets Sync & Zero-Error Mail Pipeline
 - **Mandatory Dial-Code Matrix**: Visitors select an international country code (India first + searchable alphabetical list), `None`, or `Custom`.
 - **Smart Phone Validation**: Eliminates ambiguity (no `(optional)` phone hint when a country code is chosen); India (`+91`) strictly requires 10 digits with device-native numeric keypads.
+- **Direct Inbox Mail Delivery**: Nodemailer SMTP transport over TLS/SSL (`smtp.gmail.com:465`) sends high-priority notification emails instantly to `bijoysarkar7252@gmail.com` with formatted sender contact information.
+- **Resilient Multi-Origin & CORS Support**: The `/api/contact` endpoint includes full `OPTIONS` preflight handling (`Access-Control-Allow-Origin: *`) and comprehensive origin validation supporting localhost, private network IPs, Docker containers, Kubernetes ingress, and production Vercel domains.
+- **Fail-Safe reCAPTCHA**: Gracefully handles missing reCAPTCHA secrets so legitimate inquiries are never blocked while rejecting malicious bots.
+- **Triple Persistence & Live Sheet Dispatch**: Saves every submission to `ContactMessage` in SQLite (timestamped in `IST`), appends to `/public/downloads/contact-submissions.csv`, and dispatches directly to the Google Apps Script webhook synced to Google Drive.
 - **Device-Aware Email Routing**: Opens Gmail Web Compose prefilled for `bijoysarkar7252@gmail.com` on desktop or invokes native mobile handlers cleanly, while always copying the email address to clipboard with feedback toast.
-- **Dual Persistence & Live Sheet Dispatch**: Saves every submission to `ContactMessage` (timestamped in `IST`), appends to `/public/downloads/contact-submissions.csv`, and dispatches directly to the Google Apps Script webhook synced to Google Drive.
 
 ---
 
@@ -384,6 +389,71 @@ docker run -d --name bijoy-portfolio -p 4173:4173 bijoy-sarkar-portfolio:latest
 ```
 
 The container exposes port **4173** and includes a built-in `HEALTHCHECK` pinging `http://localhost:4173/` every 30 seconds.
+
+---
+
+## ☸️ Kubernetes Orchestration
+
+Production-grade Kubernetes manifests and orchestration are provided in [`k8s/`](k8s/) for deploying to local development clusters (**Kind**, **Minikube**, **k3s**) or managed cloud providers (**GKE**, **EKS**, **AKS**).
+
+### Manifest Architecture
+
+| Manifest | Kind | Description |
+| :--- | :--- | :--- |
+| [`k8s/namespace.yaml`](k8s/namespace.yaml) | `Namespace` | Dedicated `portfolio` isolation namespace. |
+| [`k8s/configmap.yaml`](k8s/configmap.yaml) | `ConfigMap` | Non-sensitive runtime variables (`PORT: 4173`, `NODE_ENV: production`, `EMAIL_PORT: 465`). |
+| [`k8s/secret.yaml.example`](k8s/secret.yaml.example) | `Secret` | Template for credentials, SMTP passwords & secrets (generated via `scripts/gen-k8s-secret.cjs`). |
+| [`k8s/pvc.yaml`](k8s/pvc.yaml) | `PersistentVolumeClaim` | 1Gi `ReadWriteOnce` persistent storage for SQLite `/app/data/dev.db`. |
+| [`k8s/deployment.yaml`](k8s/deployment.yaml) | `Deployment` | Recreate strategy with automatic database seeding, resource limits, and liveness/readiness probes. |
+| [`k8s/service.yaml`](k8s/service.yaml) | `Service` | NodePort Service exposing port `4173` on NodePort `32173`. |
+| [`k8s/kustomization.yaml`](k8s/kustomization.yaml) | `Kustomization` | Unified Kustomize resource bundle. |
+
+### Quick Start Deployment
+
+1. **Build and Load Docker Image into Cluster:**
+
+   ```bash
+   # Build the production Docker image locally
+   docker build -t bijoy-sarkar-portfolio:latest .
+
+   # If using Kind (local development cluster in Docker):
+   cmd.exe /c "docker save bijoy-sarkar-portfolio:latest | docker exec -i kind-control-plane ctr -n k8s.io images import -"
+   ```
+
+2. **Generate Kubernetes Secrets:**
+
+   ```bash
+   # Generates k8s/secret.yaml safely from .env (git-ignored)
+   node scripts/gen-k8s-secret.cjs
+   ```
+
+3. **Apply Manifests via Kustomize:**
+
+   ```bash
+   kubectl apply -k k8s/
+   ```
+
+4. **Verify Pod & PVC Status:**
+
+   ```bash
+   # Watch pod readiness (1/1 Running)
+   kubectl get pods -n portfolio -w
+
+   # Check persistent volume binding
+   kubectl get pvc -n portfolio
+
+   # Check services and NodePort
+   kubectl get svc -n portfolio
+   ```
+
+5. **Access Application:**
+
+   ```bash
+   # Forward port 4173 to localhost
+   kubectl port-forward -n portfolio svc/portfolio-service 4173:4173
+   ```
+
+   Visit [http://localhost:4173](http://localhost:4173) in your browser.
 
 ---
 

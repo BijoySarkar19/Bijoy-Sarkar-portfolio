@@ -36,12 +36,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
    - Zoom level varies strictly from **10% to 500%**.
    - Zoom In (`+`) and Zoom Out (`-`) buttons modify zoom level in increments of **10%**.
 
-5. **Contact Us Validation, Google Sheets Sync & Inbox Integration**:
+5. **Contact Us Validation, Google Sheets Sync, Inbox Integration & Zero-Error Mail Pipeline**:
    - Enforces country selection: users MUST select a country code, choose `None`, or enter `Custom`.
    - The word `(optional)` is prohibited on the phone field.
    - If a country code is selected, phone number is mandatory. India (`+91`) enforces **strictly 10 digits**. Custom codes require country code first.
    - Mobile and tablet inputs invoke device-native numeric dial pads (`inputMode="numeric"`, `pattern="[0-9]*"`).
    - All contact submissions are saved to the database (`ContactMessage`), logged with Indian Standard Time (`IST`), appended to `/public/downloads/contact-submissions.csv` for Google Sheets, and can be managed directly in the Admin Portal under `/admin-admin/dashboard/messages`.
+   - **Zero-Error Gmail Dispatch & CORS**: Dispatches instant notification emails to `bijoysarkar7252@gmail.com` via Nodemailer TLS/SSL (`smtp.gmail.com:465`). The contact route (`/api/contact`) includes `OPTIONS` preflight handling (`Access-Control-Allow-Origin: *`) and permissive origin validation supporting localhost, local network IPs, container runtimes, Kubernetes ingress, and Vercel domains. ReCAPTCHA gracefully falls back if secret key is unset so legitimate inquiries never fail.
    - Clicking email links opens directly in Gmail Web Compose for `bijoysarkar7252@gmail.com` and copies the address to the clipboard.
 
 6. **Projects Organization & Admin Deploy Engine**:
@@ -105,3 +106,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
     - **Public Production Website**: `https://bijoy-sarkar-portfolio.vercel.app` (Hero canvas sequence, intelligent systems showcase, ongoing builds, CV viewer, intermission games, and contact inquiry dispatch).
     - **Admin CMS Management Workspace**: `https://bijoy-sarkar-portfolio.vercel.app/admin-admin` (Protected administration workspace for projects curation, work experience, skills & languages, CV uploads/deactivations, copywriting, messages inbox, and IST audit datasets with one-click undo engine).
     - Canvas background animations are strictly isolated to public routes and hidden from `/admin-admin/*`.
+
+18. **Kubernetes Architecture & Production Orchestration (`k8s/`)**:
+    - Complete Kubernetes manifests located in `/k8s/` (`namespace.yaml`, `configmap.yaml`, `secret.yaml.example`, `pvc.yaml`, `deployment.yaml`, `service.yaml`, `kustomization.yaml`).
+    - Dedicated namespace: `portfolio`.
+    - Service exposes port `4173` with NodePort `32173`.
+    - Persistent SQLite storage mounted to `/app/data` via `portfolio-data-pvc` (1Gi ReadWriteOnce).
+    - Deployment uses `strategy.type: Recreate` to ensure clean SQLite single-writer semantics with liveness/readiness probes on port `4173`.
+    - Sensitive credentials generated via `scripts/gen-k8s-secret.cjs` into git-ignored `k8s/secret.yaml`.

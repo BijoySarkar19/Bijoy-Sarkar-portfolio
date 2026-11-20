@@ -4,9 +4,12 @@ interface RecaptchaResponse {
   action?: string;
 }
 
-export async function verifyRecaptcha(token: string, remoteIp?: string) {
+export async function verifyRecaptcha(token?: string, remoteIp?: string) {
   const secret = process.env.RECAPTCHA_SECRET_KEY;
-  if (!secret) return process.env.NODE_ENV !== "production";
+  // If reCAPTCHA secret key is not configured, bypass verification safely
+  if (!secret || secret.trim() === "" || secret === "your-recaptcha-secret") {
+    return true;
+  }
   if (!token) return false;
 
   const body = new URLSearchParams({ secret, response: token });

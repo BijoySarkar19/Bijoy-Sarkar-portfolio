@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: portfolio-config
+  namespace: portfolio
+  labels:
+    app.kubernetes.io/name: bijoy-sarkar-portfolio
+data:
+  NODE_ENV: "production"
+  PORT: "4173"
+  NEXTAUTH_URL: "https://bijoy-sarkar-portfolio.vercel.app"
+  NEXT_PUBLIC_SITE_URL: "https://bijoy-sarkar-portfolio.vercel.app"
+  CONTACT_EMAIL: "bijoysarkar7252@gmail.com"
+  EMAIL_HOST: "smtp.gmail.com"
+  EMAIL_PORT: "465"
+  EMAIL_FROM: "bijoysarkar7252@gmail.com"
+  GOOGLE_SHEETS_WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbxtE4fuHg9Mpp-DuLBfF2ve2cpeWiwKk8IE7Nkw_xO2gOjlYniUzAI3Vw8D4Hy0JrPzNw/exec"

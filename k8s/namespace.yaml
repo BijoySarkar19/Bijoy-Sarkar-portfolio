@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: portfolio
+  labels:
+    name: portfolio
+    app.kubernetes.io/name: bijoy-sarkar-portfolio
+    app.kubernetes.io/part-of: portfolio-os

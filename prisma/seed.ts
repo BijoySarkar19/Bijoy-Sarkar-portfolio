@@ -415,6 +415,7 @@ async function main() {
     { key: "themeMode", value: "dark" },
     { key: "soundEnabled", value: "false" },
     { key: "gamesEnabled", value: "true" },
+    { key: "googleSheetsWebhookUrl", value: "https://script.google.com/macros/s/AKfycbxtE4fuHg9Mpp-DuLBfF2ve2cpeWiwKk8IE7Nkw_xO2gOjlYniUzAI3Vw8D4Hy0JrPzNw/exec" },
     {
       key: "degreesList",
       value: JSON.stringify([

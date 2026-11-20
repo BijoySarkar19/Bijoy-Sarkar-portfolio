@@ -114,6 +114,7 @@ function ensureSqliteSchema(dbPath: string) {
     try {
       db.prepare(`INSERT OR IGNORE INTO "SiteSetting" ("key", "value", "updatedAt") VALUES (?, ?, CURRENT_TIMESTAMP)`).run("ongoingDefaultImage", "/images/ongoing-project-cover.webp");
       db.prepare(`INSERT OR IGNORE INTO "SiteSetting" ("key", "value", "updatedAt") VALUES (?, ?, CURRENT_TIMESTAMP)`).run("defaultProjectImageCount", "3");
+      db.prepare(`INSERT OR IGNORE INTO "SiteSetting" ("key", "value", "updatedAt") VALUES (?, ?, CURRENT_TIMESTAMP)`).run("googleSheetsWebhookUrl", "https://script.google.com/macros/s/AKfycbxtE4fuHg9Mpp-DuLBfF2ve2cpeWiwKk8IE7Nkw_xO2gOjlYniUzAI3Vw8D4Hy0JrPzNw/exec");
     } catch {
       // Ignore
     }

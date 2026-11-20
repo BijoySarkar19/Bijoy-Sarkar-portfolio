@@ -50,18 +50,76 @@ export async function appendToGoogleSheetCsv(record: ContactRecord) {
   }
 }
 
+export const DEFAULT_GOOGLE_SHEETS_WEBHOOK_URL =
+  "https://script.google.com/macros/s/AKfycbxtE4fuHg9Mpp-DuLBfF2ve2cpeWiwKk8IE7Nkw_xO2gOjlYniUzAI3Vw8D4Hy0JrPzNw/exec";
+
+export const DEFAULT_GOOGLE_SHEETS_SPREADSHEET_URL =
+  "https://docs.google.com/spreadsheets/d/1bkxAetgAqLrk0MM_17Ia2VVDzUrugcaQEhFy8WjiIQQ/edit?gid=0#gid=0";
+
+export async function loadCsvContactRecords(): Promise<ContactRecord[]> {
+  try {
+    if (!existsSync(CSV_FILE)) return [];
+    const content = await readFile(CSV_FILE, "utf8");
+    const cleanContent = content.replace(/^\uFEFF/, "");
+    const lines = cleanContent.split(/\r?\n/).filter((line) => line.trim().length > 0);
+    if (lines.length <= 1) return []; // Header only
+
+    const records: ContactRecord[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      // Basic CSV splitter respecting quotes
+      const line = lines[i];
+      const match = line.match(/(?:^|,)("(?:[^"]|"")*"|[^,]*)/g);
+      if (!match || match.length < 5) continue;
+      
+      const fields = match.map((m) => {
+        let val = m.replace(/^,/, "").trim();
+        if (val.startsWith('"') && val.endsWith('"')) {
+          val = val.slice(1, -1).replace(/""/g, '"');
+        }
+        return val;
+      });
+
+      const [id, submittedAtIST, name, email, phone, message, ipAddress] = fields;
+      if (!name || !email) continue;
+
+      records.push({
+        id: id || `csv-${i}`,
+        submittedAtIST: submittedAtIST || "Recorded",
+        name,
+        email,
+        phone: phone ? phone.replace(/^'/, "") : null,
+        message: message || "",
+        ipAddress: ipAddress || null,
+      });
+    }
+    return records;
+  } catch (err) {
+    console.error("Could not load contact records from CSV:", err);
+    return [];
+  }
+}
+
 export async function syncWithGoogleSheetWebhook(record: ContactRecord) {
   try {
-    // Check if webhook URL is configured in site settings or env
-    const setting = await prisma.siteSetting.findUnique({
-      where: { key: "googleSheetsWebhookUrl" },
-    });
-    const webhookUrl = setting?.value || process.env.GOOGLE_SHEETS_WEBHOOK_URL;
+    let settingValue: string | null = null;
+    try {
+      const setting = await prisma.siteSetting.findUnique({
+        where: { key: "googleSheetsWebhookUrl" },
+      });
+      settingValue = setting?.value || null;
+    } catch {
+      // Fall through to env or default
+    }
+
+    const webhookUrl =
+      settingValue?.trim() ||
+      process.env.GOOGLE_SHEETS_WEBHOOK_URL?.trim() ||
+      DEFAULT_GOOGLE_SHEETS_WEBHOOK_URL;
 
     if (!webhookUrl || !webhookUrl.startsWith("http")) {
       return {
         synced: false,
-        reason: "Webhook URL is not configured. Go to Admin > Settings and enter your Google Apps Script Web App URL.",
+        reason: "Webhook URL is not configured.",
       };
     }
 

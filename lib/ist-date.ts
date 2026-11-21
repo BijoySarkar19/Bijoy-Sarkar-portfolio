@@ -61,3 +61,30 @@ export function formatIndianDate(date: Date | string | number): string {
     return String(date);
   }
 }
+
+/**
+ * Safely parse any date value, ISO string, or IST formatted string into millisecond epoch timestamp.
+ * Handles inputs like "21 Nov 2026, 03:11:45 am IST", "10/31/2026, 3:59:00 PM", ISO strings, and Date instances.
+ */
+export function parseDateTimestamp(val: unknown): number {
+  if (!val) return 0;
+  if (val instanceof Date) {
+    const t = val.getTime();
+    return isNaN(t) ? 0 : t;
+  }
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    if (!trimmed) return 0;
+
+    // 1. Strip ' IST' suffix if present
+    const clean = trimmed.replace(/\s+IST$/i, "").trim();
+    const d1 = new Date(clean);
+    if (!isNaN(d1.getTime())) return d1.getTime();
+
+    // 2. Try raw string as date
+    const d2 = new Date(trimmed);
+    if (!isNaN(d2.getTime())) return d2.getTime();
+  }
+  return 0;
+}

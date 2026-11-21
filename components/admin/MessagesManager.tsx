@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, Phone, Calendar, Check, ExternalLink, Download, Trash2, RefreshCw, Send, Sheet, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { parseDateTimestamp } from "@/lib/ist-date";
 
 export interface ContactMessageItem {
   id: string;
@@ -20,32 +21,93 @@ export interface ContactMessageItem {
 
 export function MessagesManager({ initialMessages }: { initialMessages: ContactMessageItem[] }) {
   const router = useRouter();
-  const [messages, setMessages] = useState<ContactMessageItem[]>(initialMessages);
+
+  // Initialize with messages sorted strictly date-wise (newest / most recently received first)
+  const [messages, setMessages] = useState<ContactMessageItem[]>(() => {
+    const list = [...initialMessages];
+    list.sort((a, b) => {
+      const timeA = parseDateTimestamp(a.submittedAtIST || a.createdAt);
+      const timeB = parseDateTimestamp(b.submittedAtIST || b.createdAt);
+      return timeB - timeA;
+    });
+    return list;
+  });
+
   const [filter, setFilter] = useState<"ALL" | "UNREAD" | "READ" | "REPLIED" | "ARCHIVED">("ALL");
   const [loading, setLoading] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
   const [feedback, setFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  const filtered = messages.filter((m) => {
-    if (filter === "ALL") return true;
-    return m.status === filter;
-  });
+  // Sync state when initialMessages change from router.refresh()
+  useEffect(() => {
+    setMessages(() => {
+      const list = [...initialMessages];
+      list.sort((a, b) => {
+        const timeA = parseDateTimestamp(a.submittedAtIST || a.createdAt);
+        const timeB = parseDateTimestamp(b.submittedAtIST || b.createdAt);
+        return timeB - timeA;
+      });
+      return list;
+    });
+  }, [initialMessages]);
+
+  // Load client-side local overrides for instant consistency across reloads
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("portfolio_msg_statuses");
+      if (raw) {
+        const overrides = JSON.parse(raw);
+        setMessages((prev) =>
+          prev.map((m) => (overrides[m.id] ? { ...m, status: overrides[m.id] } : m))
+        );
+      }
+    } catch {}
+  }, []);
+
+  const filtered = messages
+    .filter((m) => {
+      if (filter === "ALL") return true;
+      return m.status === filter;
+    })
+    .sort((a, b) => {
+      const timeA = parseDateTimestamp(a.submittedAtIST || a.createdAt);
+      const timeB = parseDateTimestamp(b.submittedAtIST || b.createdAt);
+      return timeB - timeA;
+    });
 
   const unreadCount = messages.filter((m) => m.status === "UNREAD").length;
 
   async function updateStatus(id: string, newStatus: string) {
+    // 1. Immediate optimistic UI update
+    setMessages((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, status: newStatus } : m))
+    );
+    setFeedback({ text: `Message marked as ${newStatus.toLowerCase()}.`, type: "success" });
+
+    // 2. Persist in browser localStorage for 0ms client-side persistence
+    try {
+      const raw = localStorage.getItem("portfolio_msg_statuses");
+      const overrides = raw ? JSON.parse(raw) : {};
+      overrides[id] = newStatus;
+      localStorage.setItem("portfolio_msg_statuses", JSON.stringify(overrides));
+    } catch {}
+
+    // 3. Persist to server backend API
     try {
       const res = await fetch("/api/admin/messages", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: newStatus }),
       });
-      if (!res.ok) throw new Error("Failed to update status");
-      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, status: newStatus } : m)));
-      setFeedback({ text: `Message marked as ${newStatus.toLowerCase()}.`, type: "success" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update status on server.");
+      }
+      setFeedback({ text: `Message marked as ${newStatus.toLowerCase()} successfully.`, type: "success" });
       router.refresh();
-    } catch {
-      setFeedback({ text: "Failed to update status.", type: "error" });
+    } catch (err: unknown) {
+      console.warn("Server status notice:", err);
+      // Status is already preserved locally and in localStorage
     }
   }
 
@@ -349,16 +411,17 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
     var messages = [];
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
-      if (row && (row[0] || row[1] || row[2])) {
+      if (row && (row[0] || row[1] || row[2] || row[4])) {
+        var status = (row[6] && row[6].toString().trim()) ? row[6].toString().trim().toUpperCase() : "UNREAD";
         messages.push({
-          id: "sheet-" + i,
+          id: "sheet-row-" + (i + 1),
           submittedAtIST: String(row[0] || ""),
           name: String(row[1] || ""),
           email: String(row[2] || ""),
           phone: String(row[3] || "Not provided"),
           message: String(row[4] || ""),
           ipAddress: String(row[5] || "Unknown"),
-          status: "UNREAD",
+          status: status,
           googleSynced: true,
           createdAt: new Date().toISOString()
         });
@@ -367,6 +430,7 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
     return ContentService.createTextOutput(JSON.stringify({
       status: "active",
       account: "bijoysarkar7252@gmail.com",
+      total: messages.length,
       messages: messages
     })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
@@ -383,36 +447,61 @@ function doPost(e) {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     var data = {};
     if (e && e.postData && e.postData.contents) {
-      data = JSON.parse(e.postData.contents);
+      try { data = JSON.parse(e.postData.contents); } catch (pErr) { data = {}; }
     } else if (e && e.parameter) {
       data = e.parameter;
     }
 
     // Auto-create header row if sheet is empty
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["Timestamp (IST)", "Name", "Email", "Phone", "Message", "IP Address"]);
-      sheet.getRange("A1:F1").setFontWeight("bold").setBackground("#ff5e2c").setFontColor("#ffffff");
+      sheet.appendRow(["Timestamp (IST)", "Name", "Email", "Phone", "Message", "IP Address", "Status"]);
+      sheet.getRange("A1:G1").setFontWeight("bold").setBackground("#ff5e2c").setFontColor("#ffffff");
     }
 
-    // Append inquiry row
+    // 1. Handle Status Update (Mark Read, Archive, etc.)
+    if (data.action === "update_status" && data.id) {
+      var rowIdx = -1;
+      var match = data.id.match(/sheet-row-(\\d+)/);
+      if (match) {
+        rowIdx = parseInt(match[1], 10);
+      }
+      if (rowIdx > 1 && rowIdx <= sheet.getLastRow()) {
+        sheet.getRange(rowIdx, 7).setValue(data.status || "READ");
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "success",
+          action: "update_status",
+          row: rowIdx,
+          newStatus: data.status
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
+    // 2. Append new inquiry row
+    var phone = data.rawPhone || data.phone || "Not provided";
+    if (phone && phone.toString().indexOf("+") === 0) {
+      phone = "'" + phone;
+    }
+    var timestamp = data.timestampIST || new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+
     sheet.appendRow([
-      data.timestampIST || new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
+      timestamp,
       data.name || "",
       data.email || "",
-      data.phone || "Not provided",
+      phone,
       data.message || "",
-      data.ipAddress || "Unknown"
+      data.ipAddress || "Unknown",
+      "UNREAD"
     ]);
 
-    // Send instant alert email to your Gmail
+    // Send instant alert email to Gmail
     MailApp.sendEmail({
       to: "bijoysarkar7252@gmail.com",
       subject: "New Portfolio Inquiry from " + (data.name || "Visitor"),
       replyTo: data.email || "bijoysarkar7252@gmail.com",
-      body: "New message received on " + (data.timestampIST || "Now") + "\\n\\n" +
+      body: "New message received on " + timestamp + "\\n\\n" +
             "Name: " + (data.name || "N/A") + "\\n" +
             "Email: " + (data.email || "N/A") + "\\n" +
-            "Phone: " + (data.phone || "Not provided") + "\\n\\n" +
+            "Phone: " + (data.rawPhone || data.phone || "Not provided") + "\\n\\n" +
             "Message:\\n" + (data.message || "")
     });
 
@@ -469,16 +558,17 @@ function doPost(e) {
     var messages = [];
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
-      if (row && (row[0] || row[1] || row[2])) {
+      if (row && (row[0] || row[1] || row[2] || row[4])) {
+        var status = (row[6] && row[6].toString().trim()) ? row[6].toString().trim().toUpperCase() : "UNREAD";
         messages.push({
-          id: "sheet-" + i,
+          id: "sheet-row-" + (i + 1),
           submittedAtIST: String(row[0] || ""),
           name: String(row[1] || ""),
           email: String(row[2] || ""),
           phone: String(row[3] || "Not provided"),
           message: String(row[4] || ""),
           ipAddress: String(row[5] || "Unknown"),
-          status: "UNREAD",
+          status: status,
           googleSynced: true,
           createdAt: new Date().toISOString()
         });
@@ -487,6 +577,7 @@ function doPost(e) {
     return ContentService.createTextOutput(JSON.stringify({
       status: "active",
       account: "bijoysarkar7252@gmail.com",
+      total: messages.length,
       messages: messages
     })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
@@ -503,36 +594,61 @@ function doPost(e) {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     var data = {};
     if (e && e.postData && e.postData.contents) {
-      data = JSON.parse(e.postData.contents);
+      try { data = JSON.parse(e.postData.contents); } catch (pErr) { data = {}; }
     } else if (e && e.parameter) {
       data = e.parameter;
     }
 
     // Auto-create header row if sheet is empty
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["Timestamp (IST)", "Name", "Email", "Phone", "Message", "IP Address"]);
-      sheet.getRange("A1:F1").setFontWeight("bold").setBackground("#ff5e2c").setFontColor("#ffffff");
+      sheet.appendRow(["Timestamp (IST)", "Name", "Email", "Phone", "Message", "IP Address", "Status"]);
+      sheet.getRange("A1:G1").setFontWeight("bold").setBackground("#ff5e2c").setFontColor("#ffffff");
     }
 
-    // Append row
+    // 1. Handle Status Update (Mark Read, Archive, etc.)
+    if (data.action === "update_status" && data.id) {
+      var rowIdx = -1;
+      var match = data.id.match(/sheet-row-(\\d+)/);
+      if (match) {
+        rowIdx = parseInt(match[1], 10);
+      }
+      if (rowIdx > 1 && rowIdx <= sheet.getLastRow()) {
+        sheet.getRange(rowIdx, 7).setValue(data.status || "READ");
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "success",
+          action: "update_status",
+          row: rowIdx,
+          newStatus: data.status
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
+    // 2. Append new inquiry row
+    var phone = data.rawPhone || data.phone || "Not provided";
+    if (phone && phone.toString().indexOf("+") === 0) {
+      phone = "'" + phone;
+    }
+    var timestamp = data.timestampIST || new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+
     sheet.appendRow([
-      data.timestampIST || new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
+      timestamp,
       data.name || "",
       data.email || "",
-      data.phone || "Not provided",
+      phone,
       data.message || "",
-      data.ipAddress || "Unknown"
+      data.ipAddress || "Unknown",
+      "UNREAD"
     ]);
 
-    // Send instant alert email to your Gmail
+    // Send instant alert email to Gmail
     MailApp.sendEmail({
       to: "bijoysarkar7252@gmail.com",
       subject: "New Portfolio Inquiry from " + (data.name || "Visitor"),
       replyTo: data.email || "bijoysarkar7252@gmail.com",
-      body: "New message received on " + (data.timestampIST || "Now") + "\\n\\n" +
+      body: "New message received on " + timestamp + "\\n\\n" +
             "Name: " + (data.name || "N/A") + "\\n" +
             "Email: " + (data.email || "N/A") + "\\n" +
-            "Phone: " + (data.phone || "Not provided") + "\\n\\n" +
+            "Phone: " + (data.rawPhone || data.phone || "Not provided") + "\\n\\n" +
             "Message:\\n" + (data.message || "")
     });
 

@@ -48,8 +48,7 @@ export default async function AdminDashboardPage() {
       logsTotal,
       logsRecent,
       projRecent,
-      msgTotal,
-      msgUnread,
+      allContactMessages,
     ] = await Promise.all([
       prisma.project.count(),
       prisma.project.count({ where: { published: true } }),
@@ -63,8 +62,7 @@ export default async function AdminDashboardPage() {
         take: 4,
         select: { id: true, title: true, slug: true, published: true, updatedAt: true },
       }),
-      prisma.contactMessage.count(),
-      prisma.contactMessage.count({ where: { status: "UNREAD" } }),
+      prisma.contactMessage.findMany({ select: { id: true, status: true } }),
     ]);
 
     totalProjects = pTotal;
@@ -75,8 +73,19 @@ export default async function AdminDashboardPage() {
     totalAuditLogs = logsTotal;
     recentAuditLogs = logsRecent;
     recentProjects = projRecent;
-    totalMessages = msgTotal;
-    unreadMessages = msgUnread;
+
+    let statusOverrides: Record<string, string> = {};
+    try {
+      const statusSetting = await prisma.siteSetting.findUnique({
+        where: { key: "message_statuses" },
+      });
+      if (statusSetting?.value) {
+        statusOverrides = JSON.parse(statusSetting.value);
+      }
+    } catch {}
+
+    totalMessages = (allContactMessages as any[]).length;
+    unreadMessages = (allContactMessages as any[]).filter((m) => (statusOverrides[m.id] || m.status) === "UNREAD").length;
   } catch (err) {
     console.warn("Prisma error caught on AdminDashboardPage:", err);
   }

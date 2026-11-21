@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-export { formatIndianTime, formatIndianDate } from "@/lib/ist-date";
+export { formatIndianTime, formatIndianDate, formatMessageCardIST } from "@/lib/ist-date";
 
 /**
  * Record an audit log entry in the database.

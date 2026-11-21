@@ -4,7 +4,7 @@ import { sendContactEmail } from "@/lib/mail";
 import { verifyRecaptcha } from "@/lib/recaptcha";
 import { cleanText, contactSchema } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
-import { formatIndianTime } from "@/lib/audit";
+import { formatMessageCardIST } from "@/lib/audit";
 import { appendToGoogleSheetCsv, syncWithGoogleSheetWebhook } from "@/lib/google-sheets";
 
 export const runtime = "nodejs";
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
   }
 
   const now = new Date();
-  const submittedAtIST = formatIndianTime(now);
+  const submittedAtIST = formatMessageCardIST(now);
 
   const data = {
     name: cleanText(parsed.data.name),

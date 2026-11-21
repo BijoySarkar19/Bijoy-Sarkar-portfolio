@@ -162,28 +162,6 @@ export default async function AdminMessagesPage() {
 
       <AdminNavigation active="messages" />
 
-      {/* KPI Stats */}
-      <div className="admin-stats admin-stats-4" style={{ marginBottom: 24 }}>
-        <div className="admin-stat">
-          <strong>{messages.length}</strong>
-          <span>Total Inquiries</span>
-        </div>
-        <div className="admin-stat">
-          <strong style={{ color: unreadCount > 0 ? "var(--orange)" : "var(--soft-white)" }}>
-            {unreadCount}
-          </strong>
-          <span>Unread Messages</span>
-        </div>
-        <div className="admin-stat">
-          <strong>{messages.filter((m) => m.status === "REPLIED").length}</strong>
-          <span>Replied</span>
-        </div>
-        <div className="admin-stat">
-          <strong>{messages.filter((m) => m.googleSynced).length} / {messages.length}</strong>
-          <span>Synced to Google</span>
-        </div>
-      </div>
-
       <MessagesManager initialMessages={JSON.parse(JSON.stringify(messages))} />
     </main>
   );

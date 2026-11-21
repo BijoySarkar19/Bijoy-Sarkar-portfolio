@@ -22,6 +22,32 @@ export function formatIndianTime(date: Date | string | number): string {
 }
 
 /**
+ * Format timestamp into Indian Standard Time with full weekday name for message cards
+ * Example output: "Sunday, 22 Nov 2026, 12:27:02 am IST"
+ */
+export function formatMessageCardIST(dateVal: Date | string | number): string {
+  try {
+    const ts = parseDateTimestamp(dateVal);
+    if (ts <= 0) return String(dateVal);
+    const d = new Date(ts);
+    const formatted = new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata",
+      weekday: "long",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }).format(d);
+    return `${formatted} IST`;
+  } catch {
+    return String(dateVal);
+  }
+}
+
+/**
  * Format timestamp into Indian Standard Time with full weekday name for Admin clock
  * Example output: "Saturday, 21 Nov 2026, 03:58:54 pm IST"
  */
@@ -82,8 +108,13 @@ export function parseDateTimestamp(val: unknown): number {
     const d1 = new Date(clean);
     if (!isNaN(d1.getTime())) return d1.getTime();
 
-    // 2. Try DD/MM/YYYY or DD-MM-YYYY format: e.g. 31/10/2026, 02:12:00
-    const dmyMatch = clean.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(.*)$/);
+    // 2. Strip weekday prefix if present: e.g. "Sunday, 22 Nov 2026, 12:27:02 am"
+    const withoutWeekday = clean.replace(/^[A-Za-z]+,\s*/, "").trim();
+    const dW = new Date(withoutWeekday);
+    if (!isNaN(dW.getTime())) return dW.getTime();
+
+    // 3. Try DD/MM/YYYY or DD-MM-YYYY format: e.g. 31/10/2026, 02:12:00
+    const dmyMatch = withoutWeekday.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(.*)$/);
     if (dmyMatch) {
       const [, day, month, year, rest] = dmyMatch;
       const reordered = `${month}/${day}/${year}${rest}`;
@@ -91,7 +122,7 @@ export function parseDateTimestamp(val: unknown): number {
       if (!isNaN(d.getTime())) return d.getTime();
     }
 
-    // 3. Try raw string as date
+    // 4. Try raw string as date
     const d2 = new Date(trimmed);
     if (!isNaN(d2.getTime())) return d2.getTime();
   }

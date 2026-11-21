@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Mail, Phone, Calendar, Check, ExternalLink, Download, Trash2, RefreshCw, Send, Sheet, Copy, Search, X, User, MessageSquare } from "lucide-react";
+import { Mail, Phone, Calendar, Check, CheckCheck, ExternalLink, Download, Trash2, RefreshCw, Send, Sheet, Copy, Search, X, User, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { parseDateTimestamp } from "@/lib/ist-date";
+import { parseDateTimestamp, formatMessageCardIST } from "@/lib/ist-date";
 
 export interface ContactMessageItem {
   id: string;
@@ -214,7 +214,35 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
       });
   }, [messages, filter, searchQuery, recentlyUpdatedIds]);
 
+  const totalCount = messages.length;
   const unreadCount = messages.filter((m) => m.status === "UNREAD").length;
+  const readCount = messages.filter((m) => m.status === "READ").length;
+  const repliedCount = messages.filter((m) => m.status === "REPLIED").length;
+  const archivedCount = messages.filter((m) => m.status === "ARCHIVED").length;
+  const syncedCount = messages.filter((m) => m.googleSynced).length;
+
+  async function markAllAsRead() {
+    setMessages((prev) => prev.map((m) => ({ ...m, status: "READ" })));
+    setRecentlyUpdatedIds(new Set());
+    setFeedback({ text: "All messages marked as read.", type: "success" });
+
+    try {
+      const raw = localStorage.getItem("portfolio_msg_statuses");
+      const overrides = raw ? JSON.parse(raw) : {};
+      for (const m of messages) {
+        overrides[m.id] = "READ";
+      }
+      localStorage.setItem("portfolio_msg_statuses", JSON.stringify(overrides));
+    } catch {}
+
+    try {
+      await fetch("/api/admin/messages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "mark_all_read" }),
+      });
+    } catch {}
+  }
 
   async function updateStatus(id: string, newStatus: string) {
     // 1. Immediate optimistic UI update — locked in place
@@ -282,23 +310,125 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
 
   return (
     <div className="admin-section-block">
+      {/* Live Interactive KPI Stats Cards */}
+      <div className="admin-stats admin-stats-4" style={{ marginBottom: 20 }}>
+        <div
+          className={`admin-stat admin-stat-clickable ${filter === "ALL" ? "active-stat" : ""}`}
+          onClick={() => {
+            setFilter("ALL");
+            setRecentlyUpdatedIds(new Set());
+          }}
+          title="Click to view all inquiry submissions"
+          style={{
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            borderColor: filter === "ALL" ? "var(--orange)" : undefined,
+            background: filter === "ALL" ? "rgba(255, 94, 44, 0.08)" : undefined,
+          }}
+        >
+          <strong>{totalCount}</strong>
+          <span>Total Inquiries</span>
+        </div>
+
+        <div
+          className={`admin-stat admin-stat-clickable ${filter === "UNREAD" ? "active-stat" : ""}`}
+          onClick={() => {
+            setFilter("UNREAD");
+            setRecentlyUpdatedIds(new Set());
+          }}
+          title="Click to view unread messages"
+          style={{
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            borderColor: filter === "UNREAD" ? "var(--orange)" : undefined,
+            background: filter === "UNREAD" ? "rgba(255, 94, 44, 0.08)" : undefined,
+          }}
+        >
+          <strong style={{ color: unreadCount > 0 ? "var(--orange)" : "var(--soft-white)" }}>
+            {unreadCount}
+          </strong>
+          <span>Unread Messages</span>
+        </div>
+
+        <div
+          className={`admin-stat admin-stat-clickable ${filter === "REPLIED" ? "active-stat" : ""}`}
+          onClick={() => {
+            setFilter("REPLIED");
+            setRecentlyUpdatedIds(new Set());
+          }}
+          title="Click to view replied messages"
+          style={{
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            borderColor: filter === "REPLIED" ? "var(--orange)" : undefined,
+            background: filter === "REPLIED" ? "rgba(255, 94, 44, 0.08)" : undefined,
+          }}
+        >
+          <strong style={{ color: repliedCount > 0 ? "#34a853" : "var(--soft-white)" }}>
+            {repliedCount}
+          </strong>
+          <span>Replied</span>
+        </div>
+
+        <div
+          className="admin-stat"
+          title="Inquiries synchronized with Google Sheets"
+        >
+          <strong>{syncedCount} / {totalCount}</strong>
+          <span>Synced to Google</span>
+        </div>
+      </div>
+
       {/* Action Bar */}
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {(["ALL", "UNREAD", "READ", "REPLIED", "ARCHIVED"] as const).map((tab) => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          {(["ALL", "UNREAD", "READ", "REPLIED", "ARCHIVED"] as const).map((tab) => {
+            const count =
+              tab === "ALL"
+                ? totalCount
+                : tab === "UNREAD"
+                ? unreadCount
+                : tab === "READ"
+                ? readCount
+                : tab === "REPLIED"
+                ? repliedCount
+                : archivedCount;
+
+            return (
+              <button
+                key={tab}
+                type="button"
+                className={`button ${filter === tab ? "button-primary" : "button-secondary"}`}
+                style={{ fontSize: 11, padding: "6px 12px", height: "auto" }}
+                onClick={() => {
+                  setFilter(tab);
+                  setRecentlyUpdatedIds(new Set());
+                }}
+              >
+                {tab === "ALL"
+                  ? `All (${count})`
+                  : tab === "UNREAD"
+                  ? `Unread (${count})`
+                  : tab === "READ"
+                  ? `Read (${count})`
+                  : tab === "REPLIED"
+                  ? `Replied (${count})`
+                  : `Archived (${count})`}
+              </button>
+            );
+          })}
+
+          {unreadCount > 0 && (
             <button
-              key={tab}
               type="button"
-              className={`button ${filter === tab ? "button-primary" : "button-secondary"}`}
-              style={{ fontSize: 11, padding: "6px 12px", height: "auto" }}
-              onClick={() => {
-                setFilter(tab);
-                setRecentlyUpdatedIds(new Set());
-              }}
+              className="button button-secondary"
+              style={{ fontSize: 11, padding: "6px 12px", height: "auto", color: "var(--orange)", borderColor: "var(--orange)" }}
+              onClick={markAllAsRead}
+              title="Mark all unread inquiries as read"
             >
-              {tab === "ALL" ? `All (${messages.length})` : tab === "UNREAD" ? `Unread (${unreadCount})` : tab}
+              <CheckCheck size={12} /> Mark All Read
             </button>
-          ))}
+          )}
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
@@ -479,7 +609,7 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
                 <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, color: "var(--muted)" }}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
                     <Calendar size={12} />
-                    <strong>{msg.submittedAtIST}</strong>
+                    <strong>{formatMessageCardIST(msg.submittedAtIST || msg.createdAt)}</strong>
                   </span>
                 </div>
               </div>
@@ -509,6 +639,12 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ fontSize: 11, padding: "5px 12px", height: "auto" }}
+                    onClick={() => {
+                      if (msg.status !== "REPLIED") {
+                        updateStatus(msg.id, "REPLIED");
+                      }
+                    }}
+                    title="Opens Gmail compose and automatically marks message as Replied"
                   >
                     <Send size={11} /> Reply via Gmail
                   </a>
@@ -522,7 +658,35 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
                     >
                       <Check size={11} /> Mark Read
                     </button>
-                  ) : msg.status !== "REPLIED" ? (
+                  ) : msg.status === "REPLIED" ? (
+                    <>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                          fontSize: 11,
+                          padding: "5px 10px",
+                          background: "rgba(52, 168, 83, 0.15)",
+                          border: "1px solid #34a853",
+                          color: "#34a853",
+                          borderRadius: 6,
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Check size={11} /> Replied
+                      </span>
+                      <button
+                        type="button"
+                        className="button button-secondary"
+                        style={{ fontSize: 11, padding: "5px 12px", height: "auto" }}
+                        onClick={() => updateStatus(msg.id, "UNREAD")}
+                        title="Mark as unread"
+                      >
+                        Mark Unread
+                      </button>
+                    </>
+                  ) : (
                     <button
                       type="button"
                       className="button button-secondary"
@@ -530,15 +694,6 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
                       onClick={() => updateStatus(msg.id, "REPLIED")}
                     >
                       Mark Replied
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="button button-secondary"
-                      style={{ fontSize: 11, padding: "5px 12px", height: "auto" }}
-                      onClick={() => updateStatus(msg.id, "UNREAD")}
-                    >
-                      Mark Unread
                     </button>
                   )}
 
@@ -612,21 +767,126 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
           <button
             type="button"
             onClick={() => {
-              const code = `function doGet(e) {
+              const code = `/**
+ * Bijoy Sarkar Portfolio — Google Sheets & Gmail Webhook Engine v2.2
+ * Features:
+ * 1. Automatic Column Resizing: Fits every column (A-G) perfectly to content so text never cuts off.
+ * 2. Day Name Display: Formats timestamps with full day name (e.g., "Sunday, 22 Nov 2026, 12:27:02 am IST").
+ * 3. Menu Tools: Adds a "Portfolio Tools" menu in Google Sheets to manually re-fit columns or fix legacy rows.
+ * 4. Interactive Status: Syncs READ, REPLIED, ARCHIVED, UNREAD statuses directly with the Admin Portal.
+ * 5. Instant Gmail Alerts: Sends formatted instant notifications to bijoysarkar7252@gmail.com.
+ */
+
+function onOpen() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+    ui.createMenu("Portfolio Tools")
+      .addItem("Auto-Resize Columns & Format", "manualFormatAndResize")
+      .addItem("Add Day Names to Existing Timestamps", "addDayNamesToExistingRows")
+      .addToUi();
+  } catch (e) {}
+
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  autoResizeAndFormat(sheet);
+}
+
+function manualFormatAndResize() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  autoResizeAndFormat(sheet);
+}
+
+function autoResizeAndFormat(sheet) {
+  try {
+    if (!sheet) {
+      sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    }
+    // Header styling
+    if (sheet.getLastRow() >= 1) {
+      sheet.getRange("A1:G1")
+        .setFontWeight("bold")
+        .setBackground("#ff5e2c")
+        .setFontColor("#ffffff")
+        .setHorizontalAlignment("center");
+    }
+    // Auto-fit all 7 columns
+    sheet.autoResizeColumns(1, 7);
+
+    // Ensure Column A (Timestamp with Day Name) has ample minimum width
+    if (sheet.getColumnWidth(1) < 260) {
+      sheet.setColumnWidth(1, 270);
+    }
+    // Comfortable minimum widths for all columns
+    if (sheet.getColumnWidth(2) < 140) sheet.setColumnWidth(2, 150);
+    if (sheet.getColumnWidth(3) < 200) sheet.setColumnWidth(3, 220);
+    if (sheet.getColumnWidth(4) < 130) sheet.setColumnWidth(4, 140);
+    if (sheet.getColumnWidth(5) < 260) sheet.setColumnWidth(5, 300);
+    if (sheet.getColumnWidth(6) < 130) sheet.setColumnWidth(6, 140);
+    if (sheet.getColumnWidth(7) < 100) sheet.setColumnWidth(7, 110);
+  } catch (e) {}
+}
+
+function getFormattedISTWithDay(date) {
+  var d = date || new Date();
+  var dayStr = Utilities.formatDate(d, "Asia/Kolkata", "EEEE, dd MMM yyyy, hh:mm:ss a");
+  var parts = dayStr.split(", ");
+  if (parts.length >= 2) {
+    var timePart = parts[1].replace(/\\b(AM|PM)\\b/i, function(m) { return m.toLowerCase(); });
+    return parts[0] + ", " + timePart + " IST";
+  }
+  return dayStr + " IST";
+}
+
+function addDayNamesToExistingRows() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return;
+
+  var range = sheet.getRange(2, 1, lastRow - 1, 1);
+  var values = range.getValues();
+  var changed = false;
+
+  for (var i = 0; i < values.length; i++) {
+    var val = values[i][0];
+    if (!val) continue;
+    var str = String(val).trim();
+    var hasDay = /^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)/i.test(str);
+    if (!hasDay) {
+      var d = new Date(str.replace(/IST$/i, "").trim());
+      if (isNaN(d.getTime())) {
+        var dmy = str.match(/^(\\d{1,2})[\\/\\-](\\d{1,2})[\\/\\-](\\d{4})(.*)$/);
+        if (dmy) {
+          d = new Date(dmy[2] + "/" + dmy[1] + "/" + dmy[3] + (dmy[4] || ""));
+        }
+      }
+      if (!isNaN(d.getTime())) {
+        values[i][0] = getFormattedISTWithDay(d);
+        changed = true;
+      }
+    }
+  }
+  if (changed) {
+    range.setValues(values);
+  }
+  autoResizeAndFormat(sheet);
+}
+
+function doGet(e) {
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    autoResizeAndFormat(sheet);
     var data = sheet.getDataRange().getValues();
     var messages = [];
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
       if (row && (row[0] || row[1] || row[2] || row[4])) {
+        var cleanPhone = String(row[3] || "").replace(/^'/, "").trim();
         var status = (row[6] && row[6].toString().trim()) ? row[6].toString().trim().toUpperCase() : "UNREAD";
         messages.push({
           id: "sheet-row-" + (i + 1),
           submittedAtIST: String(row[0] || ""),
           name: String(row[1] || ""),
           email: String(row[2] || ""),
-          phone: String(row[3] || "Not provided"),
+          phone: cleanPhone || "Not provided",
           message: String(row[4] || ""),
           ipAddress: String(row[5] || "Unknown"),
           status: status,
@@ -643,9 +903,9 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
     })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({
-      status: "active",
-      account: "bijoysarkar7252@gmail.com",
-      message: "Google Sheets Webhook connected."
+      status: "error",
+      error: err.toString(),
+      messages: []
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -666,7 +926,7 @@ function doPost(e) {
       sheet.getRange("A1:G1").setFontWeight("bold").setBackground("#ff5e2c").setFontColor("#ffffff");
     }
 
-    // 1. Handle Status Update (Mark Read, Archive, etc.)
+    // 1. Handle Status Update (Mark Read, Replied, Archive, etc.)
     if (data.action === "update_status" && data.id) {
       var rowIdx = -1;
       var match = data.id.match(/sheet-row-(\\d+)/);
@@ -675,6 +935,7 @@ function doPost(e) {
       }
       if (rowIdx > 1 && rowIdx <= sheet.getLastRow()) {
         sheet.getRange(rowIdx, 7).setValue(data.status || "READ");
+        autoResizeAndFormat(sheet);
         return ContentService.createTextOutput(JSON.stringify({
           status: "success",
           action: "update_status",
@@ -684,13 +945,17 @@ function doPost(e) {
       }
     }
 
-    // 2. Append new inquiry row
-    var phone = data.rawPhone || data.phone || "Not provided";
+    // 2. Format phone to prevent formula parsing
+    var rawPhone = data.rawPhone || data.phone || "Not provided";
+    var phone = rawPhone;
     if (phone && phone.toString().indexOf("+") === 0) {
       phone = "'" + phone;
     }
-    var timestamp = data.timestampIST || new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
 
+    // 3. Timestamp in Indian Standard Time (IST) with full day name
+    var timestamp = data.timestampIST || getFormattedISTWithDay(new Date());
+
+    // 4. Append row
     sheet.appendRow([
       timestamp,
       data.name || "",
@@ -701,7 +966,10 @@ function doPost(e) {
       "UNREAD"
     ]);
 
-    // Send instant alert email to Gmail
+    // 5. Automatically resize all columns to fit the new text perfectly
+    autoResizeAndFormat(sheet);
+
+    // 6. Send instant alert email to Gmail
     MailApp.sendEmail({
       to: "bijoysarkar7252@gmail.com",
       subject: "New Portfolio Inquiry from " + (data.name || "Visitor"),
@@ -759,9 +1027,81 @@ function doPost(e) {
               maxHeight: 260,
             }}
           >
-{`function doGet(e) {
+{`/**
+ * Bijoy Sarkar Portfolio — Google Sheets & Gmail Webhook Engine v2.2
+ */
+
+function onOpen() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+    ui.createMenu("Portfolio Tools")
+      .addItem("Auto-Resize Columns & Format", "manualFormatAndResize")
+      .addItem("Add Day Names to Existing Timestamps", "addDayNamesToExistingRows")
+      .addToUi();
+  } catch (e) {}
+
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  autoResizeAndFormat(sheet);
+}
+
+function manualFormatAndResize() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  autoResizeAndFormat(sheet);
+}
+
+function autoResizeAndFormat(sheet) {
+  try {
+    if (!sheet) sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    if (sheet.getLastRow() >= 1) {
+      sheet.getRange("A1:G1").setFontWeight("bold").setBackground("#ff5e2c").setFontColor("#ffffff").setHorizontalAlignment("center");
+    }
+    sheet.autoResizeColumns(1, 7);
+    if (sheet.getColumnWidth(1) < 260) sheet.setColumnWidth(1, 270);
+  } catch (e) {}
+}
+
+function getFormattedISTWithDay(date) {
+  var d = date || new Date();
+  var dayStr = Utilities.formatDate(d, "Asia/Kolkata", "EEEE, dd MMM yyyy, hh:mm:ss a");
+  var parts = dayStr.split(", ");
+  if (parts.length >= 2) {
+    var timePart = parts[1].replace(/\\b(AM|PM)\\b/i, function(m) { return m.toLowerCase(); });
+    return parts[0] + ", " + timePart + " IST";
+  }
+  return dayStr + " IST";
+}
+
+function addDayNamesToExistingRows() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return;
+  var range = sheet.getRange(2, 1, lastRow - 1, 1);
+  var values = range.getValues();
+  var changed = false;
+  for (var i = 0; i < values.length; i++) {
+    var val = values[i][0];
+    if (!val) continue;
+    var str = String(val).trim();
+    if (!/^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)/i.test(str)) {
+      var d = new Date(str.replace(/IST$/i, "").trim());
+      if (isNaN(d.getTime())) {
+        var dmy = str.match(/^(\\d{1,2})[\\/\\-](\\d{1,2})[\\/\\-](\\d{4})(.*)$/);
+        if (dmy) d = new Date(dmy[2] + "/" + dmy[1] + "/" + dmy[3] + (dmy[4] || ""));
+      }
+      if (!isNaN(d.getTime())) {
+        values[i][0] = getFormattedISTWithDay(d);
+        changed = true;
+      }
+    }
+  }
+  if (changed) range.setValues(values);
+  autoResizeAndFormat(sheet);
+}
+
+function doGet(e) {
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    autoResizeAndFormat(sheet);
     var data = sheet.getDataRange().getValues();
     var messages = [];
     for (var i = 1; i < data.length; i++) {
@@ -773,7 +1113,7 @@ function doPost(e) {
           submittedAtIST: String(row[0] || ""),
           name: String(row[1] || ""),
           email: String(row[2] || ""),
-          phone: String(row[3] || "Not provided"),
+          phone: String(row[3] || "Not provided").replace(/^'/, ""),
           message: String(row[4] || ""),
           ipAddress: String(row[5] || "Unknown"),
           status: status,
@@ -790,9 +1130,9 @@ function doPost(e) {
     })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({
-      status: "active",
-      account: "bijoysarkar7252@gmail.com",
-      message: "Google Sheets Webhook connected."
+      status: "error",
+      error: err.toString(),
+      messages: []
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -807,64 +1147,39 @@ function doPost(e) {
       data = e.parameter;
     }
 
-    // Auto-create header row if sheet is empty
     if (sheet.getLastRow() === 0) {
       sheet.appendRow(["Timestamp (IST)", "Name", "Email", "Phone", "Message", "IP Address", "Status"]);
       sheet.getRange("A1:G1").setFontWeight("bold").setBackground("#ff5e2c").setFontColor("#ffffff");
     }
 
-    // 1. Handle Status Update (Mark Read, Archive, etc.)
     if (data.action === "update_status" && data.id) {
       var rowIdx = -1;
       var match = data.id.match(/sheet-row-(\\d+)/);
-      if (match) {
-        rowIdx = parseInt(match[1], 10);
-      }
+      if (match) rowIdx = parseInt(match[1], 10);
       if (rowIdx > 1 && rowIdx <= sheet.getLastRow()) {
         sheet.getRange(rowIdx, 7).setValue(data.status || "READ");
-        return ContentService.createTextOutput(JSON.stringify({
-          status: "success",
-          action: "update_status",
-          row: rowIdx,
-          newStatus: data.status
-        })).setMimeType(ContentService.MimeType.JSON);
+        autoResizeAndFormat(sheet);
+        return ContentService.createTextOutput(JSON.stringify({ status: "success", newStatus: data.status })).setMimeType(ContentService.MimeType.JSON);
       }
     }
 
-    // 2. Append new inquiry row
     var phone = data.rawPhone || data.phone || "Not provided";
-    if (phone && phone.toString().indexOf("+") === 0) {
-      phone = "'" + phone;
-    }
-    var timestamp = data.timestampIST || new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+    if (phone && phone.toString().indexOf("+") === 0) phone = "'" + phone;
+    var timestamp = data.timestampIST || getFormattedISTWithDay(new Date());
 
-    sheet.appendRow([
-      timestamp,
-      data.name || "",
-      data.email || "",
-      phone,
-      data.message || "",
-      data.ipAddress || "Unknown",
-      "UNREAD"
-    ]);
+    sheet.appendRow([timestamp, data.name || "", data.email || "", phone, data.message || "", data.ipAddress || "Unknown", "UNREAD"]);
+    autoResizeAndFormat(sheet);
 
-    // Send instant alert email to Gmail
     MailApp.sendEmail({
       to: "bijoysarkar7252@gmail.com",
       subject: "New Portfolio Inquiry from " + (data.name || "Visitor"),
       replyTo: data.email || "bijoysarkar7252@gmail.com",
-      body: "New message received on " + timestamp + "\\n\\n" +
-            "Name: " + (data.name || "N/A") + "\\n" +
-            "Email: " + (data.email || "N/A") + "\\n" +
-            "Phone: " + (data.rawPhone || data.phone || "Not provided") + "\\n\\n" +
-            "Message:\\n" + (data.message || "")
+      body: "New message received on " + timestamp + "\\n\\nName: " + (data.name || "N/A") + "\\nEmail: " + (data.email || "N/A") + "\\nPhone: " + (data.rawPhone || data.phone || "Not provided") + "\\n\\nMessage:\\n" + (data.message || "")
     });
 
-    return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", error: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
   }
 }`}
           </pre>

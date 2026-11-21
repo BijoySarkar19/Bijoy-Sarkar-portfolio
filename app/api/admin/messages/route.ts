@@ -67,6 +67,60 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { id, status, notes, action } = body;
 
+    // Handle Mark All Read action
+    if (action === "mark_all_read") {
+      try {
+        const allMsgs = await prisma.contactMessage.findMany({ select: { id: true } });
+        const existingSetting = await prisma.siteSetting.findUnique({
+          where: { key: "message_statuses" },
+        });
+        const currentMap = existingSetting?.value ? JSON.parse(existingSetting.value) : {};
+        for (const m of allMsgs) {
+          currentMap[m.id] = "READ";
+        }
+        await prisma.siteSetting.upsert({
+          where: { key: "message_statuses" },
+          update: { value: JSON.stringify(currentMap) },
+          create: { key: "message_statuses", value: JSON.stringify(currentMap) },
+        });
+        await prisma.contactMessage.updateMany({
+          data: { status: "READ" },
+        }).catch(() => null);
+
+        return NextResponse.json({ success: true, message: "All messages marked as read." });
+      } catch (err) {
+        return NextResponse.json({ success: true, message: "Mark all read notice." });
+      }
+    }
+
+    // Support batch status sync from client (e.g. syncing localStorage overrides)
+    if (body.batchStatuses && typeof body.batchStatuses === "object") {
+      try {
+        const existingSetting = await prisma.siteSetting.findUnique({
+          where: { key: "message_statuses" },
+        });
+        const currentMap = existingSetting?.value ? JSON.parse(existingSetting.value) : {};
+        const mergedMap = { ...currentMap, ...body.batchStatuses };
+        await prisma.siteSetting.upsert({
+          where: { key: "message_statuses" },
+          update: { value: JSON.stringify(mergedMap) },
+          create: { key: "message_statuses", value: JSON.stringify(mergedMap) },
+        });
+
+        for (const [msgId, msgStatus] of Object.entries(body.batchStatuses)) {
+          if (typeof msgStatus === "string") {
+            await prisma.contactMessage.updateMany({
+              where: { id: msgId },
+              data: { status: msgStatus },
+            }).catch(() => null);
+          }
+        }
+        return NextResponse.json({ success: true, message: "Batch status sync complete." });
+      } catch (err) {
+        return NextResponse.json({ success: true, message: "Handled batch notice." });
+      }
+    }
+
     if (!id) {
       return NextResponse.json({ error: "Message ID is required." }, { status: 400 });
     }

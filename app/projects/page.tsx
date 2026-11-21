@@ -40,7 +40,7 @@ export default async function ProjectsPage() {
 
   return (
     <div className="site-shell">
-      <main className="section projects-section project-index">
+      <main className="section projects-section project-index" id="projects-directory">
         <div className="section-wrap">
           <Link className="back-link" href="/#projects">
             <ArrowLeft size={14} /> Back to portfolio
@@ -70,6 +70,7 @@ export default async function ProjectsPage() {
           {/* In Last: Currently Working Projects (Kept separate from final projects) */}
           {ongoingProjects.length > 0 && (
             <div
+              id="ongoing-projects"
               className="projects-subsection ongoing-projects-subsection"
               style={{ marginTop: "70px", paddingTop: "50px", borderTop: "1px solid var(--line)" }}
               data-reveal

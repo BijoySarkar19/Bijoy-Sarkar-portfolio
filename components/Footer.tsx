@@ -20,7 +20,7 @@ export function Footer({
   socialLinks = defaultSocialLinks,
 }: FooterProps) {
   return (
-    <footer className="site-footer">
+    <footer className="site-footer" id="footer">
       <div className="section-wrap">
         <div className="footer-main">
           <div className="footer-identity">

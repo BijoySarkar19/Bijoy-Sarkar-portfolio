@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { AdminLogout } from "@/components/admin/AdminLogout";
 import { useEffect, useState } from "react";
-import { formatIndianTime } from "@/lib/ist-date";
+import { formatAdminClockIST } from "@/lib/ist-date";
 import { Clock } from "lucide-react";
 
 export type AdminTab = "overview" | "projects" | "experience" | "skills" | "resume" | "settings" | "audit" | "messages" | "new";
@@ -12,7 +12,7 @@ export function AdminNavigation({ active }: { active: AdminTab }) {
   const [istTime, setIstTime] = useState("");
 
   useEffect(() => {
-    const update = () => setIstTime(formatIndianTime(new Date()));
+    const update = () => setIstTime(formatAdminClockIST(new Date()));
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);

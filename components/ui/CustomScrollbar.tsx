@@ -12,17 +12,59 @@ export function CustomScrollbar() {
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [indicatorText, setIndicatorText] = useState("0%");
+  const [indicatorText, setIndicatorText] = useState(() => {
+    if (pathname === "/projects") return "Projects";
+    if (pathname?.startsWith("/projects/")) return "Project";
+    if (pathname === "/404" || pathname === "/not-found") return "404";
+    return "Home";
+  });
 
   const isDraggingRef = useRef(false);
   const isHoveredRef = useRef(false);
   const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
   const rafIdRef = useRef<number | null>(null);
 
-  // Determine current active section dynamically from DOM elements present
+  // Determine current active section dynamically from route and DOM elements present
   const getSectionLabel = useCallback((_percent: number) => {
-    if (typeof document === "undefined") return "Home";
+    if (typeof document === "undefined") {
+      if (pathname === "/projects") return "Projects";
+      if (pathname?.startsWith("/projects/")) return "Project";
+      if (pathname === "/404" || pathname === "/not-found") return "404";
+      return "Home";
+    }
 
+    // 1. Dedicated Projects Index page (/projects)
+    if (pathname === "/projects") {
+      const ongoingEl = document.getElementById("ongoing-projects");
+      if (ongoingEl) {
+        const ongoingRect = ongoingEl.getBoundingClientRect();
+        // If scrolled down into the active development / ongoing subsection
+        if (ongoingRect.top <= window.innerHeight * 0.42) {
+          return "Active Development";
+        }
+      }
+      return "Projects";
+    }
+
+    // 2. Project Detail Page (/projects/[slug])
+    if (pathname?.startsWith("/projects/")) {
+      const galleryEl = document.getElementById("project-gallery");
+      const overviewEl = document.getElementById("project-overview");
+      if (overviewEl && overviewEl.getBoundingClientRect().top <= window.innerHeight * 0.42) {
+        return "Overview";
+      }
+      if (galleryEl && galleryEl.getBoundingClientRect().top <= window.innerHeight * 0.42) {
+        return "Gallery";
+      }
+      return "Project";
+    }
+
+    // 3. Error routes
+    if (pathname === "/404" || pathname === "/not-found") {
+      return "404 Not Found";
+    }
+
+    // 4. Home Page (/) sections
     const sectionCandidates = [
       { id: "home", label: "Home" },
       { id: "about", label: "About" },
@@ -43,7 +85,11 @@ export function CustomScrollbar() {
       })
       .filter((s): s is { id: string; label: string; top: number; height: number } => Boolean(s));
 
-    if (presentSections.length === 0) return "Home";
+    if (presentSections.length === 0) {
+      if (pathname === "/projects") return "Projects";
+      if (pathname?.startsWith("/projects/")) return "Project";
+      return "Home";
+    }
 
     const currentScrollY = window.scrollY;
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
@@ -62,7 +108,7 @@ export function CustomScrollbar() {
     }
 
     return presentSections[0].label;
-  }, []);
+  }, [pathname]);
 
   // Directly update thumb position via translate3d on compositor thread (0ms latency)
   const updateThumbPosition = useCallback(() => {
@@ -86,10 +132,14 @@ export function CustomScrollbar() {
 
     if (tooltipRef.current) {
       tooltipRef.current.style.transform = `translate3d(0, ${thumbY}px, 0)`;
-      const pct = Math.round(progress * 100);
-      setIndicatorText(`${getSectionLabel(progress)} · ${pct}%`);
+      setIndicatorText(getSectionLabel(progress));
     }
   }, [getSectionLabel]);
+
+  // Update on route/pathname change immediately
+  useEffect(() => {
+    updateThumbPosition();
+  }, [pathname, updateThumbPosition]);
 
   // Sync on scroll and resize, handling 1-second auto-hide
   useEffect(() => {
@@ -167,8 +217,7 @@ export function CustomScrollbar() {
       thumb!.style.transform = `translate3d(0, ${clampedY}px, 0)`;
       if (tooltipRef.current) {
         tooltipRef.current.style.transform = `translate3d(0, ${clampedY}px, 0)`;
-        const pct = Math.round(ratio * 100);
-        setIndicatorText(`${getSectionLabel(ratio)} · ${pct}%`);
+        setIndicatorText(getSectionLabel(ratio));
       }
 
       // Scroll window with zero lag
@@ -236,7 +285,7 @@ export function CustomScrollbar() {
       {/* Floating Section Tooltip */}
       <div
         ref={tooltipRef}
-        className={`custom-scrollbar-tooltip ${isHovered || isDragging ? "is-visible" : ""}`}
+        className={`custom-scrollbar-tooltip ${isVisible || isHovered || isDragging ? "is-visible" : ""}`}
         aria-hidden="true"
       >
         {indicatorText}

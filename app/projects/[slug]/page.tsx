@@ -52,7 +52,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
   return (
     <div className="site-shell">
-      <main className="section project-detail">
+      <main className="section project-detail" id="project-detail">
         <div className="section-wrap">
           <Link className="back-link" href="/#projects"><ArrowLeft size={14} /> Back to projects</Link>
           <header className="detail-hero" data-reveal>
@@ -85,8 +85,10 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               ) : null}
             </div>
           </header>
-          <ProjectGallery project={project} />
-          <div className="detail-body">
+          <div id="project-gallery">
+            <ProjectGallery project={project} />
+          </div>
+          <div className="detail-body" id="project-overview">
             <article>
               <p className="section-kicker">Overview</p>
               <p className="detail-copy">{project.longDescription}</p>

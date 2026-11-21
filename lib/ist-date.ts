@@ -22,6 +22,30 @@ export function formatIndianTime(date: Date | string | number): string {
 }
 
 /**
+ * Format timestamp into Indian Standard Time with full weekday name for Admin clock
+ * Example output: "Saturday, 21 Nov 2026, 03:58:54 pm IST"
+ */
+export function formatAdminClockIST(date: Date | string | number = new Date()): string {
+  try {
+    const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
+    const formatted = new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata",
+      weekday: "long",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }).format(d);
+    return `${formatted} IST`;
+  } catch {
+    return String(date);
+  }
+}
+
+/**
  * Format date in Indian style: "30 Oct 2026"
  */
 export function formatIndianDate(date: Date | string | number): string {

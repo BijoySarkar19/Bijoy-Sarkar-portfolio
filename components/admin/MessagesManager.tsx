@@ -343,11 +343,39 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
             type="button"
             onClick={() => {
               const code = `function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({
-    status: "active",
-    account: "bijoysarkar7252@gmail.com",
-    message: "Google Sheets Webhook is active and connected!"
-  })).setMimeType(ContentService.MimeType.JSON);
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var data = sheet.getDataRange().getValues();
+    var messages = [];
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      if (row && (row[0] || row[1] || row[2])) {
+        messages.push({
+          id: "sheet-" + i,
+          submittedAtIST: String(row[0] || ""),
+          name: String(row[1] || ""),
+          email: String(row[2] || ""),
+          phone: String(row[3] || "Not provided"),
+          message: String(row[4] || ""),
+          ipAddress: String(row[5] || "Unknown"),
+          status: "UNREAD",
+          googleSynced: true,
+          createdAt: new Date().toISOString()
+        });
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "active",
+      account: "bijoysarkar7252@gmail.com",
+      messages: messages
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "active",
+      account: "bijoysarkar7252@gmail.com",
+      message: "Google Sheets Webhook connected."
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 function doPost(e) {
@@ -435,11 +463,39 @@ function doPost(e) {
             }}
           >
 {`function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({
-    status: "active",
-    account: "bijoysarkar7252@gmail.com",
-    message: "Google Sheets Webhook is active and connected!"
-  })).setMimeType(ContentService.MimeType.JSON);
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var data = sheet.getDataRange().getValues();
+    var messages = [];
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      if (row && (row[0] || row[1] || row[2])) {
+        messages.push({
+          id: "sheet-" + i,
+          submittedAtIST: String(row[0] || ""),
+          name: String(row[1] || ""),
+          email: String(row[2] || ""),
+          phone: String(row[3] || "Not provided"),
+          message: String(row[4] || ""),
+          ipAddress: String(row[5] || "Unknown"),
+          status: "UNREAD",
+          googleSynced: true,
+          createdAt: new Date().toISOString()
+        });
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "active",
+      account: "bijoysarkar7252@gmail.com",
+      messages: messages
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "active",
+      account: "bijoysarkar7252@gmail.com",
+      message: "Google Sheets Webhook connected."
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 function doPost(e) {

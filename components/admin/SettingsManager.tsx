@@ -1365,7 +1365,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                               background: isSelected
                                 ? "rgba(var(--orange-rgb), 0.16)"
                                 : "var(--panel, rgba(255, 255, 255, 0.04))",
-                              color: isSelected ? "var(--orange)" : "var(--white)",
+                              color: isSelected ? "var(--orange)" : "var(--soft-white)",
                               fontSize: 11,
                               fontWeight: 600,
                               cursor: "pointer",
@@ -1468,7 +1468,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                         background: isSelected
                           ? "rgba(var(--orange-rgb), 0.18)"
                           : "var(--panel, rgba(255, 255, 255, 0.04))",
-                        color: isSelected ? "var(--orange)" : "var(--white)",
+                        color: isSelected ? "var(--orange)" : "var(--soft-white)",
                         fontSize: 12,
                         fontWeight: 700,
                         cursor: "pointer",
@@ -1497,7 +1497,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                       borderRadius: 8,
                       border: "1px solid var(--line)",
                       background: "var(--surface)",
-                      color: "var(--white)",
+                      color: "var(--soft-white)",
                       fontWeight: 700,
                     }}
                   />
@@ -1539,7 +1539,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                         border: isSelected ? "2px solid var(--orange)" : "1px solid var(--line)",
                         background: isSelected ? "rgba(var(--orange-rgb), 0.12)" : "rgba(255, 255, 255, 0.03)",
                         cursor: "pointer",
-                        color: "var(--white)",
+                        color: isSelected ? "var(--orange)" : "var(--soft-white)",
                         fontSize: 12,
                         fontWeight: 600,
                       }}
@@ -1574,7 +1574,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                         border: isSelected ? `2px solid ${preset.hex}` : "1px solid var(--line)",
                         background: isSelected ? "rgba(255, 255, 255, 0.08)" : "rgba(255, 255, 255, 0.03)",
                         cursor: "pointer",
-                        color: "var(--white)",
+                        color: isSelected ? "var(--orange)" : "var(--soft-white)",
                         fontSize: 11,
                       }}
                     >

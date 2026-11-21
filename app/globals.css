@@ -3244,6 +3244,10 @@ html.light-mode .admin-small-button {
   color: #334155 !important;
 }
 
+html.light-mode .admin-shell button:not(.button):not(.button-primary) {
+  color: #1e293b;
+}
+
 /* Light Mode Contrast Fix: Game Instructions Overlay (Image 2) */
 html.light-mode .game-info-overlay {
   background: rgba(255, 255, 255, 0.98) !important;

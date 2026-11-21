@@ -282,10 +282,10 @@ export function CustomScrollbar() {
         <span className="custom-scrollbar-grip" />
       </div>
 
-      {/* Floating Section Tooltip */}
+      {/* Floating Section Tooltip - strictly visible only when manually pulling the scrollbar */}
       <div
         ref={tooltipRef}
-        className={`custom-scrollbar-tooltip ${isVisible || isHovered || isDragging ? "is-visible" : ""}`}
+        className={`custom-scrollbar-tooltip ${isDragging ? "is-visible" : ""}`}
         aria-hidden="true"
       >
         {indicatorText}

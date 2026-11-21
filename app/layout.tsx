@@ -20,25 +20,56 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Bijoy Sarkar — Portfolio | Software Engineer & AI Developer",
-    template: "%s | Bijoy Sarkar",
+    default: "Bijoy Sarkar — Portfolio, Resume & CV | Software Engineer & AI Developer",
+    template: "%s | Bijoy Sarkar — Portfolio & CV",
   },
   description:
-    "Official portfolio of Bijoy Sarkar, Software Engineer and AI Developer based in Agartala, India. Discover intelligent systems, full-stack applications, CivicLens Core, machine learning engineering, and curriculum vitae at bijoy-sarkar-portfolio.vercel.app.",
+    "Official portfolio, resume, and curriculum vitae (CV) of Bijoy Sarkar, Software Engineer and AI Developer based in Agartala, India. Discover intelligent systems, full-stack applications, CivicLens Core, SentinelEdge, and download Bijoy Sarkar's verified CV and resume at bijoy-sarkar-portfolio.vercel.app.",
   keywords: [
     "Bijoy Sarkar",
-    "Bijoy Sarkar portfolio",
-    "bijoy sarkar portfolio .vercel.app",
-    "bijoy-sarkar-portfolio.vercel.app",
+    "Bijoy",
     "bijoysarkar",
+    "Bijoy Sarkar portfolio",
+    "bijoy sarkar portfolio",
+    "Bijoy portfolio",
+    "bijoy portfolio",
+    "Bijoy Sarkar CV",
+    "bijoy sarkar cv",
+    "Bijoy CV",
+    "bijoy cv",
+    "Bijoy Sarkar resume",
+    "bijoy sarkar resume",
+    "Bijoy resume",
+    "bijoy resume",
+    "Bijoy Sarkar curriculum vitae",
+    "bijoy sarkar curriculum vitae",
+    "Bijoy curriculum vitae",
+    "bijoy curriculum vitae",
+    "Bijoy Sarkar CV PDF",
+    "bijoy cv pdf",
+    "bijoy sarkar resume pdf",
+    "bijoy resume pdf",
+    "bijoy cv download",
+    "bijoy sarkar cv download",
+    "bijoy resume download",
+    "bijoy sarkar resume download",
+    "bijoy-sarkar-portfolio.vercel.app",
+    "bijoy sarkar portfolio .vercel.app",
     "Bijoy Sarkar software engineer",
     "Bijoy Sarkar AI developer",
+    "Bijoy software engineer",
+    "Bijoy developer",
     "Bijoy Sarkar ICFAI University Tripura",
     "Bijoy Sarkar Agartala",
     "Bijoy Sarkar Tripura",
     "Bijoy Sarkar developer",
+    "Bijoy Sarkar projects",
+    "Bijoy projects",
+    "Bijoy Sarkar official website",
+    "Bijoy official portfolio",
     "CivicLens Core",
     "Rakshak AI",
+    "SentinelEdge",
     "Software Engineer portfolio",
     "AI Developer portfolio",
     "Full Stack Engineer",
@@ -57,10 +88,10 @@ export const metadata: Metadata = {
     type: "profile",
     locale: "en_US",
     url: siteUrl,
-    title: "Bijoy Sarkar — Portfolio | Software Engineer & AI Developer",
+    title: "Bijoy Sarkar — Portfolio, Resume & CV | Software Engineer & AI Developer",
     description:
-      "Official portfolio of Bijoy Sarkar, Software Engineer and AI Developer. Intelligent systems, full-stack builds, and CV at bijoy-sarkar-portfolio.vercel.app.",
-    siteName: "Bijoy Sarkar Portfolio",
+      "Official portfolio, resume, and curriculum vitae (CV) of Bijoy Sarkar — Software Engineer and AI Developer. Intelligent systems, full-stack builds, and verified CV at bijoy-sarkar-portfolio.vercel.app.",
+    siteName: "Bijoy Sarkar Portfolio, Resume & CV",
     images: [
       {
         url: `${siteUrl}/opengraph-image`,
@@ -78,9 +109,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bijoy Sarkar — Portfolio | Software Engineer & AI Developer",
+    title: "Bijoy Sarkar — Portfolio, Resume & CV | Software Engineer & AI Developer",
     description:
-      "Official portfolio of Bijoy Sarkar, Software Engineer and AI Developer at bijoy-sarkar-portfolio.vercel.app.",
+      "Official portfolio, resume, and verified CV of Bijoy Sarkar — Software Engineer and AI Developer at bijoy-sarkar-portfolio.vercel.app.",
     creator: "@bijoyy_19",
     site: "@bijoyy_19",
     images: [`${siteUrl}/twitter-image`],
@@ -244,7 +275,19 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   name: "Bijoy Sarkar Portfolio",
                   alternateName: [
                     "Bijoy Sarkar",
+                    "Bijoy Sarkar Portfolio",
                     "bijoy sarkar portfolio",
+                    "Bijoy Portfolio",
+                    "bijoy portfolio",
+                    "Bijoy Sarkar CV",
+                    "bijoy sarkar cv",
+                    "Bijoy CV",
+                    "bijoy cv",
+                    "Bijoy Sarkar Resume",
+                    "bijoy sarkar resume",
+                    "Bijoy Resume",
+                    "bijoy resume",
+                    "Bijoy Sarkar Curriculum Vitae",
                     "bijoy sarkar portfolio .vercel.app",
                     "bijoy-sarkar-portfolio.vercel.app",
                     "Bijoy Sarkar Official Website",
@@ -263,12 +306,30 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   name: "Bijoy Sarkar",
                   givenName: "Bijoy",
                   familyName: "Sarkar",
-                  alternateName: ["Bijoy Sarkar", "BijoySarkar19", "Bijoy Sarkar Portfolio"],
+                  alternateName: [
+                    "Bijoy",
+                    "Bijoy Sarkar",
+                    "BijoySarkar19",
+                    "Bijoy Portfolio",
+                    "Bijoy Sarkar Portfolio",
+                    "Bijoy CV",
+                    "Bijoy Sarkar CV",
+                    "Bijoy Resume",
+                    "Bijoy Sarkar Resume"
+                  ],
                   url: siteUrl,
                   image: `${siteUrl}/bijoy-sarkar.jpg`,
                   jobTitle: "Software Engineer & AI Developer",
                   description:
-                    "Official portfolio and personal website of Bijoy Sarkar, Software Engineer and AI Developer based in Agartala, Tripura, India.",
+                    "Official portfolio, resume, and curriculum vitae (CV) of Bijoy Sarkar, Software Engineer and AI Developer based in Agartala, Tripura, India.",
+                  subjectOf: {
+                    "@type": "DigitalDocument",
+                    "@id": `${siteUrl}/#resume-doc`,
+                    name: "Bijoy Sarkar Resume & Curriculum Vitae (CV)",
+                    description: "Verified Curriculum Vitae (CV) and Resume of Bijoy Sarkar, Software Engineer and AI Developer.",
+                    url: `${siteUrl}/Bijoy_Sarkar_CV.pdf`,
+                    encodingFormat: "application/pdf"
+                  },
                   disambiguatingDescription:
                     "Bijoy Sarkar is an Indian Software Engineer, AI Developer, and Full-Stack Developer based in Agartala, Tripura, India, pursuing a B.Tech in Computer Science and Engineering at ICFAI University Tripura (GitHub: BijoySarkar19). This is the official portfolio of Bijoy Sarkar (https://bijoy-sarkar-portfolio.vercel.app), distinct from Bengali folk saint/singer Bijoy Sarkar (1903–1985) and distinct from Quality Analyst Bijoy Kumar Sarkar.",
                   worksFor: {
@@ -308,9 +369,43 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   ],
                 },
                 {
+                  "@type": "DigitalDocument",
+                  "@id": `${siteUrl}/#resume-doc`,
+                  name: "Bijoy Sarkar Resume & Curriculum Vitae (CV)",
+                  alternateName: [
+                    "Bijoy Sarkar CV",
+                    "Bijoy CV",
+                    "Bijoy Sarkar Resume",
+                    "Bijoy Resume",
+                    "Bijoy Curriculum Vitae",
+                    "Bijoy Sarkar Curriculum Vitae"
+                  ],
+                  description:
+                    "Official verified curriculum vitae (CV) and resume of Bijoy Sarkar, Software Engineer and AI Developer.",
+                  url: `${siteUrl}/#resume`,
+                  sameAs: "https://github.com/BijoySarkar19/Bijoy_Sarkar_CV",
+                  encodingFormat: "application/pdf",
+                  author: {
+                    "@id": `${siteUrl}/#person`
+                  },
+                  about: {
+                    "@id": `${siteUrl}/#person`
+                  },
+                  inLanguage: "en-US",
+                  isAccessibleForFree: true
+                },
+                {
                   "@type": "FAQPage",
                   "@id": `${siteUrl}/#faq`,
                   mainEntity: [
+                    {
+                      "@type": "Question",
+                      name: "Where can I view or download Bijoy Sarkar's portfolio, CV, or resume?",
+                      acceptedAnswer: {
+                        "@type": "Answer",
+                        text: "You can view and download Bijoy Sarkar's official portfolio, resume, and verified curriculum vitae (CV) directly at https://bijoy-sarkar-portfolio.vercel.app/#resume (or download the PDF at https://bijoy-sarkar-portfolio.vercel.app/Bijoy_Sarkar_CV.pdf). You can also view his CV repository on GitHub at https://github.com/BijoySarkar19/Bijoy_Sarkar_CV."
+                      }
+                    },
                     {
                       "@type": "Question",
                       name: "What is the official portfolio website of Bijoy Sarkar?",

@@ -35,7 +35,7 @@ export function Hero({
           <div className="hero-reveal">
             <p className="hero-intro">Hey, I&apos;m Bijoy Sarkar</p>
             <h1 className="hero-title" id="hero-title">
-              <span className="sr-only">Bijoy Sarkar — </span>
+              <span className="sr-only">Bijoy Sarkar Portfolio | Bijoy Portfolio | </span>
               <span>Software</span>
               <span className="hero-title-second">Engineer <em>&amp; AI</em></span>
               <span>Developer</span>

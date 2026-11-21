@@ -242,8 +242,9 @@ export function ResumeViewer({
       <section className="section resume-section" id="resume" aria-labelledby="resume-title">
         <div className="section-wrap">
           <div className="resume-copy" data-reveal style={{ marginBottom: "2rem" }}>
-            <p className="section-kicker">Resume</p>
+            <p className="section-kicker">Resume &amp; Curriculum Vitae (CV)</p>
             <h2 className="section-title" id="resume-title">
+              <span className="sr-only">Bijoy Sarkar Resume, Bijoy Sarkar CV, Bijoy Portfolio — </span>
               {resumeTitle}
             </h2>
             <p>{resumeSubtitle}</p>
@@ -261,8 +262,9 @@ export function ResumeViewer({
     <section className="section resume-section" id="resume" aria-labelledby="resume-title">
       <div className="section-wrap resume-layout">
         <div className="resume-copy" data-reveal>
-          <p className="section-kicker">Resume</p>
+          <p className="section-kicker">Resume &amp; Curriculum Vitae (CV)</p>
           <h2 className="section-title" id="resume-title">
+            <span className="sr-only">Bijoy Sarkar Resume, Bijoy Sarkar CV, Bijoy Portfolio — </span>
             {resumeTitle}
           </h2>
           <p>{resumeSubtitle}</p>

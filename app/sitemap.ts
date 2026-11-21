@@ -9,6 +9,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const projects = await prisma.project.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } });
   return [
     { url: base, lastModified: new Date(), changeFrequency: "daily", priority: 1.0 },
+    { url: `${base}/#resume`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.95 },
+    { url: `${base}/Bijoy_Sarkar_CV.pdf`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     { url: `${base}/projects`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
     ...projects.map((project) => ({
       url: `${base}/projects/${project.slug}`,

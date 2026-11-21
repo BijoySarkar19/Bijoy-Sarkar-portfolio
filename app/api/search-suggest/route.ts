@@ -11,8 +11,13 @@ interface SuggestionItem {
 
 const STATIC_SUGGESTIONS: SuggestionItem[] = [
   { term: "Bijoy Sarkar Portfolio", desc: "Official software engineering and AI systems portfolio", path: "/" },
-  { term: "Bijoy Sarkar Projects", desc: "Intelligent systems, CivicLens Core, ML engineering", path: "/projects" },
-  { term: "Bijoy Sarkar CV & Resume", desc: "Verified curriculum vitae, education, and technical experience", path: "/#resume" },
+  { term: "Bijoy Portfolio", desc: "Official developer portfolio and systems showcase", path: "/" },
+  { term: "Bijoy Sarkar CV", desc: "Verified curriculum vitae, education, and technical qualifications", path: "/#resume" },
+  { term: "Bijoy CV", desc: "Curriculum vitae and technical qualifications", path: "/#resume" },
+  { term: "Bijoy Sarkar Resume", desc: "Software engineer and AI developer resume (PDF & viewer)", path: "/#resume" },
+  { term: "Bijoy Resume", desc: "Download verified resume and qualifications", path: "/#resume" },
+  { term: "Bijoy Sarkar Projects", desc: "Intelligent systems, CivicLens Core, SentinelEdge, ML engineering", path: "/projects" },
+  { term: "Bijoy Projects", desc: "Browse all real-life and active development projects", path: "/projects" },
   { term: "Bijoy Sarkar About", desc: "Background at ICFAI University Tripura, core skills & stack", path: "/#about" },
   { term: "Bijoy Sarkar Contact", desc: "Direct inquiry, email, and social profiles", path: "/#contact" },
     { term: "SentinelEdge", desc: "Privacy-First edge-to-cloud video and incident intelligence platform", path: "/projects/sentineledge" },

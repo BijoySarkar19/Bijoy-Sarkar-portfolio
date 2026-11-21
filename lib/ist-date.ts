@@ -64,7 +64,7 @@ export function formatIndianDate(date: Date | string | number): string {
 
 /**
  * Safely parse any date value, ISO string, or IST formatted string into millisecond epoch timestamp.
- * Handles inputs like "21 Nov 2026, 03:11:45 am IST", "10/31/2026, 3:59:00 PM", ISO strings, and Date instances.
+ * Handles inputs like "21 Nov 2026, 03:11:45 am IST", "31/10/2026, 02:12:00", "10/31/2026, 3:59:00 PM", ISO strings, and Date instances.
  */
 export function parseDateTimestamp(val: unknown): number {
   if (!val) return 0;
@@ -82,7 +82,16 @@ export function parseDateTimestamp(val: unknown): number {
     const d1 = new Date(clean);
     if (!isNaN(d1.getTime())) return d1.getTime();
 
-    // 2. Try raw string as date
+    // 2. Try DD/MM/YYYY or DD-MM-YYYY format: e.g. 31/10/2026, 02:12:00
+    const dmyMatch = clean.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(.*)$/);
+    if (dmyMatch) {
+      const [, day, month, year, rest] = dmyMatch;
+      const reordered = `${month}/${day}/${year}${rest}`;
+      const d = new Date(reordered);
+      if (!isNaN(d.getTime())) return d.getTime();
+    }
+
+    // 3. Try raw string as date
     const d2 = new Date(trimmed);
     if (!isNaN(d2.getTime())) return d2.getTime();
   }

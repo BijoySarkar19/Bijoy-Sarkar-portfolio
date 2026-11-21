@@ -52,6 +52,7 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
   });
 
   const [filter, setFilter] = useState<"ALL" | "UNREAD" | "READ" | "REPLIED" | "ARCHIVED">("ALL");
+  const [recentlyUpdatedIds, setRecentlyUpdatedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -189,8 +190,10 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
   const filtered = useMemo(() => {
     return messages
       .filter((m) => {
-        // Tab filter
-        if (filter !== "ALL" && m.status !== filter) return false;
+        // Tab filter: Keep message in view if user recently updated its status in the active tab session
+        if (filter !== "ALL" && m.status !== filter && !recentlyUpdatedIds.has(m.id)) {
+          return false;
+        }
 
         // Search query filter (Name, Title, Email, Phone without country code, Message)
         if (!searchQuery.trim()) return true;
@@ -206,9 +209,10 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
       .sort((a, b) => {
         const timeA = parseDateTimestamp(a.submittedAtIST || a.createdAt);
         const timeB = parseDateTimestamp(b.submittedAtIST || b.createdAt);
-        return timeB - timeA;
+        if (timeB !== timeA) return timeB - timeA;
+        return (b.id || "").localeCompare(a.id || "");
       });
-  }, [messages, filter, searchQuery]);
+  }, [messages, filter, searchQuery, recentlyUpdatedIds]);
 
   const unreadCount = messages.filter((m) => m.status === "UNREAD").length;
 
@@ -217,6 +221,7 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
     setMessages((prev) =>
       prev.map((m) => (m.id === id ? { ...m, status: newStatus } : m))
     );
+    setRecentlyUpdatedIds((prev) => new Set(prev).add(id));
     setFeedback({ text: `Message marked as ${newStatus.toLowerCase()}.`, type: "success" });
 
     // 2. Persist in browser localStorage for 0ms client-side persistence
@@ -286,7 +291,10 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
               type="button"
               className={`button ${filter === tab ? "button-primary" : "button-secondary"}`}
               style={{ fontSize: 11, padding: "6px 12px", height: "auto" }}
-              onClick={() => setFilter(tab)}
+              onClick={() => {
+                setFilter(tab);
+                setRecentlyUpdatedIds(new Set());
+              }}
             >
               {tab === "ALL" ? `All (${messages.length})` : tab === "UNREAD" ? `Unread (${unreadCount})` : tab}
             </button>

@@ -25,4 +25,5 @@ crop_*.jpg
 test_head.jpg
 k8s/secret.yaml
 k8s/*.local.yaml
+*.tsbuildinfo
 

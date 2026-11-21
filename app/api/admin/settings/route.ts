@@ -112,6 +112,15 @@ export async function POST(request: Request) {
       // Project Artwork & Gallery Settings
       "ongoingDefaultImage",
       "defaultProjectImageCount",
+      // CV Watermark Controls (Edit & Remove)
+      "cvWatermarkEnabled",
+      "cvWatermarkText",
+      "cvWatermarkOpacity",
+      "cvWatermarkAngle",
+      "cv_watermark_enabled",
+      "cv_watermark_text",
+      "cv_watermark_opacity",
+      "cv_watermark_angle",
     ];
 
     for (const key of allowedKeys) {

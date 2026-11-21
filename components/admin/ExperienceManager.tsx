@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Trash2, Edit3, Briefcase, Calendar, Building, Tag, Check, X, Undo2 } from "lucide-react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { Plus, Trash2, Edit3, Briefcase, Calendar, Building, Tag, Check, X, Undo2, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export interface ExperienceItem {
@@ -22,6 +22,77 @@ export function ExperienceManager({ initialExperiences }: { initialExperiences: 
   const [loading, setLoading] = useState(false);
   const [lastAuditId, setLastAuditId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error"; canUndo?: boolean } | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const suggestions = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return [];
+    const list: { type: "role" | "org" | "skill" | "period"; title: string; subtitle: string; value: string }[] = [];
+    const seen = new Set<string>();
+
+    for (const exp of experiences) {
+      if (exp.role.toLowerCase().includes(q)) {
+        const key = `role-${exp.role}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push({ type: "role", title: exp.role, subtitle: `${exp.organization} (${exp.period})`, value: exp.role });
+        }
+      }
+      if (exp.organization.toLowerCase().includes(q)) {
+        const key = `org-${exp.organization}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push({ type: "org", title: exp.organization, subtitle: exp.role, value: exp.organization });
+        }
+      }
+      if (Array.isArray(exp.tags)) {
+        for (const tag of exp.tags) {
+          if (tag.toLowerCase().includes(q)) {
+            const key = `tag-${tag}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              list.push({ type: "skill", title: tag, subtitle: `Used at ${exp.organization}`, value: tag });
+            }
+          }
+        }
+      }
+      if (exp.period.toLowerCase().includes(q)) {
+        const key = `period-${exp.period}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push({ type: "period", title: exp.period, subtitle: `${exp.role} at ${exp.organization}`, value: exp.period });
+        }
+      }
+      if (list.length >= 8) break;
+    }
+    return list;
+  }, [experiences, searchQuery]);
+
+  const filteredExperiences = useMemo(() => {
+    if (!searchQuery.trim()) return experiences;
+    const q = searchQuery.toLowerCase().trim();
+    return experiences.filter((exp) => {
+      const matchRole = exp.role.toLowerCase().includes(q);
+      const matchOrg = exp.organization.toLowerCase().includes(q);
+      const matchPeriod = exp.period.toLowerCase().includes(q);
+      const matchSummary = exp.summary.toLowerCase().includes(q);
+      const matchTags = Array.isArray(exp.tags) && exp.tags.some((t) => t.toLowerCase().includes(q));
+      return matchRole || matchOrg || matchPeriod || matchSummary || matchTags;
+    });
+  }, [experiences, searchQuery]);
 
   async function handleUndo() {
     if (!lastAuditId) return;
@@ -198,6 +269,76 @@ export function ExperienceManager({ initialExperiences }: { initialExperiences: 
         )}
       </div>
 
+      {/* Experience Search Bar with Live Suggestions */}
+      <div className="admin-search-container" ref={searchContainerRef} style={{ marginTop: 6, marginBottom: 16 }}>
+        <div className="admin-search-bar">
+          <Search size={15} style={{ color: "var(--orange)", flexShrink: 0 }} />
+          <input
+            type="text"
+            className="admin-search-input"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            placeholder="Search experience by role, company, skills, or period..."
+            aria-label="Search work experiences"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="admin-search-clear"
+              onClick={() => {
+                setSearchQuery("");
+                setShowSuggestions(false);
+              }}
+              title="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
+          {searchQuery && (
+            <span className="admin-search-badge">
+              {filteredExperiences.length} {filteredExperiences.length === 1 ? "match" : "matches"}
+            </span>
+          )}
+        </div>
+
+        {/* Suggestions Popover */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="admin-suggestions-popover">
+            {suggestions.map((sug, idx) => (
+              <div
+                key={`${sug.type}-${sug.value}-${idx}`}
+                className="admin-suggestion-item"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setSearchQuery(sug.value);
+                  setShowSuggestions(false);
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                  {sug.type === "role" && <Briefcase size={13} style={{ color: "var(--orange)", flexShrink: 0 }} />}
+                  {sug.type === "org" && <Building size={13} style={{ color: "#38bdf8", flexShrink: 0 }} />}
+                  {sug.type === "skill" && <Tag size={13} style={{ color: "#4ade80", flexShrink: 0 }} />}
+                  {sug.type === "period" && <Calendar size={13} style={{ color: "#a78bfa", flexShrink: 0 }} />}
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, color: "var(--white)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {sug.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {sug.subtitle}
+                    </div>
+                  </div>
+                </div>
+                <span className="admin-suggestion-tag">{sug.type}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Form modal/card when creating or editing */}
       {(isCreating || editingId) && (
         <form className="admin-card admin-form-box" onSubmit={handleSubmit}>
@@ -304,7 +445,7 @@ export function ExperienceManager({ initialExperiences }: { initialExperiences: 
             </tr>
           </thead>
           <tbody>
-            {experiences.map((exp) => (
+            {filteredExperiences.map((exp) => (
               <tr key={exp.id}>
                 <td><strong>#{exp.sortOrder}</strong></td>
                 <td>
@@ -346,10 +487,12 @@ export function ExperienceManager({ initialExperiences }: { initialExperiences: 
                 </td>
               </tr>
             ))}
-            {experiences.length === 0 && (
+            {filteredExperiences.length === 0 && (
               <tr>
                 <td colSpan={6} style={{ textAlign: "center", padding: 32 }}>
-                  <p className="muted">No work experiences found. Click "Add Experience" to create one.</p>
+                  <p className="muted">
+                    {searchQuery ? `No work experiences found matching "${searchQuery}".` : "No work experiences found. Click \"Add Experience\" to create one."}
+                  </p>
                 </td>
               </tr>
             )}

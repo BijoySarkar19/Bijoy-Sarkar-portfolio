@@ -302,6 +302,10 @@ export default async function HomePage() {
             pageCount={cvPageCount}
             resumeTitle={settingsMap.resumeTitle}
             resumeSubtitle={settingsMap.resumeSubtitle}
+            watermarkEnabled={settingsMap.cvWatermarkEnabled !== "false" && settingsMap.cv_watermark_enabled !== "false"}
+            watermarkText={settingsMap.cvWatermarkText || settingsMap.cv_watermark_text || "bijoy-sarkar-portfolio"}
+            watermarkOpacity={parseFloat(settingsMap.cvWatermarkOpacity || settingsMap.cv_watermark_opacity || "0.085")}
+            watermarkAngle={parseFloat(settingsMap.cvWatermarkAngle || settingsMap.cv_watermark_angle || "-22")}
           />
         )}
         {gamesEnabled && (

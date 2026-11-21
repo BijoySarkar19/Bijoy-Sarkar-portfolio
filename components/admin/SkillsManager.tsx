@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Trash2, Edit3, Check, X, Layers, Code2, BrainCircuit, Terminal, Smartphone, Database, Fingerprint, Languages, Undo2 } from "lucide-react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { Plus, Trash2, Edit3, Check, X, Layers, Code2, BrainCircuit, Terminal, Smartphone, Database, Fingerprint, Languages, Undo2, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export interface SkillGroupItem {
@@ -32,6 +32,61 @@ export function SkillsManager({ initialGroups }: { initialGroups: SkillGroupItem
   const [loading, setLoading] = useState(false);
   const [lastAuditId, setLastAuditId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error"; canUndo?: boolean } | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const suggestions = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return [];
+    const list: { type: "category" | "skill"; title: string; subtitle: string; value: string }[] = [];
+    const seen = new Set<string>();
+
+    for (const g of groups) {
+      if (g.title.toLowerCase().includes(q)) {
+        const key = `cat-${g.title}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push({ type: "category", title: g.title, subtitle: `${g.skills.length} skills · ${g.note}`, value: g.title });
+        }
+      }
+      if (Array.isArray(g.skills)) {
+        for (const s of g.skills) {
+          if (s.toLowerCase().includes(q)) {
+            const key = `skill-${s}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              list.push({ type: "skill", title: s, subtitle: `In ${g.title}`, value: s });
+            }
+          }
+        }
+      }
+      if (list.length >= 8) break;
+    }
+    return list;
+  }, [groups, searchQuery]);
+
+  const filteredGroups = useMemo(() => {
+    if (!searchQuery.trim()) return groups;
+    const q = searchQuery.toLowerCase().trim();
+    return groups.filter((g) => {
+      const matchTitle = g.title.toLowerCase().includes(q);
+      const matchNote = g.note.toLowerCase().includes(q);
+      const matchSkill = Array.isArray(g.skills) && g.skills.some((s) => s.toLowerCase().includes(q));
+      return matchTitle || matchNote || matchSkill;
+    });
+  }, [groups, searchQuery]);
 
   async function handleUndo() {
     if (!lastAuditId) return;
@@ -211,6 +266,77 @@ export function SkillsManager({ initialGroups }: { initialGroups: SkillGroupItem
         )}
       </div>
 
+      {/* Skills Search Bar with Live Suggestions */}
+      <div className="admin-search-container" ref={searchContainerRef} style={{ marginTop: 6, marginBottom: 16 }}>
+        <div className="admin-search-bar">
+          <Search size={15} style={{ color: "var(--orange)", flexShrink: 0 }} />
+          <input
+            type="text"
+            className="admin-search-input"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            placeholder="Search skills by tool name, language, or category..."
+            aria-label="Search skills and languages"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="admin-search-clear"
+              onClick={() => {
+                setSearchQuery("");
+                setShowSuggestions(false);
+              }}
+              title="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
+          {searchQuery && (
+            <span className="admin-search-badge">
+              {filteredGroups.length} {filteredGroups.length === 1 ? "category" : "categories"}
+            </span>
+          )}
+        </div>
+
+        {/* Suggestions Popover */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="admin-suggestions-popover">
+            {suggestions.map((sug, idx) => (
+              <div
+                key={`${sug.type}-${sug.value}-${idx}`}
+                className="admin-suggestion-item"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setSearchQuery(sug.value);
+                  setShowSuggestions(false);
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                  {sug.type === "category" ? (
+                    <Layers size={13} style={{ color: "var(--orange)", flexShrink: 0 }} />
+                  ) : (
+                    <Code2 size={13} style={{ color: "#38bdf8", flexShrink: 0 }} />
+                  )}
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, color: "var(--white)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {sug.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {sug.subtitle}
+                    </div>
+                  </div>
+                </div>
+                <span className="admin-suggestion-tag">{sug.type}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Form modal/card */}
       {(isCreating || editingId) && (
         <form className="admin-card admin-form-box" onSubmit={handleSubmit}>
@@ -295,7 +421,7 @@ export function SkillsManager({ initialGroups }: { initialGroups: SkillGroupItem
 
       {/* Grid of skill categories */}
       <div className="admin-skills-cards-grid">
-        {groups.map((group) => (
+        {filteredGroups.map((group) => (
           <div key={group.id} className="admin-skill-mgmt-card">
             <div className="admin-skill-mgmt-top">
               <div>
@@ -324,18 +450,27 @@ export function SkillsManager({ initialGroups }: { initialGroups: SkillGroupItem
             </div>
 
             <div className="admin-skill-tags-wrap">
-              {(group.skills || []).map((skill, sIdx) => (
-                <span key={sIdx} className="skill-pill">
-                  {skill}
-                </span>
-              ))}
+              {(group.skills || []).map((skill, sIdx) => {
+                const isSkillMatch = searchQuery.trim() && skill.toLowerCase().includes(searchQuery.toLowerCase().trim());
+                return (
+                  <span
+                    key={sIdx}
+                    className="skill-pill"
+                    style={isSkillMatch ? { borderColor: "var(--orange)", background: "rgba(255, 94, 44, 0.2)", color: "#fff" } : undefined}
+                  >
+                    {skill}
+                  </span>
+                );
+              })}
             </div>
           </div>
         ))}
 
-        {groups.length === 0 && (
+        {filteredGroups.length === 0 && (
           <div className="empty-state full-width">
-            <p className="muted">No skill categories configured. Click "Add Category" above to create one.</p>
+            <p className="muted">
+              {searchQuery ? `No skill categories found matching "${searchQuery}".` : "No skill categories configured. Click \"Add Category\" above to create one."}
+            </p>
           </div>
         )}
       </div>

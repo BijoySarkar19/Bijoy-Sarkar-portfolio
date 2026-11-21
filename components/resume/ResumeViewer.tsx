@@ -12,6 +12,10 @@ interface ResumeViewerProps {
   pageCount?: number;
   resumeTitle?: string;
   resumeSubtitle?: string;
+  watermarkEnabled?: boolean;
+  watermarkText?: string;
+  watermarkOpacity?: number;
+  watermarkAngle?: number;
 }
 
 export function ResumeViewer({
@@ -21,6 +25,10 @@ export function ResumeViewer({
   pageCount = 3,
   resumeTitle = "Experience in the details.",
   resumeSubtitle = "Education, internships, technical work, and the projects behind this portfolio—all in one place.",
+  watermarkEnabled = true,
+  watermarkText = "bijoy-sarkar-portfolio",
+  watermarkOpacity = 0.085,
+  watermarkAngle = -22,
 }: ResumeViewerProps) {
   // Zoom level ranges strictly from 10% (0.10) to 500% (5.00), default 100% (1.00)
   const [zoom, setZoom] = useState(1);
@@ -423,8 +431,16 @@ export function ResumeViewer({
                     decoding="async"
                     draggable={false}
                   />
-                  {/* Subtle, non-intrusive security watermark across preview: visible in screenshot / screen recording */}
-                  <div className="resume-watermark" aria-hidden="true" />
+                  {/* Editable / Removable CV Watermark (managed via Admin Portal) */}
+                  {watermarkEnabled && (
+                    <div
+                      className="resume-watermark"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='150' viewBox='0 0 260 150'%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle' transform='rotate(${watermarkAngle} 130 75)' fill='%230f172a' fill-opacity='${watermarkOpacity}' font-family='-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif' font-weight='700' font-size='13' letter-spacing='0.07em'%3E${encodeURIComponent(watermarkText)}%3C/text%3E%3C/svg%3E")`,
+                      }}
+                      aria-hidden="true"
+                    />
+                  )}
                 </div>
               ))}
             </div>

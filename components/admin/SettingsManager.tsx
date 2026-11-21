@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Save,
   Undo2,
@@ -21,6 +21,9 @@ import {
   Upload,
   EyeOff,
   RotateCcw,
+  Search,
+  X,
+  Sliders,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -49,6 +52,11 @@ export interface SiteSettingsMap {
   googleSheetsWebhookUrl?: string;
   themeAccent?: string;
   themeMode?: string;
+  // CV Watermark Controls (Edit & Remove)
+  cvWatermarkEnabled?: string;
+  cvWatermarkText?: string;
+  cvWatermarkOpacity?: string;
+  cvWatermarkAngle?: string;
   // Project Artwork & Gallery Defaults
   ongoingDefaultImage?: string;
   defaultProjectImageCount?: string;
@@ -131,6 +139,44 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingArtwork, setUploadingArtwork] = useState(false);
+
+  // Settings Search Bar & Live Suggestions State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const SETTINGS_SECTIONS_INDEX = useMemo(() => [
+    { id: "sec-visibility", title: "Section Visibility Toggles", category: "Modules", keywords: ["hero", "about", "skills", "projects", "resume", "cv", "games", "contact", "visibility", "toggles", "enable", "disable"] },
+    { id: "sec-identity", title: "Profile & Identity (Hero Headline)", category: "Identity", keywords: ["hero", "headline", "bio", "title", "subhead", "status", "open to opportunities"] },
+    { id: "sec-location", title: "Location, Maps & Address Mode", category: "Location", keywords: ["location", "address", "map", "agartala", "tripura", "india", "current", "permanent", "dual", "single"] },
+    { id: "sec-contact", title: "Contact & Gmail Alert Settings", category: "Contact", keywords: ["email", "contact", "bijoysarkar7252@gmail.com", "webhook", "google sheets", "alerts"] },
+    { id: "sec-watermark", title: "CV Watermark Controls (Edit & Remove)", category: "Curriculum Vitae", keywords: ["watermark", "cv", "resume", "confidential", "opacity", "angle", "remove watermark", "edit watermark", "watermark text"] },
+    { id: "sec-social", title: "Social Profiles & Links", category: "Social", keywords: ["github", "linkedin", "twitter", "x", "instagram", "facebook", "youtube", "discord"] },
+    { id: "sec-degrees", title: "Education & Academic Degrees", category: "Education", keywords: ["degree", "education", "icfai", "b.tech", "computer science", "university"] },
+    { id: "sec-theme", title: "Theme Accent & Color Appearance", category: "Appearance", keywords: ["theme", "accent", "color", "orange", "blue", "violet", "emerald", "red", "dark mode", "light mode"] },
+    { id: "sec-artwork", title: "Default Project Artwork & Layout", category: "Projects", keywords: ["artwork", "ongoing", "cover", "image", "layout", "single hero"] },
+    { id: "sec-editorial", title: "Editorial Headings & Subtitles", category: "Copywriting", keywords: ["editorial", "headings", "subtitles", "about title", "skills title", "projects title", "resume title", "games title", "contact title"] },
+  ], []);
+
+  const suggestions = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return [];
+    return SETTINGS_SECTIONS_INDEX.filter((item) =>
+      item.title.toLowerCase().includes(q) ||
+      item.category.toLowerCase().includes(q) ||
+      item.keywords.some((k) => k.toLowerCase().includes(q))
+    ).slice(0, 8);
+  }, [SETTINGS_SECTIONS_INDEX, searchQuery]);
 
   useEffect(() => {
     const activeAccent = settings.themeAccent || "#ff5e2c";
@@ -415,13 +461,88 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
         </div>
       </div>
 
+      {/* Settings Search Bar with Live Suggestions */}
+      <div className="admin-search-container" ref={searchContainerRef} style={{ marginTop: 6, marginBottom: 20 }}>
+        <div className="admin-search-bar">
+          <Search size={15} style={{ color: "var(--orange)", flexShrink: 0 }} />
+          <input
+            type="text"
+            className="admin-search-input"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            placeholder="Search settings by field name, category, or keyword..."
+            aria-label="Search settings and configuration"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="admin-search-clear"
+              onClick={() => {
+                setSearchQuery("");
+                setShowSuggestions(false);
+              }}
+              title="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
+          {searchQuery && (
+            <span className="admin-search-badge">
+              {suggestions.length} {suggestions.length === 1 ? "section" : "sections"}
+            </span>
+          )}
+        </div>
+
+        {/* Suggestions Popover */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="admin-suggestions-popover">
+            {suggestions.map((sug, idx) => (
+              <div
+                key={`${sug.id}-${idx}`}
+                className="admin-suggestion-item"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setSearchQuery(sug.title);
+                  setShowSuggestions(false);
+                  const el = document.getElementById(sug.id);
+                  if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                    el.style.outline = "2px solid var(--orange)";
+                    setTimeout(() => {
+                      el.style.outline = "";
+                    }, 2500);
+                  }
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                  <Sliders size={13} style={{ color: "var(--orange)", flexShrink: 0 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, color: "var(--white)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {sug.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      Category: {sug.category} · Jump to configuration
+                    </div>
+                  </div>
+                </div>
+                <span className="admin-suggestion-tag">{sug.category}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <form onSubmit={handleSave} className="admin-form">
         <div
           className="admin-grid"
           style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 20 }}
         >
           {/* Section Visibility Modules (Image 2 request) */}
-          <div className="admin-card" style={{ gridColumn: "1 / -1" }}>
+          <div id="sec-visibility" className="admin-card" style={{ gridColumn: "1 / -1" }}>
             <div className="admin-card-heading">
               <div>
                 <p className="section-kicker">Portfolio Modules</p>
@@ -813,6 +934,60 @@ export function SettingsManager({ initialSettings }: { initialSettings: SiteSett
                     }
                     onChange={(e) => handleChange("resumeSubtitle", e.target.value)}
                   />
+                </div>
+
+                {/* CV Watermark Controls */}
+                <div id="sec-watermark" style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                    <strong style={{ fontSize: 11, color: "var(--soft-white)" }}>CV Watermark Overlay</strong>
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 11, color: "var(--silver)" }}>
+                      <input
+                        type="checkbox"
+                        checked={settings.cvWatermarkEnabled !== "false"}
+                        onChange={(e) => handleChange("cvWatermarkEnabled", e.target.checked ? "true" : "false")}
+                        style={{ width: 14, height: 14, accentColor: "var(--orange)", cursor: "pointer" }}
+                      />
+                      <span>{settings.cvWatermarkEnabled !== "false" ? "Watermark Active" : "Watermark Removed"}</span>
+                    </label>
+                  </div>
+                  {settings.cvWatermarkEnabled !== "false" && (
+                    <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 10 }}>
+                      <div className="field" style={{ margin: 0 }}>
+                        <label style={{ fontSize: 10 }}>Watermark Text</label>
+                        <input
+                          style={{ fontSize: 11 }}
+                          value={settings.cvWatermarkText ?? "bijoy-sarkar-portfolio"}
+                          onChange={(e) => handleChange("cvWatermarkText", e.target.value)}
+                          placeholder="bijoy-sarkar-portfolio"
+                        />
+                      </div>
+                      <div className="field" style={{ margin: 0 }}>
+                        <label style={{ fontSize: 10 }}>Opacity</label>
+                        <select
+                          style={{ fontSize: 11 }}
+                          value={settings.cvWatermarkOpacity ?? "0.085"}
+                          onChange={(e) => handleChange("cvWatermarkOpacity", e.target.value)}
+                        >
+                          <option value="0.04">Subtle (4%)</option>
+                          <option value="0.085">Default (8.5%)</option>
+                          <option value="0.15">Medium (15%)</option>
+                          <option value="0.25">Prominent (25%)</option>
+                        </select>
+                      </div>
+                      <div className="field" style={{ margin: 0 }}>
+                        <label style={{ fontSize: 10 }}>Angle</label>
+                        <select
+                          style={{ fontSize: 11 }}
+                          value={settings.cvWatermarkAngle ?? "-22"}
+                          onChange={(e) => handleChange("cvWatermarkAngle", e.target.value)}
+                        >
+                          <option value="-22">-22°</option>
+                          <option value="-45">-45°</option>
+                          <option value="0">0°</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

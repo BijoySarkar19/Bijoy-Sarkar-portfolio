@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Mail, Phone, Calendar, Check, ExternalLink, Download, Trash2, RefreshCw, Send, Sheet, Copy } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Mail, Phone, Calendar, Check, ExternalLink, Download, Trash2, RefreshCw, Send, Sheet, Copy, Search, X, User, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseDateTimestamp } from "@/lib/ist-date";
 
@@ -19,6 +19,24 @@ export interface ContactMessageItem {
   createdAt: string | Date;
 }
 
+// Matches phone number without requiring country code
+function matchesPhone(phone: string | null | undefined, query: string): boolean {
+  if (!phone || !query) return false;
+  const q = query.toLowerCase().trim();
+  const raw = phone.toLowerCase();
+  if (raw.includes(q)) return true;
+
+  const pDigits = phone.replace(/\D/g, "");
+  const qDigits = query.replace(/\D/g, "");
+  if (qDigits.length > 0) {
+    if (pDigits.includes(qDigits)) return true;
+    // Strip common country code prefixes (e.g. 91 for India, 1 for US, etc.)
+    const national = pDigits.replace(/^(91|1|44|61|81)/, "");
+    if (national.includes(qDigits)) return true;
+  }
+  return false;
+}
+
 export function MessagesManager({ initialMessages }: { initialMessages: ContactMessageItem[] }) {
   const router = useRouter();
 
@@ -34,14 +52,50 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
   });
 
   const [filter, setFilter] = useState<"ALL" | "UNREAD" | "READ" | "REPLIED" | "ARCHIVED">("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
   const [loading, setLoading] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
   const [feedback, setFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  // Sync state when initialMessages change from router.refresh()
+  // Close suggestions popover when clicking outside
   useEffect(() => {
-    setMessages(() => {
-      const list = [...initialMessages];
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Sync state when initialMessages change from server, while strictly protecting user updates & localStorage overrides
+  useEffect(() => {
+    let localOverrides: Record<string, string> = {};
+    try {
+      const raw = localStorage.getItem("portfolio_msg_statuses");
+      if (raw) localOverrides = JSON.parse(raw);
+    } catch {}
+
+    setMessages((prev) => {
+      // Gather any status changes made during this session
+      const activeStatusMap: Record<string, string> = { ...localOverrides };
+      for (const m of prev) {
+        if (m.status !== "UNREAD") {
+          activeStatusMap[m.id] = m.status;
+        }
+      }
+
+      const list = initialMessages.map((m) => {
+        const finalStatus = activeStatusMap[m.id] || m.status;
+        return {
+          ...m,
+          status: finalStatus,
+        };
+      });
+
       list.sort((a, b) => {
         const timeA = parseDateTimestamp(a.submittedAtIST || a.createdAt);
         const timeB = parseDateTimestamp(b.submittedAtIST || b.createdAt);
@@ -51,7 +105,7 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
     });
   }, [initialMessages]);
 
-  // Load client-side local overrides for instant consistency across reloads
+  // Load client-side local overrides on mount for instant zero-latency consistency
   useEffect(() => {
     try {
       const raw = localStorage.getItem("portfolio_msg_statuses");
@@ -64,21 +118,102 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
     } catch {}
   }, []);
 
-  const filtered = messages
-    .filter((m) => {
-      if (filter === "ALL") return true;
-      return m.status === filter;
-    })
-    .sort((a, b) => {
-      const timeA = parseDateTimestamp(a.submittedAtIST || a.createdAt);
-      const timeB = parseDateTimestamp(b.submittedAtIST || b.createdAt);
-      return timeB - timeA;
-    });
+  // Compute live search suggestions across Name, Email, Phone (no country code), and Message description
+  const suggestions = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return [];
+
+    const list: { type: "name" | "email" | "phone" | "message"; title: string; subtitle: string; value: string }[] = [];
+    const seen = new Set<string>();
+
+    for (const m of messages) {
+      // 1. Name suggestion
+      if (m.name && m.name.toLowerCase().includes(q)) {
+        const key = `name-${m.name}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push({ type: "name", title: m.name, subtitle: m.email || "Name match", value: m.name });
+        }
+      }
+
+      // 2. Email suggestion
+      if (m.email && m.email.toLowerCase().includes(q)) {
+        const key = `email-${m.email}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push({ type: "email", title: m.email, subtitle: `Inquiry by ${m.name}`, value: m.email });
+        }
+      }
+
+      // 3. Phone number suggestion (does NOT require country code)
+      if (m.phone && matchesPhone(m.phone, q)) {
+        const cleanDigits = m.phone.replace(/[^\d+]/g, "");
+        const key = `phone-${cleanDigits}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          const rawWithoutCountry = m.phone.replace(/^\+91\s*/, "").replace(/^'\+91\s*/, "").replace(/^'/, "");
+          list.push({
+            type: "phone",
+            title: m.phone.replace(/^'/, ""),
+            subtitle: `${m.name} · Matches without country code`,
+            value: rawWithoutCountry,
+          });
+        }
+      }
+
+      // 4. Message / Description excerpt suggestion
+      if (m.message && m.message.toLowerCase().includes(q)) {
+        const idx = m.message.toLowerCase().indexOf(q);
+        const start = Math.max(0, idx - 15);
+        const end = Math.min(m.message.length, idx + q.length + 35);
+        const snippet = (start > 0 ? "..." : "") + m.message.substring(start, end).trim() + (end < m.message.length ? "..." : "");
+        const key = `msg-${snippet}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push({
+            type: "message",
+            title: snippet,
+            subtitle: `Message content from ${m.name}`,
+            value: m.message.substring(idx, Math.min(m.message.length, idx + 25)).trim(),
+          });
+        }
+      }
+
+      if (list.length >= 8) break;
+    }
+
+    return list;
+  }, [messages, searchQuery]);
+
+  // Combined tab + search filtering
+  const filtered = useMemo(() => {
+    return messages
+      .filter((m) => {
+        // Tab filter
+        if (filter !== "ALL" && m.status !== filter) return false;
+
+        // Search query filter (Name, Title, Email, Phone without country code, Message)
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase().trim();
+        const nameMatch = m.name?.toLowerCase().includes(q);
+        const emailMatch = m.email?.toLowerCase().includes(q);
+        const msgMatch = m.message?.toLowerCase().includes(q);
+        const notesMatch = m.notes?.toLowerCase().includes(q);
+        const phoneMatch = matchesPhone(m.phone, q);
+
+        return Boolean(nameMatch || emailMatch || msgMatch || notesMatch || phoneMatch);
+      })
+      .sort((a, b) => {
+        const timeA = parseDateTimestamp(a.submittedAtIST || a.createdAt);
+        const timeB = parseDateTimestamp(b.submittedAtIST || b.createdAt);
+        return timeB - timeA;
+      });
+  }, [messages, filter, searchQuery]);
 
   const unreadCount = messages.filter((m) => m.status === "UNREAD").length;
 
   async function updateStatus(id: string, newStatus: string) {
-    // 1. Immediate optimistic UI update
+    // 1. Immediate optimistic UI update — locked in place
     setMessages((prev) =>
       prev.map((m) => (m.id === id ? { ...m, status: newStatus } : m))
     );
@@ -92,7 +227,7 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
       localStorage.setItem("portfolio_msg_statuses", JSON.stringify(overrides));
     } catch {}
 
-    // 3. Persist to server backend API
+    // 3. Persist to server backend API asynchronously (no router.refresh to prevent race conditions)
     try {
       const res = await fetch("/api/admin/messages", {
         method: "PATCH",
@@ -101,13 +236,11 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.error || "Failed to update status on server.");
+        console.warn("Server update notice:", data);
       }
       setFeedback({ text: `Message marked as ${newStatus.toLowerCase()} successfully.`, type: "success" });
-      router.refresh();
     } catch (err: unknown) {
       console.warn("Server status notice:", err);
-      // Status is already preserved locally and in localStorage
     }
   }
 
@@ -123,7 +256,6 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
       if (!res.ok) throw new Error(data.error || "Sync failed");
       setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, googleSynced: true } : m)));
       setFeedback({ text: "Synced with Google Sheets!", type: "success" });
-      router.refresh();
     } catch (err: unknown) {
       setFeedback({ text: err instanceof Error ? err.message : "Sync failed.", type: "error" });
     } finally {
@@ -138,7 +270,6 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
       if (!res.ok) throw new Error("Failed to delete message");
       setMessages((prev) => prev.filter((m) => m.id !== id));
       setFeedback({ text: "Message removed.", type: "success" });
-      router.refresh();
     } catch {
       setFeedback({ text: "Failed to delete message.", type: "error" });
     }
@@ -147,7 +278,7 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
   return (
     <div className="admin-section-block">
       {/* Action Bar */}
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {(["ALL", "UNREAD", "READ", "REPLIED", "ARCHIVED"] as const).map((tab) => (
             <button
@@ -185,6 +316,76 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
         </div>
       </div>
 
+      {/* Smart Search Bar with Live Suggestions (Name, Title, Email, Phone without country code, Message) */}
+      <div className="admin-search-container" ref={searchContainerRef}>
+        <div className="admin-search-bar">
+          <Search size={15} style={{ color: "var(--orange)", flexShrink: 0 }} />
+          <input
+            type="text"
+            className="admin-search-input"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            placeholder="Search by name, email, phone (no country code needed), or message content..."
+            aria-label="Search inquiries"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="admin-search-clear"
+              onClick={() => {
+                setSearchQuery("");
+                setShowSuggestions(false);
+              }}
+              title="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
+          {searchQuery && (
+            <span className="admin-search-badge">
+              {filtered.length} {filtered.length === 1 ? "match" : "matches"}
+            </span>
+          )}
+        </div>
+
+        {/* Suggestions Popover */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="admin-suggestions-popover">
+            {suggestions.map((sug, idx) => (
+              <div
+                key={`${sug.type}-${sug.value}-${idx}`}
+                className="admin-suggestion-item"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setSearchQuery(sug.value);
+                  setShowSuggestions(false);
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                  {sug.type === "name" && <User size={13} style={{ color: "var(--orange)", flexShrink: 0 }} />}
+                  {sug.type === "email" && <Mail size={13} style={{ color: "#38bdf8", flexShrink: 0 }} />}
+                  {sug.type === "phone" && <Phone size={13} style={{ color: "#4ade80", flexShrink: 0 }} />}
+                  {sug.type === "message" && <MessageSquare size={13} style={{ color: "#a78bfa", flexShrink: 0 }} />}
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, color: "var(--white)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {sug.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {sug.subtitle}
+                    </div>
+                  </div>
+                </div>
+                <span className="admin-suggestion-tag">{sug.type}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {feedback && (
         <div
           style={{
@@ -207,7 +408,12 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
 
       {/* Messages List */}
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {filtered.map((msg) => {
+        {filtered.length === 0 ? (
+          <div className="admin-card" style={{ padding: "30px", textAlign: "center", color: "var(--muted)", fontSize: 13, borderStyle: "dashed" }}>
+            {searchQuery ? `No inquiries match "${searchQuery}". Try searching by phone digits without country code, or a sender name.` : "No messages found in this filter."}
+          </div>
+        ) : (
+          filtered.map((msg) => {
           const isUnread = msg.status === "UNREAD";
           const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.email)}&su=Re:%20Inquiry%20from%20Portfolio&body=Hi%20${encodeURIComponent(msg.name)},%0A%0A`;
 
@@ -377,13 +583,7 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
               </div>
             </div>
           );
-        })}
-
-        {filtered.length === 0 && (
-          <div style={{ padding: "40px", textAlign: "center", color: "var(--muted)", background: "rgba(8, 11, 20, 0.4)", borderRadius: 12 }}>
-            No messages found in this filter.
-          </div>
-        )}
+        }))}
       </div>
 
       {/* Google Sheets Integration Guide Card */}

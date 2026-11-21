@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Pencil, Sparkles, Rocket, Star, Eye, EyeOff, RotateCcw, Plus } from "lucide-react";
+import { ArrowUpRight, Pencil, Sparkles, Rocket, Star, Eye, EyeOff, RotateCcw, Plus, Search, X, FolderGit2 } from "lucide-react";
 import { DeleteProjectButton } from "@/components/admin/DeleteProjectButton";
 
 export interface AdminProjectItem {
@@ -22,18 +22,87 @@ export interface AdminProjectItem {
 export function ProjectListManager({ initialProjects }: { initialProjects: AdminProjectItem[] }) {
   const [projects, setProjects] = useState<AdminProjectItem[]>(initialProjects);
   const [filter, setFilter] = useState<"all" | "finished" | "ongoing" | "home" | "drafts">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error"; auditLogId?: string } | null>(null);
   const [undoing, setUndoing] = useState(false);
 
-  // Strictly partition Finished Projects (Real Life Problems, 01 to 15) vs Currently Working Builds
-  const finishedProjects = projects.filter((p) => !p.isOngoing);
-  const ongoingProjects = projects.filter((p) => p.isOngoing);
+  // Close suggestions popover when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const homeMainCount = finishedProjects.filter((p) => p.featuredOnHome && p.published).length;
-  const ongoingHomeCount = ongoingProjects.filter((p) => p.featuredOnHome && p.published).length;
-  const totalOngoingCount = ongoingProjects.length;
+  // Compute live project search suggestions
+  const suggestions = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return [];
+    const list: { type: "title" | "slug" | "stage"; title: string; subtitle: string; value: string }[] = [];
+    const seen = new Set<string>();
+
+    for (const p of projects) {
+      if (p.title.toLowerCase().includes(q)) {
+        const key = `title-${p.title}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push({
+            type: "title",
+            title: p.title,
+            subtitle: `/${p.slug} · ${p.isOngoing ? "⚡ Currently Working" : "Main Project"}`,
+            value: p.title,
+          });
+        }
+      }
+      if (p.slug.toLowerCase().includes(q)) {
+        const key = `slug-${p.slug}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push({
+            type: "slug",
+            title: `/${p.slug}`,
+            subtitle: `${p.title}`,
+            value: p.slug,
+          });
+        }
+      }
+      if (list.length >= 8) break;
+    }
+    return list;
+  }, [projects, searchQuery]);
+
+  // Project search filter helper
+  const matchesSearch = (p: AdminProjectItem) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    return (
+      p.title.toLowerCase().includes(q) ||
+      p.slug.toLowerCase().includes(q) ||
+      (p.githubUrl && p.githubUrl.toLowerCase().includes(q)) ||
+      (p.liveUrl && p.liveUrl.toLowerCase().includes(q)) ||
+      (p.isOngoing ? "currently working ongoing" : "main finished").includes(q) ||
+      (p.published ? "published" : "draft").includes(q)
+    );
+  };
+
+  // Strictly partition Finished Projects vs Currently Working Builds with search applied
+  const allFinished = projects.filter((p) => !p.isOngoing);
+  const allOngoing = projects.filter((p) => p.isOngoing);
+
+  const finishedProjects = allFinished.filter(matchesSearch);
+  const ongoingProjects = allOngoing.filter(matchesSearch);
+
+  const homeMainCount = allFinished.filter((p) => p.featuredOnHome && p.published).length;
+  const ongoingHomeCount = allOngoing.filter((p) => p.featuredOnHome && p.published).length;
   const draftsCount = projects.filter((p) => !p.published).length;
+  const totalMatches = finishedProjects.length + ongoingProjects.length;
 
   async function handleToggle(id: string, action: "toggle_ongoing" | "toggle_featured_home" | "toggle_published" | "apply_ongoing_artwork") {
     // Client-side guard rails enforcing 5 main projects and 2 ongoing projects limits
@@ -316,6 +385,73 @@ export function ProjectListManager({ initialProjects }: { initialProjects: Admin
         <button type="button" className={`admin-tab ${filter === "drafts" ? "is-active" : ""}`} onClick={() => setFilter("drafts")}>
           Drafts ({draftsCount})
         </button>
+      </div>
+
+      {/* Projects Search Bar with Live Suggestions */}
+      <div className="admin-search-container" ref={searchContainerRef} style={{ marginTop: 14 }}>
+        <div className="admin-search-bar">
+          <Search size={15} style={{ color: "var(--orange)", flexShrink: 0 }} />
+          <input
+            type="text"
+            className="admin-search-input"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            placeholder="Search projects by title, slug, stage, or tags..."
+            aria-label="Search projects"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="admin-search-clear"
+              onClick={() => {
+                setSearchQuery("");
+                setShowSuggestions(false);
+              }}
+              title="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
+          {searchQuery && (
+            <span className="admin-search-badge">
+              {totalMatches} {totalMatches === 1 ? "project" : "projects"}
+            </span>
+          )}
+        </div>
+
+        {/* Suggestions Popover */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="admin-suggestions-popover">
+            {suggestions.map((sug, idx) => (
+              <div
+                key={`${sug.type}-${sug.value}-${idx}`}
+                className="admin-suggestion-item"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setSearchQuery(sug.value);
+                  setShowSuggestions(false);
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                  <FolderGit2 size={13} style={{ color: "var(--orange)", flexShrink: 0 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, color: "var(--white)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {sug.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {sug.subtitle}
+                    </div>
+                  </div>
+                </div>
+                <span className="admin-suggestion-tag">{sug.type}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Render Lists Based on Filter */}

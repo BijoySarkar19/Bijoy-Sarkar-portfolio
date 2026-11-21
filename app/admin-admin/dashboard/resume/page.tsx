@@ -44,6 +44,37 @@ export default async function AdminResumePage() {
     ];
   }
 
+  let watermarkMap: Record<string, string> = {
+    enabled: "true",
+    text: "bijoy-sarkar-portfolio",
+    opacity: "0.085",
+    angle: "-22",
+  };
+  try {
+    const wSettings = await prisma.siteSetting.findMany({
+      where: {
+        key: {
+          in: [
+            "cvWatermarkEnabled",
+            "cvWatermarkText",
+            "cvWatermarkOpacity",
+            "cvWatermarkAngle",
+            "cv_watermark_enabled",
+            "cv_watermark_text",
+            "cv_watermark_opacity",
+            "cv_watermark_angle",
+          ],
+        },
+      },
+    });
+    for (const s of wSettings) {
+      if (s.key === "cvWatermarkEnabled" || s.key === "cv_watermark_enabled") watermarkMap.enabled = s.value;
+      if (s.key === "cvWatermarkText" || s.key === "cv_watermark_text") watermarkMap.text = s.value;
+      if (s.key === "cvWatermarkOpacity" || s.key === "cv_watermark_opacity") watermarkMap.opacity = s.value;
+      if (s.key === "cvWatermarkAngle" || s.key === "cv_watermark_angle") watermarkMap.angle = s.value;
+    }
+  } catch {}
+
   return (
     <main>
       <div className="admin-topline">
@@ -53,7 +84,7 @@ export default async function AdminResumePage() {
         </div>
       </div>
       <AdminNavigation active="resume" />
-      <ResumeManager initialResumes={parsed} />
+      <ResumeManager initialResumes={parsed} initialWatermark={watermarkMap} />
     </main>
   );
 }

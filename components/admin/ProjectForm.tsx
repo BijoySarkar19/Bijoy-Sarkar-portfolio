@@ -119,7 +119,7 @@ export function ProjectForm({
     if (checked) {
       setFeaturedOnHome(true);
       // For ongoing projects, default to 1 image using the configured default ongoing image
-      setImages([defaultOngoingImage || "/images/ongoing-project-cover-violet.webp"]);
+      setImages([defaultOngoingImage || "/images/ongoing-project-cover-orange.webp"]);
     } else {
       // When moving from ongoing to main: automatically remove default ongoing images!
       const cleaned = images.filter((img) => !isOngoingPlaceholder(img));
@@ -195,7 +195,7 @@ export function ProjectForm({
       setMessageType("error");
       setMessage(
         isOngoingVal
-          ? "Currently doing projects require at least 1 image (e.g. /images/ongoing-project-cover-violet.webp)."
+          ? "Currently doing projects require at least 1 image (e.g. /images/ongoing-project-cover-orange.webp)."
           : "Finished projects must have at least 1 real project screenshot. Please enter an image path."
       );
       setPending(false);

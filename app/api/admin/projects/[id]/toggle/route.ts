@@ -82,7 +82,7 @@ export async function POST(request: Request, { params }: RouteContext) {
         // If moving back to ongoing and image1 is empty, assign ongoing default artwork
         if (!project.image1 || project.image1.trim() === "") {
           const setting = await prisma.siteSetting.findUnique({ where: { key: "ongoingDefaultImage" } });
-          updateData.image1 = setting?.value || "/images/ongoing-project-cover-violet.webp";
+          updateData.image1 = setting?.value || "/images/ongoing-project-cover-orange.webp";
         }
       }
 

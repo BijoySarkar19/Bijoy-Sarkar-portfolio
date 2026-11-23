@@ -6,8 +6,8 @@ const NEXTAUTH_SECRET =
   "bijoy-sarkar-portfolio-auth-secret-key-2026-fallback-secure-deterministic";
 
 export async function proxy(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const isProtectedAdminPage = pathname.startsWith("/admin-admin/dashboard");
+  const pathname = request.nextUrl.pathname.toLowerCase();
+  const isProtectedAdminPage = pathname === "/admin-admin/dashboard" || pathname.startsWith("/admin-admin/dashboard/");
   const isProtectedAdminApi = pathname.startsWith("/api/admin");
   const isProtectedProjectMutation = pathname.startsWith("/api/projects") && !["GET", "HEAD", "OPTIONS"].includes(request.method);
 
@@ -31,6 +31,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/admin-admin/dashboard",
     "/admin-admin/dashboard/:path*",
     "/api/admin/:path*",
     "/api/projects/:path*",

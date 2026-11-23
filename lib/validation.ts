@@ -44,7 +44,7 @@ export const projectInputSchema = z.object({
 
 export const contactSchema = z.object({
   name: z.string().trim().min(2).max(80),
-  email: z.email().trim().max(254).refine((value) => /\.com$/i.test(value), "Use an email address ending in .com."),
+  email: z.email().trim().max(254),
   phone: z.string().trim().max(24).regex(/^\+?[0-9 ]*$/, "Phone numbers may contain digits only.").optional().default(""),
   message: z.string().trim().min(1).max(100000).refine((value) => {
     const words = value.split(/\s+/u).filter(Boolean).length;

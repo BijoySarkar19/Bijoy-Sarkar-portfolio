@@ -25,8 +25,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No image file provided." }, { status: 400 });
     }
 
-    if (!file.type.startsWith("image/") && !file.name.match(/\.(jpe?g|png|webp|svg|gif|avif)$/i)) {
-      return NextResponse.json({ error: "Only image files (JPEG, PNG, WEBP, SVG, GIF) are permitted." }, { status: 400 });
+    const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"]);
+    const ALLOWED_MIME_TYPES = new Set([
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "image/avif",
+    ]);
+
+    const ext = extname(file.name).toLowerCase();
+    const mime = file.type.toLowerCase();
+
+    // Strict validation: BOTH extension and MIME type must be safe raster images (SVG disallowed to prevent stored XSS)
+    if (!ALLOWED_EXTENSIONS.has(ext) || !ALLOWED_MIME_TYPES.has(mime)) {
+      return NextResponse.json(
+        { error: "Only safe raster image files (JPEG, PNG, WEBP, GIF, AVIF) are permitted." },
+        { status: 400 }
+      );
     }
 
     if (file.size > 10 * 1024 * 1024) {
@@ -36,7 +52,6 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const ext = extname(file.name) || ".webp";
     const safeName = `custom-ongoing-${Date.now()}${ext}`;
 
     const uploadsDir = join(process.cwd(), "public", "uploads");

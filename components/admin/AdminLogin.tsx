@@ -24,7 +24,15 @@ export function AdminLogin() {
         callbackUrl: "/admin-admin/dashboard",
       });
       if (result?.error) {
-        setMessage("Those credentials did not match an admin account.");
+        if (
+          result.error.toLowerCase().includes("wait") ||
+          result.error.toLowerCase().includes("attempts") ||
+          result.error.toLowerCase().includes("too many")
+        ) {
+          setMessage(result.error);
+        } else {
+          setMessage("Those credentials did not match an admin account.");
+        }
         return;
       }
       router.replace("/admin-admin/dashboard");

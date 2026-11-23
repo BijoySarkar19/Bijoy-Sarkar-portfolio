@@ -14,6 +14,7 @@ export interface HeroProps {
 }
 
 export function Hero({
+  title = "Software Engineer & AI Developer",
   subhead = "Building intelligent systems and full-stack solutions.",
   bio = "Computer Science undergraduate focused on AI/ML, secure software, and useful digital products.",
   location = "Agartala, Tripura, India",
@@ -36,9 +37,15 @@ export function Hero({
             <p className="hero-intro">Hey, I&apos;m Bijoy Sarkar</p>
             <h1 className="hero-title" id="hero-title">
               <span className="sr-only">Bijoy Sarkar Portfolio | Bijoy Portfolio | </span>
-              <span>Software</span>
-              <span className="hero-title-second">Engineer <em>&amp; AI</em></span>
-              <span>Developer</span>
+              {!title || title === "Software Engineer & AI Developer" ? (
+                <>
+                  <span>Software</span>
+                  <span className="hero-title-second">Engineer <em>&amp; AI</em></span>
+                  <span>Developer</span>
+                </>
+              ) : (
+                <span>{title}</span>
+              )}
             </h1>
           </div>
           <div className="hero-summary hero-reveal" style={{ animationDelay: "110ms" }}>

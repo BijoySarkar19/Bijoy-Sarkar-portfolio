@@ -124,15 +124,6 @@ export function ProjectCard({ project, index }: { project: PortfolioProject; ind
             >
               <SocialIcon name="github" size={13} />
             </a>
-          ) : project.isOngoing ? (
-            <Link
-              className="project-link project-github"
-              href="/404"
-              aria-label={`${project.title} GitHub repository under active development (404)`}
-              title="GitHub repository under active development (Opens 404)"
-            >
-              <SocialIcon name="github" size={13} />
-            </Link>
           ) : null}
         </div>
       </div>

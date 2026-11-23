@@ -258,6 +258,7 @@ export default async function HomePage() {
       <main>
         {heroEnabled && (
           <Hero
+            title={settingsMap.heroTitle}
             subhead={settingsMap.heroSubhead}
             bio={settingsMap.heroBio}
             location={resolvedLocation}

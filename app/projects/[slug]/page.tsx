@@ -73,10 +73,6 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                 <a className="button" href={github} target="_blank" rel="noopener noreferrer">
                   <SocialIcon name="github" size={14} /> GitHub <ArrowUpRight size={13} />
                 </a>
-              ) : project.isOngoing ? (
-                <Link className="button" href="/404" title="GitHub repository under active development (Opens 404)">
-                  <SocialIcon name="github" size={14} /> GitHub <ArrowUpRight size={13} />
-                </Link>
               ) : null}
               {live ? (
                 <a className="button button-secondary" href={live} target="_blank" rel="noopener noreferrer">
@@ -103,22 +99,12 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                     <a href={github} target="_blank" rel="noopener noreferrer">
                       Source code <ArrowUpRight size={13} />
                     </a>
-                  ) : project.isOngoing ? (
-                    <Link href="/404" title="Source code under active development (Opens 404)">
-                      Source code <ArrowUpRight size={13} />
-                    </Link>
                   ) : null}
                   {live ? (
                     <a href={live} target="_blank" rel="noopener noreferrer">
                       Live project <ArrowUpRight size={13} />
                     </a>
                   ) : null}
-                </div>
-              ) : project.isOngoing ? (
-                <div className="detail-aside-links">
-                  <Link href="/404" title="Source code under active development (Opens 404)">
-                    Source code <ArrowUpRight size={13} />
-                  </Link>
                 </div>
               ) : (
                 <p className="detail-private-note">Project links are being prepared.</p>

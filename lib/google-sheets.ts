@@ -18,10 +18,15 @@ const CSV_DIR = join(process.cwd(), "public", "downloads");
 const CSV_FILE = join(CSV_DIR, "contact-submissions.csv");
 
 function escapeCsv(field: string = ""): string {
-  if (field.includes(",") || field.includes('"') || field.includes("\n") || field.includes("\r")) {
-    return `"${field.replace(/"/g, '""')}"`;
+  let val = field;
+  // Mitigate CSV Formula Injection: neutralize leading =, +, -, @, tab, or carriage return
+  if (/^[=+\-@\t\r]/.test(val)) {
+    val = `'${val}`;
   }
-  return field;
+  if (val.includes(",") || val.includes('"') || val.includes("\n") || val.includes("\r")) {
+    return `"${val.replace(/"/g, '""')}"`;
+  }
+  return val;
 }
 
 export async function appendToGoogleSheetCsv(record: ContactRecord) {
@@ -134,6 +139,7 @@ export async function syncWithGoogleSheetWebhook(record: ContactRecord) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       redirect: "follow",
+      signal: AbortSignal.timeout(8000),
       body: JSON.stringify({
         account: record.recipientEmail || "bijoysarkar7252@gmail.com",
         recipientEmail: record.recipientEmail || "bijoysarkar7252@gmail.com",

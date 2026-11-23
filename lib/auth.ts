@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { adminLoginSchema } from "@/lib/validation";
 import { allowLoginAttempt, recordFailedLogin, resetLoginAttempts } from "@/lib/auth-rate-limit";
@@ -47,23 +48,25 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Too many failed sign-in attempts. Please wait 15 minutes before retrying.");
         }
 
-        // 1. Direct environment administrator credentials fallback
+        // 1. Direct environment administrator credentials verification (timing-safe)
         const envUsername = (process.env.ADMIN_USERNAME || "Bijoy19").trim().toLowerCase();
         const envEmail = (process.env.ADMIN_EMAIL || "bijoysarkar7252@gmail.com").trim().toLowerCase();
-        const envPassword = process.env.ADMIN_PASSWORD || "Teriki77!";
+        const envPassword = process.env.ADMIN_PASSWORD;
 
-        if (
-          (username === envUsername || username === "bijoy") &&
-          email === envEmail &&
-          password === envPassword
-        ) {
-          await resetLoginAttempts(identifier);
-          return {
-            id: "admin-env",
-            name: process.env.ADMIN_USERNAME || "Bijoy19",
-            email: process.env.ADMIN_EMAIL || "bijoysarkar7252@gmail.com",
-            role: "ADMIN" as const,
-          };
+        if (envPassword && (username === envUsername || username === "bijoy") && email === envEmail) {
+          // Use SHA-256 digests for constant-time comparison to prevent timing attacks
+          const inputHash = crypto.createHash("sha256").update(password).digest();
+          const targetHash = crypto.createHash("sha256").update(envPassword).digest();
+
+          if (crypto.timingSafeEqual(inputHash, targetHash)) {
+            await resetLoginAttempts(identifier);
+            return {
+              id: "admin-env",
+              name: process.env.ADMIN_USERNAME || "Bijoy19",
+              email: process.env.ADMIN_EMAIL || "bijoysarkar7252@gmail.com",
+              role: "ADMIN" as const,
+            };
+          }
         }
 
         // 2. Check against database admin record if database is accessible

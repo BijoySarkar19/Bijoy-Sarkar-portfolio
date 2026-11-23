@@ -4,15 +4,25 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
 import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { exec } from "child_process";
+import { join, resolve } from "path";
+import { execFile } from "child_process";
 
 export const runtime = "nodejs";
 
 function triggerPreviewGeneration(relativePath: string) {
   try {
-    const fullPath = join(process.cwd(), "public", relativePath.replace(/^\//, "").split("?")[0]);
-    exec(`python scripts/generate-cv-pages.py "${fullPath}"`, (err, stdout, stderr) => {
+    const publicDir = join(process.cwd(), "public");
+    const normalizedRelative = relativePath.replace(/^\//, "").split("?")[0];
+    const fullPath = resolve(publicDir, normalizedRelative);
+
+    // Guard against path traversal outside public folder
+    if (!fullPath.startsWith(publicDir)) {
+      console.warn("Path traversal attempt blocked in triggerPreviewGeneration:", relativePath);
+      return;
+    }
+
+    // Use safe execFile with array arguments to prevent shell command injection
+    execFile("python", ["scripts/generate-cv-pages.py", fullPath], (err, stdout, stderr) => {
       if (err) console.error("Error generating CV preview:", err, stderr);
       else console.log("CV preview regenerated:", stdout.trim());
     });
@@ -124,8 +134,8 @@ export async function POST(request: Request) {
     const filename = String(body.filename ?? "").trim();
     const path = String(body.path ?? "").trim();
 
-    if (!filename || !path.endsWith(".pdf") || !path.startsWith("/")) {
-      return NextResponse.json({ error: "Invalid resume details. Path must start with / and end with .pdf." }, { status: 400 });
+    if (!filename || !path.endsWith(".pdf") || !path.startsWith("/") || path.includes("..") || path.includes("\\")) {
+      return NextResponse.json({ error: "Invalid resume details. Path must start with /, end with .pdf, and cannot contain '..' or directory traversal sequences." }, { status: 400 });
     }
 
     const previousActive = await prisma.resumeFile.findFirst({ where: { active: true } });

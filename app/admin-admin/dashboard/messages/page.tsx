@@ -1,7 +1,7 @@
 import { AdminNavigation } from "@/components/admin/AdminNavigation";
 import { MessagesManager } from "@/components/admin/MessagesManager";
 import { prisma } from "@/lib/prisma";
-import { loadCsvContactRecords, DEFAULT_GOOGLE_SHEETS_SPREADSHEET_URL, DEFAULT_GOOGLE_SHEETS_WEBHOOK_URL } from "@/lib/google-sheets";
+import { DEFAULT_GOOGLE_SHEETS_SPREADSHEET_URL } from "@/lib/google-sheets";
 import { parseDateTimestamp } from "@/lib/ist-date";
 import Link from "next/link";
 import { ExternalLink, Sheet } from "lucide-react";
@@ -10,7 +10,6 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminMessagesPage() {
   let messages: any[] = [];
-  let unreadCount = 0;
 
   try {
     // 0. Load status overrides from SiteSetting so status persists across serverless instances
@@ -24,93 +23,7 @@ export default async function AdminMessagesPage() {
       }
     } catch {}
 
-    // 1. Try to fetch live messages from the Google Apps Script Webhook
-    try {
-      const webhookRes = await fetch(DEFAULT_GOOGLE_SHEETS_WEBHOOK_URL, {
-        cache: "no-store",
-        signal: AbortSignal.timeout(4000),
-      });
-      if (webhookRes.ok) {
-        const json = await webhookRes.json();
-        if (json.messages && Array.isArray(json.messages) && json.messages.length > 0) {
-          for (const m of json.messages) {
-            // Ignore completely blank empty rows
-            if (!m.name && !m.email && !m.message) continue;
-
-            try {
-              const finalStatus = statusOverrides[m.id] || m.status || "UNREAD";
-              const parsedTime = parseDateTimestamp(m.submittedAtIST || m.createdAt);
-              const createdAtDate = parsedTime > 0 ? new Date(parsedTime) : new Date();
-
-              await prisma.contactMessage.upsert({
-                where: { id: m.id },
-                update: {
-                  status: statusOverrides[m.id] ? statusOverrides[m.id] : undefined,
-                },
-                create: {
-                  id: m.id,
-                  name: m.name || "Visitor",
-                  email: m.email || "unknown@example.com",
-                  phone: m.phone || null,
-                  message: m.message || "",
-                  submittedAtIST: m.submittedAtIST || "Recorded",
-                  ipAddress: m.ipAddress || null,
-                  status: finalStatus,
-                  googleSynced: true,
-                  createdAt: createdAtDate,
-                },
-              });
-            } catch {
-              // Ignore duplicate ID errors
-            }
-          }
-        }
-      }
-    } catch {
-      // Non-blocking fallback
-    }
-
-    // 2. Ensure bundled CSV dataset records are synced into SQLite
-    try {
-      const csvRecords = await loadCsvContactRecords();
-      if (csvRecords.length > 0) {
-        for (const r of csvRecords) {
-          if (!r.name && !r.email && !r.message) continue;
-
-          try {
-            const id = r.id || "temp";
-            const finalStatus = statusOverrides[id] || "UNREAD";
-            const parsedTime = parseDateTimestamp(r.submittedAtIST);
-            const createdAtDate = parsedTime > 0 ? new Date(parsedTime) : new Date();
-
-            await prisma.contactMessage.upsert({
-              where: { id },
-              update: {
-                status: statusOverrides[id] ? statusOverrides[id] : undefined,
-              },
-              create: {
-                id,
-                name: r.name,
-                email: r.email,
-                phone: r.phone || null,
-                message: r.message,
-                submittedAtIST: r.submittedAtIST,
-                ipAddress: r.ipAddress || null,
-                status: finalStatus,
-                googleSynced: true,
-                createdAt: createdAtDate,
-              },
-            });
-          } catch {
-            // Ignore if upsert failed
-          }
-        }
-      }
-    } catch {
-      // Non-blocking
-    }
-
-    // 3. Load all inquiries from SQLite database and sort date-wise (newest / most recent first)
+    // 1. Direct local database query — executes in ~5ms without blocking external network requests
     const rawMsgs = await prisma.contactMessage.findMany();
 
     // Filter out any blank row artifacts
@@ -124,7 +37,7 @@ export default async function AdminMessagesPage() {
       return m;
     });
 
-    // Strictly sort date-wise: newest / most recently done message first
+    // Strictly sort date-wise: newest / most recently received message first
     mappedMsgs.sort((a, b) => {
       const timeA = parseDateTimestamp(a.submittedAtIST || a.createdAt);
       const timeB = parseDateTimestamp(b.submittedAtIST || b.createdAt);
@@ -132,7 +45,6 @@ export default async function AdminMessagesPage() {
     });
 
     messages = mappedMsgs;
-    unreadCount = messages.filter((m) => m.status === "UNREAD").length;
   } catch (err) {
     console.warn("Prisma error caught on AdminMessagesPage:", err);
   }

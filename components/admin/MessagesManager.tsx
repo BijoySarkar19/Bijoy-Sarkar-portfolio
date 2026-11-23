@@ -58,8 +58,70 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const [loading, setLoading] = useState(false);
+  const [isSyncingSheets, setIsSyncingSheets] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
   const [feedback, setFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  // Background sync from Google Sheets without blocking page transition
+  async function triggerSheetsSync(manual: boolean = true) {
+    setIsSyncingSheets(true);
+    try {
+      const res = await fetch("/api/admin/messages/sync", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.messages && Array.isArray(data.messages)) {
+          let localOverrides: Record<string, string> = {};
+          try {
+            const raw = localStorage.getItem("portfolio_msg_statuses");
+            if (raw) localOverrides = JSON.parse(raw);
+          } catch {}
+
+          setMessages((prev) => {
+            const activeStatusMap: Record<string, string> = { ...localOverrides };
+            for (const m of prev) {
+              if (m.status !== "UNREAD") {
+                activeStatusMap[m.id] = m.status;
+              }
+            }
+
+            const updatedList = data.messages.map((m: ContactMessageItem) => ({
+              ...m,
+              status: activeStatusMap[m.id] || m.status,
+            }));
+
+            updatedList.sort((a: ContactMessageItem, b: ContactMessageItem) => {
+              const timeA = parseDateTimestamp(a.submittedAtIST || a.createdAt);
+              const timeB = parseDateTimestamp(b.submittedAtIST || b.createdAt);
+              if (timeB !== timeA) return timeB - timeA;
+              return (b.id || "").localeCompare(a.id || "");
+            });
+
+            return updatedList;
+          });
+
+          if (manual) {
+            setFeedback({ text: `Synced with Google Sheets (${data.messages.length} inquiries up to date)`, type: "success" });
+          }
+        }
+      } else if (manual) {
+        setFeedback({ text: "Could not sync with Google Sheets webhook.", type: "error" });
+      }
+    } catch {
+      if (manual) {
+        setFeedback({ text: "Sync failed. Check network connection.", type: "error" });
+      }
+    } finally {
+      setIsSyncingSheets(false);
+    }
+  }
+
+  // Trigger silent non-blocking background check 800ms after page mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      triggerSheetsSync(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Close suggestions popover when clicking outside
   useEffect(() => {
@@ -431,7 +493,18 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
           )}
         </div>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={() => triggerSheetsSync(true)}
+            disabled={isSyncingSheets}
+            style={{ fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6 }}
+            title="Sync latest inquiries from Google Sheets in real-time"
+          >
+            <RefreshCw size={13} style={{ animation: isSyncingSheets ? "spin 1s linear infinite" : undefined }} />
+            {isSyncingSheets ? "Syncing..." : "Sync Sheets"}
+          </button>
           <a
             className="button button-secondary"
             href="https://docs.google.com/spreadsheets/d/1bkxAetgAqLrk0MM_17Ia2VVDzUrugcaQEhFy8WjiIQQ/edit?gid=0#gid=0"

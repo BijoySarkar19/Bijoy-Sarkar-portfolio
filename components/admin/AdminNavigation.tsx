@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AdminLogout } from "@/components/admin/AdminLogout";
 import { useEffect, useState } from "react";
 import { formatAdminClockIST } from "@/lib/ist-date";
@@ -8,8 +9,25 @@ import { Clock } from "lucide-react";
 
 export type AdminTab = "overview" | "projects" | "experience" | "skills" | "resume" | "settings" | "audit" | "messages" | "new";
 
+const NAV_ITEMS: { tab: AdminTab; href: string; label: string }[] = [
+  { tab: "overview", href: "/admin-admin/dashboard", label: "Overview" },
+  { tab: "projects", href: "/admin-admin/dashboard/projects", label: "Projects" },
+  { tab: "experience", href: "/admin-admin/dashboard/experience", label: "Work Experience" },
+  { tab: "skills", href: "/admin-admin/dashboard/skills", label: "Skills & Languages" },
+  { tab: "resume", href: "/admin-admin/dashboard/resume", label: "CV / Resume" },
+  { tab: "messages", href: "/admin-admin/dashboard/messages", label: "Messages & Sheets" },
+  { tab: "settings", href: "/admin-admin/dashboard/settings", label: "Settings" },
+  { tab: "audit", href: "/admin-admin/dashboard/audit", label: "Activity Dataset (IST)" },
+];
+
 export function AdminNavigation({ active }: { active: AdminTab }) {
   const [istTime, setIstTime] = useState("");
+  const [pendingTab, setPendingTab] = useState<AdminTab | null>(null);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setPendingTab(null);
+  }, [pathname, active]);
 
   useEffect(() => {
     const update = () => setIstTime(formatAdminClockIST(new Date()));
@@ -22,30 +40,27 @@ export function AdminNavigation({ active }: { active: AdminTab }) {
     <div className="admin-nav-container">
       <div className="admin-nav-row">
         <nav className="admin-nav" aria-label="Admin navigation">
-          <Link href="/admin-admin/dashboard" aria-current={active === "overview" ? "page" : undefined}>
-            Overview
-          </Link>
-          <Link href="/admin-admin/dashboard/projects" aria-current={active === "projects" || active === "new" ? "page" : undefined}>
-            Projects
-          </Link>
-          <Link href="/admin-admin/dashboard/experience" aria-current={active === "experience" ? "page" : undefined}>
-            Work Experience
-          </Link>
-          <Link href="/admin-admin/dashboard/skills" aria-current={active === "skills" ? "page" : undefined}>
-            Skills &amp; Languages
-          </Link>
-          <Link href="/admin-admin/dashboard/resume" aria-current={active === "resume" ? "page" : undefined}>
-            CV / Resume
-          </Link>
-          <Link href="/admin-admin/dashboard/messages" aria-current={active === "messages" ? "page" : undefined}>
-            Messages &amp; Sheets
-          </Link>
-          <Link href="/admin-admin/dashboard/settings" aria-current={active === "settings" ? "page" : undefined}>
-            Settings
-          </Link>
-          <Link href="/admin-admin/dashboard/audit" aria-current={active === "audit" ? "page" : undefined}>
-            Activity Dataset (IST)
-          </Link>
+          {NAV_ITEMS.map((item) => {
+            const isCurrent = active === item.tab || (item.tab === "projects" && active === "new");
+            const isPending = pendingTab === item.tab && !isCurrent;
+
+            return (
+              <Link
+                key={item.tab}
+                href={item.href}
+                prefetch={true}
+                aria-current={isCurrent ? "page" : undefined}
+                className={isPending ? "admin-nav-pending" : undefined}
+                onClick={() => {
+                  if (!isCurrent) {
+                    setPendingTab(item.tab);
+                  }
+                }}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
         <div className="admin-nav-aside">
           {istTime && (

@@ -716,7 +716,7 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
                     </span>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                       <Phone size={13} style={{ color: "var(--orange)" }} />
-                      <span>{msg.phone || "No phone provided"}</span>
+                      <span>{msg.phone === "#ERROR!" || !msg.phone ? "Not provided" : msg.phone}</span>
                     </span>
                   </div>
                 </div>

@@ -42,12 +42,21 @@ export async function POST() {
         const json = await webhookRes.json();
         if (json.messages && Array.isArray(json.messages) && json.messages.length > 0) {
           for (const m of json.messages) {
-            if (!m.name && !m.email && !m.message) continue;
-
             try {
+              const rowMatch = m.id?.match(/sheet-row-(\d+)/);
+              const rowNum = rowMatch ? rowMatch[1] : "";
               const finalStatus = statusOverrides[m.id] || m.status || "UNREAD";
               const parsedTime = parseDateTimestamp(m.submittedAtIST || m.createdAt);
               const createdAtDate = parsedTime > 0 ? new Date(parsedTime) : new Date();
+              const name = m.name?.trim() || (rowNum ? `Inquiry (Sheet Row ${rowNum})` : "Direct Submission");
+              const email = m.email?.trim() || "Not provided";
+              const message =
+                m.message?.trim() ||
+                (rowNum
+                  ? `Direct spreadsheet inquiry recorded on Google Sheets (Row ${rowNum}).`
+                  : "Direct spreadsheet inquiry recorded on Google Sheets.");
+              const cleanPhone =
+                m.phone === "#ERROR!" || !m.phone ? "Not provided" : String(m.phone).replace(/^'/, "").trim();
 
               await prisma.contactMessage.upsert({
                 where: { id: m.id },
@@ -56,10 +65,10 @@ export async function POST() {
                 },
                 create: {
                   id: m.id,
-                  name: m.name || "Visitor",
-                  email: m.email || "unknown@example.com",
-                  phone: m.phone || null,
-                  message: m.message || "",
+                  name,
+                  email,
+                  phone: cleanPhone,
+                  message,
                   submittedAtIST: m.submittedAtIST || "Recorded",
                   ipAddress: m.ipAddress || null,
                   status: finalStatus,
@@ -111,7 +120,7 @@ export async function POST() {
       }
     } catch {}
 
-    // 3. Return full updated list merging database and fallback entries
+    // 3. Return full updated list merging database and fallback entries with full 1:1 parity
     const rawMsgs = await prisma.contactMessage.findMany().catch(() => []);
     const msgMap = new Map<string, any>();
     for (const fb of FALLBACK_CONTACT_MESSAGES) {
@@ -122,16 +131,27 @@ export async function POST() {
       });
     }
     for (const m of rawMsgs) {
-      if (m.name || m.email || m.message) {
-        msgMap.set(m.id, m);
-      }
+      msgMap.set(m.id, m);
     }
-    const validMsgs = Array.from(msgMap.values()).filter((m) => m.name || m.email || m.message);
-    const mappedMsgs = validMsgs.map((m) => {
-      if (statusOverrides[m.id]) {
-        return { ...m, status: statusOverrides[m.id] };
-      }
-      return m;
+    const mappedMsgs = Array.from(msgMap.values()).map((m) => {
+      const rowMatch = m.id?.match(/sheet-row-(\d+)/);
+      const rowNum = rowMatch ? rowMatch[1] : "";
+      const defaultName = rowNum ? `Inquiry (Sheet Row ${rowNum})` : "Direct Submission";
+      const cleanPhone =
+        m.phone === "#ERROR!" || !m.phone ? "Not provided" : String(m.phone).replace(/^'/, "").trim();
+
+      return {
+        ...m,
+        name: m.name?.trim() || defaultName,
+        email: m.email?.trim() || "Not provided",
+        phone: cleanPhone,
+        message:
+          m.message?.trim() ||
+          (rowNum
+            ? `Direct spreadsheet inquiry recorded on Google Sheets (Row ${rowNum}).`
+            : "Direct spreadsheet inquiry recorded on Google Sheets."),
+        status: statusOverrides[m.id] || m.status || "READ",
+      };
     });
 
     mappedMsgs.sort((a, b) => {

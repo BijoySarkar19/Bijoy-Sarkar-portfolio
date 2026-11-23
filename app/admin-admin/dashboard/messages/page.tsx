@@ -42,20 +42,29 @@ export default async function AdminMessagesPage() {
     }
 
     for (const m of rawMsgs) {
-      if (m.name || m.email || m.message) {
-        msgMap.set(m.id, m);
-      }
+      msgMap.set(m.id, m);
     }
 
-    // Filter out any blank row artifacts
-    const validMsgs = Array.from(msgMap.values()).filter((m) => m.name || m.email || m.message);
+    // Apply any status overrides & clean presentation defaults to guarantee 1:1 Google Sheets parity
+    const mappedMsgs = Array.from(msgMap.values()).map((m) => {
+      const rowMatch = m.id?.match(/sheet-row-(\d+)/);
+      const rowNum = rowMatch ? rowMatch[1] : "";
+      const defaultName = rowNum ? `Inquiry (Sheet Row ${rowNum})` : "Direct Submission";
+      const cleanPhone =
+        m.phone === "#ERROR!" || !m.phone ? "Not provided" : String(m.phone).replace(/^'/, "").trim();
 
-    // Apply any status overrides directly
-    const mappedMsgs = validMsgs.map((m) => {
-      if (statusOverrides[m.id]) {
-        return { ...m, status: statusOverrides[m.id] };
-      }
-      return m;
+      return {
+        ...m,
+        name: m.name?.trim() || defaultName,
+        email: m.email?.trim() || "Not provided",
+        phone: cleanPhone,
+        message:
+          m.message?.trim() ||
+          (rowNum
+            ? `Direct spreadsheet inquiry recorded on Google Sheets (Row ${rowNum}).`
+            : "Direct spreadsheet inquiry recorded on Google Sheets."),
+        status: statusOverrides[m.id] || m.status || "READ",
+      };
     });
 
     // Strictly sort date-wise: newest / most recently received message first

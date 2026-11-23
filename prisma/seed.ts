@@ -2,6 +2,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../generated/prisma/client";
+import { FALLBACK_CONTACT_MESSAGES } from "../lib/fallback-messages";
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL ?? "file:./dev.db",
@@ -439,6 +440,29 @@ async function main() {
     });
   }
   console.info("Seeded default site settings.");
+
+  // Seed Contact Messages from Fallback Google Sheets Dataset
+  for (const m of FALLBACK_CONTACT_MESSAGES) {
+    const parsedDate = new Date(m.createdAt || Date.now());
+    await prisma.contactMessage.upsert({
+      where: { id: m.id },
+      update: {},
+      create: {
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        phone: m.phone || null,
+        message: m.message,
+        submittedAtIST: m.submittedAtIST,
+        ipAddress: m.ipAddress || null,
+        status: m.status || "READ",
+        googleSynced: true,
+        notes: m.notes || null,
+        createdAt: isNaN(parsedDate.getTime()) ? new Date() : parsedDate,
+      },
+    });
+  }
+  console.info(`Seeded ${FALLBACK_CONTACT_MESSAGES.length} contact messages.`);
 
   // Seed Initial Audit Log
   const auditCount = await prisma.auditLog.count();

@@ -41,8 +41,20 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
   const router = useRouter();
 
   // Initialize with messages sorted strictly date-wise (newest / most recently received first)
+  // Fall back immediately to browser localStorage cache if initialMessages is empty for 0ms cold-start display
   const [messages, setMessages] = useState<ContactMessageItem[]>(() => {
-    const list = [...initialMessages];
+    let list = [...initialMessages];
+    if (list.length === 0 && typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("portfolio_cached_messages");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            list = parsed;
+          }
+        }
+      } catch {}
+    }
     list.sort((a, b) => {
       const timeA = parseDateTimestamp(a.submittedAtIST || a.createdAt);
       const timeB = parseDateTimestamp(b.submittedAtIST || b.createdAt);
@@ -58,18 +70,20 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const [loading, setLoading] = useState(false);
-  const [isSyncingSheets, setIsSyncingSheets] = useState(false);
+  const [isManualSyncing, setIsManualSyncing] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
   const [feedback, setFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  // Background sync from Google Sheets without blocking page transition
+  // Background sync from Google Sheets without blocking page transition or disrupting UI
   async function triggerSheetsSync(manual: boolean = true) {
-    setIsSyncingSheets(true);
+    if (manual) {
+      setIsManualSyncing(true);
+    }
     try {
       const res = await fetch("/api/admin/messages/sync", { method: "POST" });
       if (res.ok) {
         const data = await res.json();
-        if (data.messages && Array.isArray(data.messages)) {
+        if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
           let localOverrides: Record<string, string> = {};
           try {
             const raw = localStorage.getItem("portfolio_msg_statuses");
@@ -96,6 +110,10 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
               return (b.id || "").localeCompare(a.id || "");
             });
 
+            try {
+              localStorage.setItem("portfolio_cached_messages", JSON.stringify(updatedList));
+            } catch {}
+
             return updatedList;
           });
 
@@ -111,17 +129,28 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
         setFeedback({ text: "Sync failed. Check network connection.", type: "error" });
       }
     } finally {
-      setIsSyncingSheets(false);
+      if (manual) {
+        setIsManualSyncing(false);
+      }
     }
   }
 
-  // Trigger silent non-blocking background check 800ms after page mount
+  // Trigger silent non-blocking background check 200ms after page mount
   useEffect(() => {
     const timer = setTimeout(() => {
       triggerSheetsSync(false);
-    }, 800);
+    }, 200);
     return () => clearTimeout(timer);
   }, []);
+
+  // Persist messages cache to localStorage for instant 0ms retrieval on subsequent page visits
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem("portfolio_cached_messages", JSON.stringify(messages));
+      } catch {}
+    }
+  }, [messages]);
 
   // Close suggestions popover when clicking outside
   useEffect(() => {
@@ -136,6 +165,19 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
 
   // Sync state when initialMessages change from server, while strictly protecting user updates & localStorage overrides
   useEffect(() => {
+    if (initialMessages.length === 0) {
+      try {
+        const cached = localStorage.getItem("portfolio_cached_messages");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMessages(parsed);
+          }
+        }
+      } catch {}
+      return;
+    }
+
     let localOverrides: Record<string, string> = {};
     try {
       const raw = localStorage.getItem("portfolio_msg_statuses");
@@ -498,12 +540,12 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
             type="button"
             className="button button-secondary"
             onClick={() => triggerSheetsSync(true)}
-            disabled={isSyncingSheets}
+            disabled={isManualSyncing}
             style={{ fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6 }}
             title="Sync latest inquiries from Google Sheets in real-time"
           >
-            <RefreshCw size={13} style={{ animation: isSyncingSheets ? "spin 1s linear infinite" : undefined }} />
-            {isSyncingSheets ? "Syncing..." : "Sync Sheets"}
+            <RefreshCw size={13} style={{ animation: isManualSyncing ? "spin 1s linear infinite" : undefined }} />
+            {isManualSyncing ? "Syncing..." : "Sync Sheets"}
           </button>
           <a
             className="button button-secondary"

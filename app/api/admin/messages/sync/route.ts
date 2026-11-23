@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { loadCsvContactRecords, DEFAULT_GOOGLE_SHEETS_WEBHOOK_URL } from "@/lib/google-sheets";
 import { parseDateTimestamp } from "@/lib/ist-date";
+import { FALLBACK_CONTACT_MESSAGES } from "@/lib/fallback-messages";
 
 export const runtime = "nodejs";
 
@@ -110,9 +111,22 @@ export async function POST() {
       }
     } catch {}
 
-    // 3. Return full updated list
-    const rawMsgs = await prisma.contactMessage.findMany();
-    const validMsgs = rawMsgs.filter((m) => m.name || m.email || m.message);
+    // 3. Return full updated list merging database and fallback entries
+    const rawMsgs = await prisma.contactMessage.findMany().catch(() => []);
+    const msgMap = new Map<string, any>();
+    for (const fb of FALLBACK_CONTACT_MESSAGES) {
+      msgMap.set(fb.id, {
+        ...fb,
+        createdAt: new Date(fb.createdAt || Date.now()),
+        updatedAt: new Date(fb.createdAt || Date.now()),
+      });
+    }
+    for (const m of rawMsgs) {
+      if (m.name || m.email || m.message) {
+        msgMap.set(m.id, m);
+      }
+    }
+    const validMsgs = Array.from(msgMap.values()).filter((m) => m.name || m.email || m.message);
     const mappedMsgs = validMsgs.map((m) => {
       if (statusOverrides[m.id]) {
         return { ...m, status: statusOverrides[m.id] };

@@ -365,6 +365,14 @@ export function NumberMergeGame({ compactMode = false }: { compactMode?: boolean
   const [bestTile, setBestTile] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [activeDirection, setActiveDirection] = useState<Direction | null>(null);
+  const [isInViewport, setIsInViewport] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const cardRef = useRef<HTMLElement>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
   const { suggestion, recordInput, resetIdle } = useIdleSuggestion(SUGGESTIONS_2048, startTime !== null);
 
   function reset() {
@@ -372,19 +380,130 @@ export function NumberMergeGame({ compactMode = false }: { compactMode?: boolean
     setScore(0);
     setBestTile(0);
     setStartTime(null);
+    setActiveDirection(null);
     resetIdle();
+    boardRef.current?.focus();
   }
 
-  function move(direction: Direction) {
-    if (!startTime) setStartTime(Date.now());
-    recordInput();
-    const { grid: moved, gained } = slide(grid, direction);
-    if (gridsMatch(grid, moved)) return;
-    playGameMoveSound();
-    const next = addTile(moved);
-    setGrid(next);
-    setScore((current) => current + gained);
-    setBestTile((current) => Math.max(current, ...next.flat()));
+  const move = useCallback(
+    (direction: Direction) => {
+      if (!startTime) setStartTime(Date.now());
+      recordInput();
+
+      setActiveDirection(direction);
+      const activeTimer = setTimeout(() => setActiveDirection(null), 180);
+
+      const { grid: moved, gained } = slide(grid, direction);
+      if (gridsMatch(grid, moved)) return () => clearTimeout(activeTimer);
+
+      playGameMoveSound();
+      const next = addTile(moved);
+      setGrid(next);
+      setScore((current) => current + gained);
+      setBestTile((current) => Math.max(current, ...next.flat()));
+
+      return () => clearTimeout(activeTimer);
+    },
+    [grid, startTime, recordInput]
+  );
+
+  const moveRef = useRef(move);
+  moveRef.current = move;
+
+  // Track viewport visibility with IntersectionObserver so arrow keys respond smoothly when looking at the game
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setIsInViewport(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInViewport(entry.isIntersecting && entry.intersectionRatio > 0.15);
+      },
+      { threshold: [0, 0.15, 0.5] }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Global window keyboard event listener for Arrow keys and WASD
+  useEffect(() => {
+    function handleKeyDown(event: globalThis.KeyboardEvent) {
+      // Never intercept when user is typing in form inputs, textareas, search bars, etc.
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable ||
+          target.closest("input, textarea, select, [contenteditable='true']"))
+      ) {
+        return;
+      }
+
+      // Check whether 2048 is interactive (visible in viewport, hovered, or card has focus)
+      const card = cardRef.current;
+      if (!card) return;
+
+      const isFocused = card.contains(document.activeElement);
+      if (!isInViewport && !isHovered && !isFocused) return;
+
+      const key = event.key;
+      let dir: Direction | null = null;
+
+      if (key === "ArrowUp" || key === "w" || key === "W") {
+        dir = "up";
+      } else if (key === "ArrowDown" || key === "s" || key === "S") {
+        dir = "down";
+      } else if (key === "ArrowLeft" || key === "a" || key === "A") {
+        dir = "left";
+      } else if (key === "ArrowRight" || key === "d" || key === "D") {
+        dir = "right";
+      }
+
+      if (dir) {
+        // Prevent default browser page scrolling when using arrow keys on 2048
+        event.preventDefault();
+        event.stopPropagation();
+        moveRef.current(dir);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown, { passive: false });
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isInViewport, isHovered]);
+
+  // Touch swipe support for mobile and tablet players
+  function handleTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    if (e.touches.length === 1) {
+      touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+  }
+
+  function handleTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+    if (!touchStartRef.current || e.changedTouches.length === 0) return;
+    const start = touchStartRef.current;
+    const end = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+
+    // Minimum swipe threshold of 24px
+    if (Math.max(absX, absY) > 24) {
+      if (absX > absY) {
+        moveRef.current(dx > 0 ? "right" : "left");
+      } else {
+        moveRef.current(dy > 0 ? "down" : "up");
+      }
+    }
+    touchStartRef.current = null;
   }
 
   function handleBoardKey(event: KeyboardEvent<HTMLDivElement>) {
@@ -404,7 +523,15 @@ export function NumberMergeGame({ compactMode = false }: { compactMode?: boolean
   const over = noMoves(grid);
 
   return (
-    <article className={`game-card number-game${compactMode ? " game-card-compact" : ""}`}>
+    <article
+      ref={cardRef}
+      className={`game-card number-game${compactMode ? " game-card-compact" : ""}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={() => {
+        boardRef.current?.focus();
+      }}
+    >
       {/* Strictly bounded instruction overlay inside the game card box */}
       <GameInfoOverlay
         info={INFO_2048}
@@ -457,12 +584,19 @@ export function NumberMergeGame({ compactMode = false }: { compactMode?: boolean
       <IdleSuggestion suggestion={suggestion} />
 
       <div
+        ref={boardRef}
         className="game-2048-board"
         role="grid"
-        aria-label="2048 game board. Focus here and use the arrow keys."
+        aria-label="2048 game board. Use keyboard arrow keys or touch swipe."
         tabIndex={0}
         onKeyDown={handleBoardKey}
-        onClick={() => { if (!startTime) setStartTime(Date.now()); recordInput(); }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onClick={() => {
+          if (!startTime) setStartTime(Date.now());
+          recordInput();
+          boardRef.current?.focus();
+        }}
       >
         {grid.flatMap((row, y) => row.map((value, x) => (
           <div
@@ -481,9 +615,13 @@ export function NumberMergeGame({ compactMode = false }: { compactMode?: boolean
         {arrows.map(({ direction, label, icon: Icon }) => (
           <button
             key={direction}
-            className="game-control"
+            className={`game-control${activeDirection === direction ? " is-active" : ""}`}
             type="button"
-            onClick={() => move(direction)}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              boardRef.current?.focus();
+              move(direction);
+            }}
             aria-label={label}
           >
             <Icon size={16} />

@@ -1,8 +1,20 @@
 import "dotenv/config";
+import fs from "fs";
 import bcrypt from "bcryptjs";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../generated/prisma/client";
-import { FALLBACK_CONTACT_MESSAGES } from "../lib/fallback-messages";
+
+function loadFallbackMessages() {
+  try {
+    const jsonUrl = new URL("./fallback-messages.json", import.meta.url);
+    if (fs.existsSync(jsonUrl)) {
+      return JSON.parse(fs.readFileSync(jsonUrl, "utf8"));
+    }
+  } catch {}
+  return [];
+}
+
+const FALLBACK_CONTACT_MESSAGES = loadFallbackMessages();
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL ?? "file:./dev.db",

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { allowContactAttempt } from "@/lib/contact-rate-limit";
 import { sendContactEmail } from "@/lib/mail";
 import { verifyRecaptcha } from "@/lib/recaptcha";
@@ -136,30 +136,50 @@ export async function POST(request: Request) {
       // Use fallback
     }
 
-    // 4. Attempt Google Sheets Webhook Sync if configured
-    const syncRes = await syncWithGoogleSheetWebhook({
-      id: saved.id,
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      message: data.message,
-      submittedAtIST,
-      ipAddress: remoteIp,
-      recipientEmail,
-    });
+    // 4. Background dispatch: Google Sheets Webhook and Email delivery in parallel
+    const backgroundTasks = async () => {
+      try {
+        await Promise.allSettled([
+          (async () => {
+            const syncRes = await syncWithGoogleSheetWebhook({
+              id: saved.id,
+              name: data.name,
+              email: data.email,
+              phone: data.phone,
+              message: data.message,
+              submittedAtIST,
+              ipAddress: remoteIp,
+              recipientEmail,
+            });
 
-    if (syncRes.synced) {
-      await prisma.contactMessage.update({
-        where: { id: saved.id },
-        data: { googleSynced: true },
-      });
-    }
+            if (syncRes.synced) {
+              try {
+                await prisma.contactMessage.update({
+                  where: { id: saved.id },
+                  data: { googleSynced: true },
+                });
+              } catch (dbErr) {
+                console.warn("Failed to update googleSynced flag:", dbErr);
+              }
+            }
+          })(),
+          (async () => {
+            try {
+              await sendContactEmail(data, now, riskInfo, recipientEmail);
+            } catch (emailError) {
+              console.warn("Email transport skipped/unconfigured:", emailError);
+            }
+          })(),
+        ]);
+      } catch (err) {
+        console.warn("Background dispatch error:", err);
+      }
+    };
 
-    // 5. Send email delivery if SMTP is configured (non-blocking fallback)
-    try {
-      await sendContactEmail(data, now, riskInfo, recipientEmail);
-    } catch (emailError) {
-      console.warn("Email transport skipped/unconfigured:", emailError);
+    if (typeof after === "function") {
+      after(backgroundTasks);
+    } else {
+      backgroundTasks().catch((err) => console.warn("Background dispatch error:", err));
     }
 
     return NextResponse.json({

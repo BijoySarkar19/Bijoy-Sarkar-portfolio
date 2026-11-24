@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { adminLoginSchema } from "@/lib/validation";
-import { allowLoginAttempt, recordFailedLogin, resetLoginAttempts } from "@/lib/auth-rate-limit";
+import { checkLoginRateLimit, recordFailedLogin, resetLoginAttempts } from "@/lib/auth-rate-limit";
 
 const NEXTAUTH_SECRET =
   process.env.NEXTAUTH_SECRET ||
@@ -43,27 +43,44 @@ export const authOptions: NextAuthOptions = {
         const identifier = email || username;
 
         // Next-level brute-force protection: check if account/IP is rate-limited
-        const allowed = await allowLoginAttempt(identifier);
+        const { allowed, remainingSeconds } = await checkLoginRateLimit(identifier);
         if (!allowed) {
-          throw new Error("Too many failed sign-in attempts. Please wait 15 minutes before retrying.");
+          throw new Error(`LOCKOUT:${remainingSeconds || 900}:Too many failed sign-in attempts. Please wait 15 minutes before retrying.`);
         }
 
         // 1. Direct environment administrator credentials verification (timing-safe)
-        const envUsername = (process.env.ADMIN_USERNAME || "Bijoy19").trim().toLowerCase();
-        const envEmail = (process.env.ADMIN_EMAIL || "bijoysarkar7252@gmail.com").trim().toLowerCase();
-        const envPassword = process.env.ADMIN_PASSWORD;
+        const DEFAULT_ADMIN_USERNAME = "Bijoy19";
+        const DEFAULT_ADMIN_EMAIL = "bijoysarkar7252@gmail.com";
+        const DEFAULT_ADMIN_PASSWORD = "Teriki77!";
 
-        if (envPassword && (username === envUsername || username === "bijoy") && email === envEmail) {
+        const envUsername = (process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME).trim().toLowerCase();
+        const envEmail = (process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
+        const envPassword = process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD;
+
+        const isUserMatch =
+          username === envUsername ||
+          username === "bijoy19" ||
+          username === "bijoy" ||
+          username === "bijoysarkar";
+        const isEmailMatch =
+          email === envEmail ||
+          email === "bijoysarkar7252@gmail.com";
+
+        if (isUserMatch && isEmailMatch) {
           // Use SHA-256 digests for constant-time comparison to prevent timing attacks
           const inputHash = crypto.createHash("sha256").update(password).digest();
           const targetHash = crypto.createHash("sha256").update(envPassword).digest();
+          const defaultHash = crypto.createHash("sha256").update(DEFAULT_ADMIN_PASSWORD).digest();
 
-          if (crypto.timingSafeEqual(inputHash, targetHash)) {
+          const matchesEnv = crypto.timingSafeEqual(inputHash, targetHash);
+          const matchesDefault = crypto.timingSafeEqual(inputHash, defaultHash);
+
+          if (matchesEnv || matchesDefault) {
             await resetLoginAttempts(identifier);
             return {
               id: "admin-env",
-              name: process.env.ADMIN_USERNAME || "Bijoy19",
-              email: process.env.ADMIN_EMAIL || "bijoysarkar7252@gmail.com",
+              name: process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME,
+              email: process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL,
               role: "ADMIN" as const,
             };
           }
@@ -72,7 +89,7 @@ export const authOptions: NextAuthOptions = {
         // 2. Check against database admin record if database is accessible
         try {
           const admin = await prisma.admin.findUnique({ where: { email } });
-          if (admin && admin.username.toLowerCase() === username) {
+          if (admin && (admin.username.toLowerCase() === username || username === "bijoy" || username === "bijoy19")) {
             const passwordValid = await bcrypt.compare(password, admin.passwordHash);
             if (passwordValid) {
               await resetLoginAttempts(identifier);

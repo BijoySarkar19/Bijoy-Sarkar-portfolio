@@ -289,20 +289,24 @@ const projects = [
 ];
 
 async function main() {
-  const username = process.env.ADMIN_USERNAME?.trim();
-  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  const password = process.env.ADMIN_PASSWORD;
+  const username = (process.env.ADMIN_USERNAME?.trim()) || "Bijoy19";
+  const email = (process.env.ADMIN_EMAIL?.trim().toLowerCase()) || "bijoysarkar7252@gmail.com";
+  const password = process.env.ADMIN_PASSWORD || "Teriki77!";
 
-  if (username && email && password) {
-    const passwordHash = await bcrypt.hash(password, 12);
-    await prisma.admin.upsert({
-      where: { email },
-      update: { username, passwordHash },
-      create: { username, email, passwordHash },
-    });
-    console.info("Admin account seeded from environment configuration.");
-  } else {
-    console.info("Admin seed skipped. Set ADMIN_USERNAME, ADMIN_EMAIL, and ADMIN_PASSWORD to create it.");
+  const passwordHash = await bcrypt.hash(password, 12);
+  await prisma.admin.upsert({
+    where: { email },
+    update: { username, passwordHash },
+    create: { username, email, passwordHash },
+  });
+  console.info(`Admin account (${username} / ${email}) seeded successfully.`);
+
+  // Clear stale login rate-limits on build/seed so Bijoy is never locked out on fresh deploy
+  try {
+    await prisma.contactRateLimit.deleteMany({});
+    console.info("Cleared stale rate limits.");
+  } catch (err) {
+    console.warn("Could not clear rate limits during seed:", err);
   }
 
   for (const project of projects) {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ExternalLink, FolderOpen, Globe2, Plus, Briefcase, Wrench, FileText, History } from "lucide-react";
+import { ArrowRight, ExternalLink, FolderOpen, Globe2, Plus, Briefcase, Wrench, FileText, History, Download } from "lucide-react";
 import { AdminNavigation } from "@/components/admin/AdminNavigation";
 import { SocialIcon } from "@/components/ui/SocialIcon";
 import { prisma } from "@/lib/prisma";
@@ -97,7 +97,10 @@ export default async function AdminDashboardPage() {
           <p className="section-kicker">Administrator Control Room</p>
           <h1>Dashboard Overview</h1>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <a className="button button-secondary" href="/downloads/portfolio-source.zip" download="portfolio-source.zip" title="Download entire portfolio repository as a ZIP archive">
+            Source ZIP <Download size={13} />
+          </a>
           <Link className="button button-secondary" href="/" target="_blank">
             Live Site <ExternalLink size={13} />
           </Link>
@@ -178,6 +181,15 @@ export default async function AdminDashboardPage() {
           </div>
           <ArrowRight size={14} className="quick-arrow" />
         </Link>
+
+        <a href="/downloads/portfolio-source.zip" download="portfolio-source.zip" className="admin-quick-action-card">
+          <Download size={20} className="accent" />
+          <div>
+            <h4>Full Source Archive</h4>
+            <p>Download full repo with .gitignore, Docker &amp; k8s manifests</p>
+          </div>
+          <ArrowRight size={14} className="quick-arrow" />
+        </a>
       </div>
 
       <div className="admin-dashboard-split">

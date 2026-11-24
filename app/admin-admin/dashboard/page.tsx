@@ -98,6 +98,9 @@ export default async function AdminDashboardPage() {
           <h1>Dashboard Overview</h1>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <a className="button button-secondary" href="/api/admin/download-env" download=".env" title="Download main .env configuration file">
+            Download .env <Download size={13} />
+          </a>
           <a className="button button-secondary" href="/downloads/portfolio-source.zip" download="portfolio-source.zip" title="Download entire portfolio repository as a ZIP archive">
             Source ZIP <Download size={13} />
           </a>

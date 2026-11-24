@@ -36,7 +36,7 @@ export function EmailLink({
   }, []);
 
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
-    // 1. Copy address to clipboard automatically so user always has it
+    // 1. Copy clean button name (email text label) to clipboard
     if (navigator?.clipboard) {
       navigator.clipboard.writeText(email).then(() => {
         setCopied(true);
@@ -68,10 +68,11 @@ export function EmailLink({
       target={activeTarget}
       rel={activeRel}
       onClick={handleClick}
+      data-button-name={email}
       title={
         isMobile
-          ? "Tap to open Gmail app and compose directly to Bijoy (also copies address to clipboard)"
-          : "Click to open Gmail inbox in browser and compose directly to Bijoy (also copies address to clipboard)"
+          ? "Tap to open Gmail app and compose directly to Bijoy (copies button name to clipboard)"
+          : "Click to open Gmail inbox in browser and compose directly to Bijoy (copies button name to clipboard)"
       }
     >
       {showIcon && <Mail size={className.includes("footer") ? 13 : 15} />}

@@ -1874,6 +1874,81 @@ img { display: block; max-width: 100%; }
 .admin-login-form { display: grid; gap: 15px; }
 .admin-alert { padding: 10px 12px; border: 1px solid rgba(var(--orange-rgb), 0.38); border-radius: 10px; background: rgba(var(--orange-rgb), 0.08); color: #ffb4a1; font-size: 11px; }
 .toast { position: fixed; z-index: 60; right: 24px; bottom: 24px; max-width: min(360px, calc(100vw - 48px)); padding: 13px 17px; border: 1px solid rgb(255 255 255 / 0.14); border-radius: 12px; background: #0c1020; color: #fff; box-shadow: 0 12px 40px rgb(0 0 0 / 0.4); font-size: 12px; }
+
+/* Clean Button Copy Toast (Guarantees only button names are copied, address copying is blocked) */
+.clean-copy-toast {
+  position: fixed;
+  z-index: 99999;
+  bottom: 28px;
+  right: 28px;
+  max-width: min(400px, calc(100vw - 40px));
+  padding: 12px 18px;
+  border: 1px solid rgba(var(--orange-rgb), 0.4);
+  border-radius: 14px;
+  background: rgba(10, 14, 26, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 24px rgba(var(--orange-rgb), 0.16);
+  pointer-events: none;
+  animation: cleanCopySlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cleanCopySlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.clean-copy-toast-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.clean-copy-badge {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(var(--orange-rgb), 0.16);
+  border: 1px solid rgba(var(--orange-rgb), 0.32);
+  color: var(--orange);
+  flex-shrink: 0;
+}
+
+.clean-copy-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.clean-copy-title {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.clean-copy-sub {
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+@media (max-width: 600px) {
+  .clean-copy-toast {
+    right: 16px;
+    bottom: 20px;
+    left: 16px;
+    max-width: calc(100vw - 32px);
+  }
+}
 .gallery-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 14px; margin-top: 42px; }
 .gallery-hero { position: relative; grid-row: span 2; min-height: 520px; margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: #080b14; }
 .gallery-support { position: relative; min-height: 250px; margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: #080b14; }

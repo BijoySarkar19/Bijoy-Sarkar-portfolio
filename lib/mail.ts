@@ -30,6 +30,9 @@ export async function sendContactEmail(
     port,
     secure: port === 465,
     auth: { user, pass },
+    connectionTimeout: 4000,
+    greetingTimeout: 4000,
+    socketTimeout: 6000,
   });
 
   const name = escapeHtml(data.name);

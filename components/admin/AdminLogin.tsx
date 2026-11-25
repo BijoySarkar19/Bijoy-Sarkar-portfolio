@@ -11,7 +11,7 @@ export function AdminLogin() {
   const [message, setMessage] = useState("");
   const [lockoutSeconds, setLockoutSeconds] = useState<number>(0);
 
-  // Restore active lockout countdown on mount or page refresh
+  // Restore active lockout countdown on mount or page refresh and sync with server
   useEffect(() => {
     try {
       const stored = localStorage.getItem("admin_lockout_until");
@@ -27,6 +27,19 @@ export function AdminLogin() {
     } catch {
       // Storage access safety
     }
+
+    // Query server for live lockout state
+    fetch("/api/admin/auth-status?identifier=bijoysarkar7252@gmail.com")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.locked && data.remainingSeconds > 0) {
+          setLockoutSeconds(data.remainingSeconds);
+          try {
+            localStorage.setItem("admin_lockout_until", String(Date.now() + data.remainingSeconds * 1000));
+          } catch {}
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Ticking countdown clock every 1 second
@@ -84,20 +97,34 @@ export function AdminLogin() {
 
       if (result?.error) {
         const errStr = result.error;
-        if (
+        let isLockout =
           errStr.startsWith("LOCKOUT:") ||
           errStr.toLowerCase().includes("15 minutes") ||
           errStr.toLowerCase().includes("attempts") ||
-          errStr.toLowerCase().includes("too many")
-        ) {
-          let sec = 15 * 60; // 900 seconds default
-          if (errStr.startsWith("LOCKOUT:")) {
-            const parts = errStr.split(":");
-            const parsed = parseInt(parts[1], 10);
-            if (!isNaN(parsed) && parsed > 0) {
-              sec = parsed;
+          errStr.toLowerCase().includes("too many");
+
+        let sec = 15 * 60; // 900 seconds default
+        if (errStr.startsWith("LOCKOUT:")) {
+          const parts = errStr.split(":");
+          const parsed = parseInt(parts[1], 10);
+          if (!isNaN(parsed) && parsed > 0) {
+            sec = parsed;
+          }
+        }
+
+        // Also query live server status in case NextAuth masked the error as CredentialsSignin
+        try {
+          const checkRes = await fetch(`/api/admin/auth-status?identifier=${encodeURIComponent(emailVal || usernameVal)}`);
+          if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            if (checkData.locked) {
+              isLockout = true;
+              sec = checkData.remainingSeconds || 900;
             }
           }
+        } catch {}
+
+        if (isLockout) {
           setLockoutSeconds(sec);
           try {
             localStorage.setItem("admin_lockout_until", String(Date.now() + sec * 1000));

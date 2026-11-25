@@ -21,6 +21,7 @@ export async function verifyRecaptcha(token?: string, remoteIp?: string) {
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body,
       cache: "no-store",
+      signal: AbortSignal.timeout(3000),
     });
     if (!response.ok) return false;
     const result = (await response.json()) as RecaptchaResponse;

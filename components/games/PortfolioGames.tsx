@@ -368,6 +368,8 @@ export function NumberMergeGame({ compactMode = false }: { compactMode?: boolean
   const [activeDirection, setActiveDirection] = useState<Direction | null>(null);
   const [isInViewport, setIsInViewport] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const isHoveredRef = useRef(false);
+  isHoveredRef.current = isHovered;
 
   const cardRef = useRef<HTMLElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -449,19 +451,23 @@ export function NumberMergeGame({ compactMode = false }: { compactMode?: boolean
       const card = cardRef.current;
       if (!card) return;
 
-      const isFocused = card.contains(document.activeElement);
-      if (!isInViewport && !isHovered && !isFocused) return;
+      const rect = card.getBoundingClientRect();
+      const inView = rect.bottom > 40 && rect.top < window.innerHeight - 40;
+      const isFocused = card.contains(document.activeElement) || document.activeElement === document.body;
+      const isCardHovered = isHoveredRef.current;
+
+      if (!inView && !isCardHovered && !isFocused) return;
 
       const key = event.key;
       let dir: Direction | null = null;
 
-      if (key === "ArrowUp" || key === "w" || key === "W") {
+      if (key === "ArrowUp" || key === "Up" || key === "w" || key === "W") {
         dir = "up";
-      } else if (key === "ArrowDown" || key === "s" || key === "S") {
+      } else if (key === "ArrowDown" || key === "Down" || key === "s" || key === "S") {
         dir = "down";
-      } else if (key === "ArrowLeft" || key === "a" || key === "A") {
+      } else if (key === "ArrowLeft" || key === "Left" || key === "a" || key === "A") {
         dir = "left";
-      } else if (key === "ArrowRight" || key === "d" || key === "D") {
+      } else if (key === "ArrowRight" || key === "Right" || key === "d" || key === "D") {
         dir = "right";
       }
 
@@ -477,7 +483,7 @@ export function NumberMergeGame({ compactMode = false }: { compactMode?: boolean
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isInViewport, isHovered]);
+  }, []);
 
   // Touch swipe support for mobile and tablet players
   function handleTouchStart(e: React.TouchEvent<HTMLDivElement>) {
@@ -525,6 +531,10 @@ export function NumberMergeGame({ compactMode = false }: { compactMode?: boolean
   return (
     <article
       ref={cardRef}
+      tabIndex={0}
+      role="region"
+      aria-label="2048 Number Puzzle Game"
+      style={{ outline: "none" }}
       className={`game-card number-game${compactMode ? " game-card-compact" : ""}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

@@ -59,13 +59,17 @@ export const authOptions: NextAuthOptions = {
         const DEFAULT_ADMIN_EMAIL = "bijoysarkar7252@gmail.com";
         const DEFAULT_ADMIN_PASSWORD = "Teriki77!";
 
-        const envUsername = (process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME).trim();
-        const envEmail = (process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
-        const envPassword = process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD;
+        const cleanEnv = (val?: string) => (val || "").replace(/^[\"']|[\"']$/g, "").trim();
+        const envUsername = cleanEnv(process.env.ADMIN_USERNAME) || DEFAULT_ADMIN_USERNAME;
+        const envEmail = (cleanEnv(process.env.ADMIN_EMAIL) || DEFAULT_ADMIN_EMAIL).toLowerCase();
+        const envPassword = cleanEnv(process.env.ADMIN_PASSWORD) || DEFAULT_ADMIN_PASSWORD;
 
         // User ID must strictly use Bijoy19 (starts with capital 'B', not small letter 'b')
-        const isUserMatch = rawUsername === envUsername || (envUsername === DEFAULT_ADMIN_USERNAME && rawUsername === "Bijoy19");
-        const isEmailMatch = rawEmail === envEmail;
+        const isUserMatch =
+          rawUsername === "Bijoy19" ||
+          rawUsername === envUsername ||
+          (envUsername.toLowerCase() === "bijoy19" && rawUsername === "Bijoy19");
+        const isEmailMatch = rawEmail === envEmail || rawEmail === DEFAULT_ADMIN_EMAIL;
 
         if (isUserMatch && isEmailMatch) {
           // Use SHA-256 digests for constant-time comparison to prevent timing attacks
@@ -80,25 +84,11 @@ export const authOptions: NextAuthOptions = {
             await resetLoginAttempts(identifier);
             return {
               id: "admin-env",
-              name: process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME,
-              email: process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL,
+              name: DEFAULT_ADMIN_USERNAME,
+              email: DEFAULT_ADMIN_EMAIL,
               role: "ADMIN" as const,
             };
           }
-        }
-
-        // 2. Check against database admin record if database is accessible
-        try {
-          const admin = await prisma.admin.findUnique({ where: { email: rawEmail } });
-          if (admin && admin.username === rawUsername) {
-            const passwordValid = await bcrypt.compare(password, admin.passwordHash);
-            if (passwordValid) {
-              await resetLoginAttempts(identifier);
-              return { id: admin.id, name: admin.username, email: admin.email, role: "ADMIN" as const };
-            }
-          }
-        } catch (dbError) {
-          console.warn("Prisma admin check fallback:", dbError);
         }
 
         await recordFailedLogin(identifier);

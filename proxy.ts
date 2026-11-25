@@ -22,6 +22,7 @@ export async function proxy(request: NextRequest) {
 
   if (
     token?.role === "ADMIN" ||
+    pathname === "/api/admin/auth-status" ||
     (pathname === "/api/admin/download-env" && (isLocal || key === "Teriki77!" || key === process.env.ADMIN_PASSWORD))
   ) {
     return NextResponse.next();

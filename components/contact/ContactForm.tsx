@@ -168,13 +168,21 @@ export function ContactForm() {
 
     try {
       let captchaToken = "";
-      if (siteKey) {
-        if (!window.grecaptcha) throw new Error("Security check is still loading. Please try again.");
-        captchaToken = await new Promise<string>((resolve, reject) => {
-          window.grecaptcha?.ready(() => {
-            window.grecaptcha?.execute(siteKey, { action: "contact" }).then(resolve).catch(reject);
-          });
-        });
+      if (siteKey && typeof window !== "undefined") {
+        try {
+          if (window.grecaptcha) {
+            captchaToken = await Promise.race([
+              new Promise<string>((resolve, reject) => {
+                window.grecaptcha?.ready(() => {
+                  window.grecaptcha?.execute(siteKey, { action: "contact" }).then(resolve).catch(reject);
+                });
+              }),
+              new Promise<string>((resolve) => setTimeout(() => resolve(""), 2000)),
+            ]);
+          }
+        } catch {
+          captchaToken = "";
+        }
       }
 
       const response = await fetch("/api/contact", {

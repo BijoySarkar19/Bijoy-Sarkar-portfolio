@@ -43,14 +43,22 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
   // Initialize with messages sorted strictly date-wise (newest / most recently received first)
   // Fall back immediately to browser localStorage cache if initialMessages is empty for 0ms cold-start display
   const [messages, setMessages] = useState<ContactMessageItem[]>(() => {
-    let list = [...initialMessages];
+    let deletedSet = new Set<string>();
+    if (typeof window !== "undefined") {
+      try {
+        const d = localStorage.getItem("portfolio_deleted_message_ids");
+        if (d) JSON.parse(d).forEach((id: string) => deletedSet.add(id));
+      } catch {}
+    }
+
+    let list = initialMessages.filter((m) => !deletedSet.has(m.id));
     if (list.length === 0 && typeof window !== "undefined") {
       try {
         const cached = localStorage.getItem("portfolio_cached_messages");
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            list = parsed;
+            list = parsed.filter((m: ContactMessageItem) => !deletedSet.has(m.id));
           }
         }
       } catch {}
@@ -65,6 +73,8 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
 
   const [filter, setFilter] = useState<"ALL" | "UNREAD" | "READ" | "REPLIED" | "ARCHIVED">("ALL");
   const [recentlyUpdatedIds, setRecentlyUpdatedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -165,13 +175,19 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
 
   // Sync state when initialMessages change from server, while strictly protecting user updates & localStorage overrides
   useEffect(() => {
+    let deletedSet = new Set<string>();
+    try {
+      const d = localStorage.getItem("portfolio_deleted_message_ids");
+      if (d) JSON.parse(d).forEach((id: string) => deletedSet.add(id));
+    } catch {}
+
     if (initialMessages.length === 0) {
       try {
         const cached = localStorage.getItem("portfolio_cached_messages");
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setMessages(parsed);
+            setMessages(parsed.filter((m: ContactMessageItem) => !deletedSet.has(m.id)));
           }
         }
       } catch {}
@@ -193,14 +209,31 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
         }
       }
 
-      const list = initialMessages.map((m) => {
-        const finalStatus = activeStatusMap[m.id] || m.status;
-        return {
-          ...m,
-          status: finalStatus,
-        };
-      });
+      const map = new Map<string, ContactMessageItem>();
 
+      // 1. First add initialMessages that are not deleted
+      for (const m of initialMessages) {
+        if (!deletedSet.has(m.id)) {
+          const finalStatus = activeStatusMap[m.id] || m.status;
+          map.set(m.id, {
+            ...m,
+            status: finalStatus,
+          });
+        }
+      }
+
+      // 2. Preserve any messages from current state (e.g. from Google Sheets sync)
+      for (const m of prev) {
+        if (!deletedSet.has(m.id) && !map.has(m.id)) {
+          const finalStatus = activeStatusMap[m.id] || m.status;
+          map.set(m.id, {
+            ...m,
+            status: finalStatus,
+          });
+        }
+      }
+
+      const list = Array.from(map.values());
       list.sort((a, b) => {
         const timeA = parseDateTimestamp(a.submittedAtIST || a.createdAt);
         const timeB = parseDateTimestamp(b.submittedAtIST || b.createdAt);
@@ -400,15 +433,98 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
     }
   }
 
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    const allFilteredSelected = filtered.length > 0 && filtered.every((m) => selectedIds.has(m.id));
+    if (allFilteredSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        filtered.forEach((m) => next.delete(m.id));
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        filtered.forEach((m) => next.add(m.id));
+        return next;
+      });
+    }
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
   async function deleteMessage(id: string) {
     if (!confirm("Are you sure you want to delete this contact submission?")) return;
     try {
       const res = await fetch(`/api/admin/messages?id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete message");
+
+      // Record in localStorage so it remains deleted across instances
+      try {
+        const raw = localStorage.getItem("portfolio_deleted_message_ids");
+        const list: string[] = raw ? JSON.parse(raw) : [];
+        if (!list.includes(id)) list.push(id);
+        localStorage.setItem("portfolio_deleted_message_ids", JSON.stringify(list));
+      } catch {}
+
       setMessages((prev) => prev.filter((m) => m.id !== id));
-      setFeedback({ text: "Message removed.", type: "success" });
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      setFeedback({ text: "Message deleted successfully.", type: "success" });
     } catch {
       setFeedback({ text: "Failed to delete message.", type: "error" });
+    }
+  }
+
+  async function deleteSelected() {
+    if (selectedIds.size === 0) return;
+    const count = selectedIds.size;
+    if (!confirm(`Are you sure you want to delete ${count} selected message(s)?`)) return;
+
+    setIsDeleting(true);
+    const idsList = Array.from(selectedIds);
+    try {
+      const res = await fetch("/api/admin/messages", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: idsList }),
+      });
+      if (!res.ok) throw new Error("Failed to delete messages");
+
+      // Record in localStorage so they remain permanently deleted
+      try {
+        const raw = localStorage.getItem("portfolio_deleted_message_ids");
+        const list: string[] = raw ? JSON.parse(raw) : [];
+        for (const id of idsList) {
+          if (!list.includes(id)) list.push(id);
+        }
+        localStorage.setItem("portfolio_deleted_message_ids", JSON.stringify(list));
+      } catch {}
+
+      const idsSet = new Set(idsList);
+      setMessages((prev) => prev.filter((m) => !idsSet.has(m.id)));
+      setSelectedIds(new Set());
+      setFeedback({ text: `${count} message(s) deleted successfully.`, type: "success" });
+    } catch {
+      setFeedback({ text: "Failed to delete selected messages.", type: "error" });
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -659,6 +775,71 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
         </div>
       )}
 
+      {/* Selection & Batch Actions Toolbar */}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 10,
+          padding: "10px 16px",
+          background: selectedIds.size > 0 ? "rgba(255, 94, 44, 0.08)" : "rgba(255, 255, 255, 0.02)",
+          border: selectedIds.size > 0 ? "1px solid rgba(255, 94, 44, 0.35)" : "1px solid var(--line)",
+          borderRadius: 8,
+          marginBottom: 14,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 12, color: "var(--soft-white)", fontWeight: 500 }}>
+            <input
+              type="checkbox"
+              checked={filtered.length > 0 && filtered.every((m) => selectedIds.has(m.id))}
+              onChange={toggleSelectAll}
+              style={{ cursor: "pointer", width: 16, height: 16, accentColor: "var(--orange)" }}
+            />
+            <span>Select All ({filtered.length})</span>
+          </label>
+          {selectedIds.size > 0 && (
+            <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 999, background: "rgba(255, 94, 44, 0.2)", color: "var(--orange)", fontWeight: 600 }}>
+              {selectedIds.size} selected
+            </span>
+          )}
+        </div>
+
+        {selectedIds.size > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              type="button"
+              className="button button-secondary"
+              style={{ fontSize: 11, padding: "4px 10px", height: "auto" }}
+              onClick={clearSelection}
+            >
+              Clear Selection
+            </button>
+            <button
+              type="button"
+              className="button"
+              style={{
+                fontSize: 11,
+                padding: "4px 12px",
+                height: "auto",
+                background: "#dc2626",
+                borderColor: "#ef4444",
+                color: "#ffffff",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+              onClick={deleteSelected}
+              disabled={isDeleting}
+            >
+              <Trash2 size={12} /> {isDeleting ? "Deleting..." : `Delete Selected (${selectedIds.size})`}
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Messages List */}
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {filtered.length === 0 ? (
@@ -668,14 +849,24 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
         ) : (
           filtered.map((msg) => {
           const isUnread = msg.status === "UNREAD";
+          const isSelected = selectedIds.has(msg.id);
           const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.email)}&su=Re:%20Inquiry%20from%20Portfolio&body=Hi%20${encodeURIComponent(msg.name)},%0A%0A`;
 
           return (
             <div
               key={msg.id}
               style={{
-                background: isUnread ? "rgba(255, 94, 44, 0.05)" : "rgba(8, 11, 20, 0.7)",
-                border: isUnread ? "1px solid rgba(255, 94, 44, 0.4)" : "1px solid var(--line)",
+                background: isSelected
+                  ? "rgba(255, 94, 44, 0.1)"
+                  : isUnread
+                  ? "rgba(255, 94, 44, 0.05)"
+                  : "rgba(8, 11, 20, 0.7)",
+                border: isSelected
+                  ? "1px solid var(--orange)"
+                  : isUnread
+                  ? "1px solid rgba(255, 94, 44, 0.4)"
+                  : "1px solid var(--line)",
+                boxShadow: isSelected ? "0 0 12px rgba(255, 94, 44, 0.2)" : undefined,
                 borderRadius: 12,
                 padding: "16px 20px",
                 display: "flex",
@@ -684,11 +875,25 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
                 transition: "all 150ms ease",
               }}
             >
-              {/* Header: Name, Contact & Date */}
+              {/* Header: Checkbox, Name, Contact & Date */}
               <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                    <strong style={{ fontSize: 16, color: "var(--soft-white)" }}>{msg.name}</strong>
+                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleSelect(msg.id)}
+                    title={`Select message from ${msg.name}`}
+                    style={{
+                      marginTop: 4,
+                      cursor: "pointer",
+                      width: 17,
+                      height: 17,
+                      accentColor: "var(--orange)",
+                    }}
+                  />
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                      <strong style={{ fontSize: 16, color: "var(--soft-white)" }}>{msg.name}</strong>
                     {isUnread && (
                       <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "var(--orange)", color: "#fff" }}>
                         NEW / UNREAD
@@ -720,8 +925,9 @@ export function MessagesManager({ initialMessages }: { initialMessages: ContactM
                     </span>
                   </div>
                 </div>
+              </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, color: "var(--muted)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, color: "var(--muted)" }}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
                     <Calendar size={12} />
                     <strong>{formatMessageCardIST(msg.submittedAtIST || msg.createdAt)}</strong>

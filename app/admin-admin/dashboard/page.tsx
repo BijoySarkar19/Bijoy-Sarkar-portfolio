@@ -5,6 +5,7 @@ import { SocialIcon } from "@/components/ui/SocialIcon";
 import { prisma } from "@/lib/prisma";
 import { formatIndianTime } from "@/lib/audit";
 import { parseAuditChanges } from "@/lib/audit-diff";
+import { FALLBACK_CONTACT_MESSAGES } from "@/lib/fallback-messages";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,7 @@ export default async function AdminDashboardPage() {
     recentProjects = projRecent;
 
     let statusOverrides: Record<string, string> = {};
+    let deletedIds = new Set<string>();
     try {
       const statusSetting = await prisma.siteSetting.findUnique({
         where: { key: "message_statuses" },
@@ -82,10 +84,25 @@ export default async function AdminDashboardPage() {
       if (statusSetting?.value) {
         statusOverrides = JSON.parse(statusSetting.value);
       }
+      const deletedSetting = await prisma.siteSetting.findUnique({
+        where: { key: "deleted_message_ids" },
+      });
+      if (deletedSetting?.value) {
+        deletedIds = new Set(JSON.parse(deletedSetting.value));
+      }
     } catch {}
 
-    totalMessages = (allContactMessages as any[]).length;
-    unreadMessages = (allContactMessages as any[]).filter((m) => (statusOverrides[m.id] || m.status) === "UNREAD").length;
+    const msgMap = new Map<string, any>();
+    for (const fb of FALLBACK_CONTACT_MESSAGES) {
+      msgMap.set(fb.id, fb);
+    }
+    for (const m of (allContactMessages as any[])) {
+      msgMap.set(m.id, m);
+    }
+
+    const activeMsgs = Array.from(msgMap.values()).filter((m) => !deletedIds.has(m.id));
+    totalMessages = activeMsgs.length;
+    unreadMessages = activeMsgs.filter((m) => (statusOverrides[m.id] || m.status) === "UNREAD").length;
   } catch (err) {
     console.warn("Prisma error caught on AdminDashboardPage:", err);
   }

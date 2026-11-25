@@ -20,12 +20,19 @@ export async function POST() {
 
   try {
     let statusOverrides: Record<string, string> = {};
+    let deletedIds = new Set<string>();
     try {
       const statusSetting = await prisma.siteSetting.findUnique({
         where: { key: "message_statuses" },
       });
       if (statusSetting?.value) {
         statusOverrides = JSON.parse(statusSetting.value);
+      }
+      const deletedSetting = await prisma.siteSetting.findUnique({
+        where: { key: "deleted_message_ids" },
+      });
+      if (deletedSetting?.value) {
+        deletedIds = new Set(JSON.parse(deletedSetting.value));
       }
     } catch {}
 
@@ -133,7 +140,9 @@ export async function POST() {
     for (const m of rawMsgs) {
       msgMap.set(m.id, m);
     }
-    const mappedMsgs = Array.from(msgMap.values()).map((m) => {
+    const mappedMsgs = Array.from(msgMap.values())
+      .filter((m) => !deletedIds.has(m.id))
+      .map((m) => {
       const rowMatch = m.id?.match(/sheet-row-(\d+)/);
       const rowNum = rowMatch ? rowMatch[1] : "";
       const defaultName = rowNum ? `Inquiry (Sheet Row ${rowNum})` : "Direct Submission";

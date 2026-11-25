@@ -13,14 +13,21 @@ export default async function AdminMessagesPage() {
   let messages: any[] = [];
 
   try {
-    // 0. Load status overrides from SiteSetting so status persists across serverless instances
+    // 0. Load status overrides and deleted IDs so state persists across serverless instances
     let statusOverrides: Record<string, string> = {};
+    let deletedIds = new Set<string>();
     try {
       const statusSetting = await prisma.siteSetting.findUnique({
         where: { key: "message_statuses" },
       });
       if (statusSetting?.value) {
         statusOverrides = JSON.parse(statusSetting.value);
+      }
+      const deletedSetting = await prisma.siteSetting.findUnique({
+        where: { key: "deleted_message_ids" },
+      });
+      if (deletedSetting?.value) {
+        deletedIds = new Set(JSON.parse(deletedSetting.value));
       }
     } catch {}
 
@@ -46,7 +53,9 @@ export default async function AdminMessagesPage() {
     }
 
     // Apply any status overrides & clean presentation defaults to guarantee 1:1 Google Sheets parity
-    const mappedMsgs = Array.from(msgMap.values()).map((m) => {
+    const mappedMsgs = Array.from(msgMap.values())
+      .filter((m) => !deletedIds.has(m.id))
+      .map((m) => {
       const rowMatch = m.id?.match(/sheet-row-(\d+)/);
       const rowNum = rowMatch ? rowMatch[1] : "";
       const defaultName = rowNum ? `Inquiry (Sheet Row ${rowNum})` : "Direct Submission";

@@ -37,10 +37,10 @@ export const authOptions: NextAuthOptions = {
         const parsed = adminLoginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const username = parsed.data.username.trim().toLowerCase();
-        const email = parsed.data.email.trim().toLowerCase();
+        const rawUsername = parsed.data.username.trim();
+        const rawEmail = parsed.data.email.trim();
         const password = parsed.data.password;
-        const identifier = email || username;
+        const identifier = rawEmail || rawUsername;
 
         // Next-level brute-force protection: check if account/IP is rate-limited
         const { allowed, remainingSeconds } = await checkLoginRateLimit(identifier);
@@ -48,23 +48,24 @@ export const authOptions: NextAuthOptions = {
           throw new Error(`LOCKOUT:${remainingSeconds || 900}:Too many failed sign-in attempts. Please wait 15 minutes before retrying.`);
         }
 
+        // Strictly enforce: email must be small letter, no capital letters accepted
+        if (/[A-Z]/.test(rawEmail)) {
+          await recordFailedLogin(identifier);
+          return null;
+        }
+
         // 1. Direct environment administrator credentials verification (timing-safe)
         const DEFAULT_ADMIN_USERNAME = "Bijoy19";
         const DEFAULT_ADMIN_EMAIL = "bijoysarkar7252@gmail.com";
         const DEFAULT_ADMIN_PASSWORD = "Teriki77!";
 
-        const envUsername = (process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME).trim().toLowerCase();
+        const envUsername = (process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME).trim();
         const envEmail = (process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
         const envPassword = process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD;
 
-        const isUserMatch =
-          username === envUsername ||
-          username === "bijoy19" ||
-          username === "bijoy" ||
-          username === "bijoysarkar";
-        const isEmailMatch =
-          email === envEmail ||
-          email === "bijoysarkar7252@gmail.com";
+        // User ID must strictly use Bijoy19 (starts with capital 'B', not small letter 'b')
+        const isUserMatch = rawUsername === envUsername || (envUsername === DEFAULT_ADMIN_USERNAME && rawUsername === "Bijoy19");
+        const isEmailMatch = rawEmail === envEmail;
 
         if (isUserMatch && isEmailMatch) {
           // Use SHA-256 digests for constant-time comparison to prevent timing attacks
@@ -88,8 +89,8 @@ export const authOptions: NextAuthOptions = {
 
         // 2. Check against database admin record if database is accessible
         try {
-          const admin = await prisma.admin.findUnique({ where: { email } });
-          if (admin && (admin.username.toLowerCase() === username || username === "bijoy" || username === "bijoy19")) {
+          const admin = await prisma.admin.findUnique({ where: { email: rawEmail } });
+          if (admin && admin.username === rawUsername) {
             const passwordValid = await bcrypt.compare(password, admin.passwordHash);
             if (passwordValid) {
               await resetLoginAttempts(identifier);

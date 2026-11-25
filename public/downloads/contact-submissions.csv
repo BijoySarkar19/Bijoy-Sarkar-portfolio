@@ -1,24 +1,26 @@
-﻿Submission ID,Date & Time (IST),Full Name,Email Address,Phone Number,Message Content,IP Address
-sheet-row-2,"31 Oct 2026, 02:12:00 am IST",Verification Bot,bijoysarkar7252@gmail.com,Not provided,Testing Google Sheet direct append and Gmail alert.,127.0.0.1
-sheet-row-3,"31 Oct 2026, 12:37:47 am IST",Bijoy Self,bijoy.the.sarkar@gmail.com,Not provided,Hi how are you ? This is a test message to ensure contact service functions properly.,::1
-sheet-row-4,"31 Oct 2026, 12:42:38 am IST",Bijoy Self,bijoy.the.sarkar@gmail.com,Not provided,Hi how are you ?,::1
-sheet-row-5,"31 Oct 2026, 03:59:23 am IST",Inquiry (Sheet Row 5),Not provided,Not provided,Direct spreadsheet inquiry recorded on Google Sheets (Row 5).,Unknown
-sheet-row-6,"31 Oct 2026, 04:54:47 am IST",yupp,gg@yahoo.com,Not provided,Its me self for testing,::1
-sheet-row-7,"31 Oct 2026, 04:58:27 am IST",cdv,vdv@gmail.com,Not provided,TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST,::1
-sheet-row-8,"31 Oct 2026, 04:59:55 am IST",CDV,DWD@gmail.com,Not provided,TEST TEST TEST TEST TEST  125,::1
-sheet-row-9,"31 Oct 2026, 05:05:00 am IST",Test Phone Fix,test@example.com,'+91 9158554458,Testing phone quote fix in Google Sheets,127.0.0.1
-sheet-row-10,"31 Oct 2026, 05:13:00 am IST",Webhook Verification,bijoysarkar7252@gmail.com,'+91 9158554458,Testing automatic phone text formatting with Version 3 deployment,127.0.0.1
-sheet-row-11,"21 Nov 2026, 02:36:45 am IST",Bijoy Verification,bijoysarkar7252@gmail.com,9876543210,Testing zero-error contact form and direct mail delivery from Kubernetes cluster!,::1
-sheet-row-12,"21 Nov 2026, 02:39:57 am IST",Bijoy Verification,bijoysarkar7252@gmail.com,'+91 9876543210,Zero error verification of direct inbox mail and Google Sheets sync inside Kubernetes cluster!,::1
-sheet-row-13,"21 Nov 2026, 02:44:41 am IST",Bijoy Sarkar Verification,bijoysarkar7252@gmail.com,'+91 9876543210,Testing contact form end-to-end to verify zero errors and direct delivery to inbox.,::1
-sheet-row-14,"21 Nov 2026, 02:56:00 am IST",Webhook Live Test,bijoysarkar7252@gmail.com,'+91 9876543210,Testing direct Google Apps Script Webhook dispatch and Gmail alert!,Unknown
-sheet-row-15,"21 Nov 2026, 03:00:00 am IST",Node Fetch Verification,bijoysarkar7252@gmail.com,'+91 9876543210,Testing native node fetch redirect behavior with Google Apps Script Webhook.,Unknown
-sheet-row-16,"21 Nov 2026, 03:01:09 am IST",Bijoy End-to-End Test,bijoysarkar7252@gmail.com,'+91 9876543210,Testing automatic Google Sheets append and instant Gmail alert dispatch.,::1
-sheet-row-17,"21 Nov 2026, 03:06:56 am IST",Bijoy Post-Fix Verification,bijoysarkar7252@gmail.com,'+91 9876543210,Verifying live Vercel deployment with hardcoded Google Sheets Webhook fallback and instant alert.,106.222.224.158
-sheet-row-18,"21 Nov 2026, 03:09:53 am IST",ho,ho@gh.com,'+91 9863475856,do you knoe me .,106.222.224.158
-sheet-row-19,"21 Nov 2026, 03:10:38 am IST",ho,ho@ho.com,'+91 9863447546,do you know me .,106.222.224.158
-sheet-row-20,"21 Nov 2026, 03:13:57 am IST",Inquiry (Sheet Row 20),Not provided,Not provided,Direct spreadsheet inquiry recorded on Google Sheets (Row 20).,Unknown
-sheet-row-21,"21 Nov 2026, 12:04:10 pm IST",yupp,yupp@yu.com,Not provided,Bhc ghe c hu j,106.222.226.72
-sheet-row-22,"21 Nov 2026, 12:04:49 pm IST",bjbj,hdjv@gdb.com,Not provided,ddvnjed uch ef 8 e u8e,106.222.226.72
-sheet-row-23,"22 Nov 2026, 12:27:02 am IST",yu,hdsg@gmi.com,'+91 6005151521,vdvd hcided Hi whou are you,106.222.226.72
-cmwumc9qc0000bwhjwnchmhk6,"Tuesday, 24 Nov 2026, 05:05:54 pm IST",Speed Verification,bijoy.test@example.com,'+91 9876543210,Testing instant sub-second contact form dispatch after optimization.,::1
+Timestamp (IST),Name,Email,Phone,Message
+"31 Oct 2026, 02:12:00 am IST","Verification Bot","bijoysarkar7252@gmail.com","Not provided","Testing Google Sheet direct append and Gmail alert."
+"31 Oct 2026, 12:37:47 am IST","Bijoy Self","bijoy.the.sarkar@gmail.com","Not provided","Hi how are you ? This is a test message to ensure contact service functions properly."
+"31 Oct 2026, 12:42:38 am IST","Bijoy Self","bijoy.the.sarkar@gmail.com","Not provided","Hi how are you ?"
+"Sat Oct 31 2026 03:59:23 GMT+0530 (India Standard Time)","Inquiry (Sheet Row 5)","Not provided","Not provided","Direct spreadsheet inquiry recorded on Google Sheets (Row 5)."
+"31 Oct 2026, 04:54:47 am IST","yupp","gg@yahoo.com","Not provided","Its me self for testing"
+"31 Oct 2026, 04:58:27 am IST","cdv","vdv@gmail.com","Not provided","TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST"
+"31 Oct 2026, 04:59:55 am IST","CDV","DWD@gmail.com","Not provided","TEST TEST TEST TEST TEST  125"
+"31 Oct 2026, 05:05:00 am IST","Test Phone Fix","test@example.com","+91 9158554458","Testing phone quote fix in Google Sheets"
+"31 Oct 2026, 05:13:00 am IST","Webhook Verification","bijoysarkar7252@gmail.com","+91 9158554458","Testing automatic phone text formatting with Version 3 deployment"
+"21 Nov 2026, 02:36:45 am IST","Bijoy Verification","bijoysarkar7252@gmail.com","9876543210","Testing zero-error contact form and direct mail delivery from Kubernetes cluster!"
+"21 Nov 2026, 02:39:57 am IST","Bijoy Verification","bijoysarkar7252@gmail.com","+91 9876543210","Zero error verification of direct inbox mail and Google Sheets sync inside Kubernetes cluster!"
+"21 Nov 2026, 02:44:41 am IST","Bijoy Sarkar Verification","bijoysarkar7252@gmail.com","+91 9876543210","Testing contact form end-to-end to verify zero errors and direct delivery to inbox."
+"21 Nov 2026, 02:56:00 am IST","Webhook Live Test","bijoysarkar7252@gmail.com","+91 9876543210","Testing direct Google Apps Script Webhook dispatch and Gmail alert!"
+"21 Nov 2026, 03:00:00 am IST","Node Fetch Verification","bijoysarkar7252@gmail.com","+91 9876543210","Testing native node fetch redirect behavior with Google Apps Script Webhook."
+"21 Nov 2026, 03:01:09 am IST","Bijoy End-to-End Test","bijoysarkar7252@gmail.com","+91 9876543210","Testing automatic Google Sheets append and instant Gmail alert dispatch."
+"21 Nov 2026, 03:06:56 am IST","Bijoy Post-Fix Verification","bijoysarkar7252@gmail.com","+91 9876543210","Verifying live Vercel deployment with hardcoded Google Sheets Webhook fallback and instant alert."
+"21 Nov 2026, 03:09:53 am IST","ho","ho@gh.com","+91 9863475856","do you knoe me ."
+"21 Nov 2026, 03:10:38 am IST","ho","ho@ho.com","+91 9863447546","do you know me ."
+"Sat Nov 21 2026 03:13:57 GMT+0530 (India Standard Time)","Inquiry (Sheet Row 20)","Not provided","Not provided","Direct spreadsheet inquiry recorded on Google Sheets (Row 20)."
+"21 Nov 2026, 12:04:10 pm IST","yupp","yupp@yu.com","Not provided","Bhc ghe c hu j"
+"21 Nov 2026, 12:04:49 pm IST","bjbj","hdjv@gdb.com","Not provided","ddvnjed uch ef 8 e u8e"
+"22 Nov 2026, 12:27:02 am IST","yu","hdsg@gmi.com","+91 6005151521","vdvd hcided Hi whou are you"
+"Tuesday, 24 Nov 2026, 03:56:49 pm IST","Bij","bij@bij.com","+91 9863476586","Hi how are you ."
+"Tuesday, 24 Nov 2026, 05:05:54 pm IST","Speed Verification","bijoy.test@example.com","+91 9876543210","Testing instant sub-second contact form dispatch after optimization."
+"Tuesday, 24 Nov 2026, 05:05:54 pm IST","Speed Verification","bijoy.test@example.com","+91 9876543210","Testing instant sub-second contact form dispatch after optimization."

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AdminLogout } from "@/components/admin/AdminLogout";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { formatAdminClockIST } from "@/lib/ist-date";
 import { Clock } from "lucide-react";
 
@@ -24,10 +24,26 @@ export function AdminNavigation({ active }: { active: AdminTab }) {
   const [istTime, setIstTime] = useState("");
   const [pendingTab, setPendingTab] = useState<AdminTab | null>(null);
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setPendingTab(null);
   }, [pathname, active]);
+
+  // Keep active tab centered and visible in the horizontal scroll container (stays on selected section)
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const timer = setTimeout(() => {
+      const activeLink = nav.querySelector<HTMLElement>('[aria-current="page"]');
+      if (activeLink) {
+        activeLink.scrollIntoView({ inline: "center", block: "nearest", behavior: "auto" });
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [active, pathname]);
 
   useEffect(() => {
     const update = () => setIstTime(formatAdminClockIST(new Date()));
@@ -39,7 +55,7 @@ export function AdminNavigation({ active }: { active: AdminTab }) {
   return (
     <div className="admin-nav-container">
       <div className="admin-nav-row">
-        <nav className="admin-nav" aria-label="Admin navigation">
+        <nav className="admin-nav" ref={navRef} aria-label="Admin navigation">
           {NAV_ITEMS.map((item) => {
             const isCurrent = active === item.tab || (item.tab === "projects" && active === "new");
             const isPending = pendingTab === item.tab && !isCurrent;

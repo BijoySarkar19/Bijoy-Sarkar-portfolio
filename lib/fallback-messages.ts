@@ -1,5 +1,5 @@
 // Auto-generated fallback contact messages from Google Sheets
-// Synchronizes all rows (Rows 2 to 23) ensuring 1:1 parity with Google Sheets
+// Synchronizes all rows (Rows 2 to 25 + Direct) ensuring 1:1 parity with Google Sheets
 
 export interface FallbackContactMessage {
   id: string;
@@ -27,7 +27,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.269Z"
   },
   {
     "id": "sheet-row-3",
@@ -40,7 +40,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-4",
@@ -53,7 +53,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-5",
@@ -61,12 +61,12 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "email": "Not provided",
     "phone": "Not provided",
     "message": "Direct spreadsheet inquiry recorded on Google Sheets (Row 5).",
-    "submittedAtIST": "31 Oct 2026, 03:59:23 am IST",
+    "submittedAtIST": "Sat Oct 31 2026 03:59:23 GMT+0530 (India Standard Time)",
     "ipAddress": "Unknown",
     "status": "UNREAD",
     "googleSynced": true,
-    "notes": "Direct spreadsheet record with empty contact fields",
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "notes": null,
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-6",
@@ -79,7 +79,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-7",
@@ -92,7 +92,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-8",
@@ -105,7 +105,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-9",
@@ -118,7 +118,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-10",
@@ -131,7 +131,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-11",
@@ -144,7 +144,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-12",
@@ -157,7 +157,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-13",
@@ -170,7 +170,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-14",
@@ -183,7 +183,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-15",
@@ -196,7 +196,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-16",
@@ -209,7 +209,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-17",
@@ -222,7 +222,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-18",
@@ -235,7 +235,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-19",
@@ -248,7 +248,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-20",
@@ -256,12 +256,12 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "email": "Not provided",
     "phone": "Not provided",
     "message": "Direct spreadsheet inquiry recorded on Google Sheets (Row 20).",
-    "submittedAtIST": "21 Nov 2026, 03:13:57 am IST",
+    "submittedAtIST": "Sat Nov 21 2026 03:13:57 GMT+0530 (India Standard Time)",
     "ipAddress": "Unknown",
     "status": "UNREAD",
     "googleSynced": true,
-    "notes": "Direct spreadsheet record with empty contact fields",
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "notes": null,
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-21",
@@ -274,7 +274,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-22",
@@ -287,7 +287,7 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "READ",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
   },
   {
     "id": "sheet-row-23",
@@ -300,6 +300,45 @@ export const FALLBACK_CONTACT_MESSAGES: FallbackContactMessage[] = [
     "status": "REPLIED",
     "googleSynced": true,
     "notes": null,
-    "createdAt": "2026-11-23T16:51:12.175Z"
+    "createdAt": "2026-11-25T06:35:33.270Z"
+  },
+  {
+    "id": "sheet-row-24",
+    "name": "Bij",
+    "email": "bij@bij.com",
+    "phone": "+91 9863476586",
+    "message": "Hi how are you .",
+    "submittedAtIST": "Tuesday, 24 Nov 2026, 03:56:49 pm IST",
+    "ipAddress": "49.42.100.95",
+    "status": "UNREAD",
+    "googleSynced": true,
+    "notes": null,
+    "createdAt": "2026-11-25T06:35:33.270Z"
+  },
+  {
+    "id": "sheet-row-25",
+    "name": "Speed Verification",
+    "email": "bijoy.test@example.com",
+    "phone": "+91 9876543210",
+    "message": "Testing instant sub-second contact form dispatch after optimization.",
+    "submittedAtIST": "Tuesday, 24 Nov 2026, 05:05:54 pm IST",
+    "ipAddress": "::1",
+    "status": "UNREAD",
+    "googleSynced": true,
+    "notes": null,
+    "createdAt": "2026-11-25T06:35:33.270Z"
+  },
+  {
+    "id": "cmwumc9qc0000bwhjwnchmhk6",
+    "name": "Speed Verification",
+    "email": "bijoy.test@example.com",
+    "phone": "+91 9876543210",
+    "message": "Testing instant sub-second contact form dispatch after optimization.",
+    "submittedAtIST": "Tuesday, 24 Nov 2026, 05:05:54 pm IST",
+    "ipAddress": "::1",
+    "status": "UNREAD",
+    "googleSynced": true,
+    "notes": null,
+    "createdAt": "2026-11-24T11:35:54.000Z"
   }
 ];

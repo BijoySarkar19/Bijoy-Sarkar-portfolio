@@ -1,12 +1,8 @@
 import { z } from "zod";
 
 export const adminLoginSchema = z.object({
-  username: z.string().trim().min(2).max(64).refine((val) => val === "Bijoy19" || !val.toLowerCase().startsWith("bijoy") || val.startsWith("B"), {
-    message: "Username must start with capital 'B' (Bijoy19).",
-  }),
-  email: z.string().email().trim().max(254).refine((val) => !/[A-Z]/.test(val), {
-    message: "Email must be strictly lowercase (no capital letters allowed).",
-  }),
+  username: z.string().trim().min(2).max(64),
+  email: z.string().email().trim().max(254),
   password: z.string().min(1).max(128),
 });
 

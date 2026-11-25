@@ -72,20 +72,6 @@ export function AdminLogin() {
     const usernameVal = String(form.get("username") || "").trim();
     const emailVal = String(form.get("email") || "").trim();
 
-    // Enforce email strictly lowercase (no capital letters accepted)
-    if (/[A-Z]/.test(emailVal)) {
-      setMessage("Email must contain only lowercase letters (no capital letters accepted).");
-      setPending(false);
-      return;
-    }
-
-    // Enforce Userid must use Bijoy19 (capital B, not small letter b)
-    if (usernameVal === "bijoy19" || (usernameVal.toLowerCase() === "bijoy19" && !usernameVal.startsWith("B"))) {
-      setMessage("User ID must use capital 'B' (Bijoy19), not small letter 'b'.");
-      setPending(false);
-      return;
-    }
-
     try {
       const result = await signIn("credentials", {
         username: usernameVal,

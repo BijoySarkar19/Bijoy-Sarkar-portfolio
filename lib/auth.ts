@@ -48,12 +48,6 @@ export const authOptions: NextAuthOptions = {
           throw new Error(`LOCKOUT:${remainingSeconds || 900}:Too many failed sign-in attempts. Please wait 15 minutes before retrying.`);
         }
 
-        // Strictly enforce: email must be small letter, no capital letters accepted
-        if (/[A-Z]/.test(rawEmail)) {
-          await recordFailedLogin(identifier);
-          return null;
-        }
-
         // 1. Direct environment administrator credentials verification (timing-safe)
         const DEFAULT_ADMIN_USERNAME = "Bijoy19";
         const DEFAULT_ADMIN_EMAIL = "bijoysarkar7252@gmail.com";
@@ -64,12 +58,15 @@ export const authOptions: NextAuthOptions = {
         const envEmail = (cleanEnv(process.env.ADMIN_EMAIL) || DEFAULT_ADMIN_EMAIL).toLowerCase();
         const envPassword = cleanEnv(process.env.ADMIN_PASSWORD) || DEFAULT_ADMIN_PASSWORD;
 
-        // User ID must strictly use Bijoy19 (starts with capital 'B', not small letter 'b')
+        const normalizedEmail = rawEmail.toLowerCase();
         const isUserMatch =
           rawUsername === "Bijoy19" ||
+          rawUsername.toLowerCase() === "bijoy19" ||
           rawUsername === envUsername ||
-          (envUsername.toLowerCase() === "bijoy19" && rawUsername === "Bijoy19");
-        const isEmailMatch = rawEmail === envEmail || rawEmail === DEFAULT_ADMIN_EMAIL;
+          rawUsername.toLowerCase() === envUsername.toLowerCase();
+        const isEmailMatch =
+          normalizedEmail === envEmail ||
+          normalizedEmail === DEFAULT_ADMIN_EMAIL.toLowerCase();
 
         if (isUserMatch && isEmailMatch) {
           // Use SHA-256 digests for constant-time comparison to prevent timing attacks

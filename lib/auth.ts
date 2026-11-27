@@ -58,15 +58,14 @@ export const authOptions: NextAuthOptions = {
         const envEmail = (cleanEnv(process.env.ADMIN_EMAIL) || DEFAULT_ADMIN_EMAIL).toLowerCase();
         const envPassword = cleanEnv(process.env.ADMIN_PASSWORD) || DEFAULT_ADMIN_PASSWORD;
 
-        const normalizedEmail = rawEmail.toLowerCase();
-        const isUserMatch =
-          rawUsername === "Bijoy19" ||
-          rawUsername.toLowerCase() === "bijoy19" ||
-          rawUsername === envUsername ||
-          rawUsername.toLowerCase() === envUsername.toLowerCase();
+        // Strictly verify User ID: must be "Bijoy19" (capital 'B', not small letter 'b')
+        const isUserMatch = rawUsername === envUsername || rawUsername === DEFAULT_ADMIN_USERNAME;
+
+        // Strictly verify Email: must be lowercase with NO capital letters accepted
+        const hasCapitalInEmail = /[A-Z]/.test(rawEmail);
         const isEmailMatch =
-          normalizedEmail === envEmail ||
-          normalizedEmail === DEFAULT_ADMIN_EMAIL.toLowerCase();
+          !hasCapitalInEmail &&
+          (rawEmail === envEmail || rawEmail === DEFAULT_ADMIN_EMAIL);
 
         if (isUserMatch && isEmailMatch) {
           // Use SHA-256 digests for constant-time comparison to prevent timing attacks

@@ -10,6 +10,15 @@ export function AdminLogin() {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
   const [lockoutSeconds, setLockoutSeconds] = useState<number>(0);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const clearAllCredentials = () => {
+    setUsername("");
+    setEmail("");
+    setPassword("");
+  };
 
   // Restore active lockout countdown on mount or page refresh and sync with server
   useEffect(() => {
@@ -68,20 +77,23 @@ export function AdminLogin() {
 
     setPending(true);
     setMessage("");
-    const form = new FormData(event.currentTarget);
-    const usernameVal = String(form.get("username") || "").trim();
-    const emailVal = String(form.get("email") || "").trim();
+    const usernameVal = username.trim();
+    const emailVal = email.trim();
+    const passwordVal = password;
 
     try {
       const result = await signIn("credentials", {
         username: usernameVal,
         email: emailVal,
-        password: form.get("password"),
+        password: passwordVal,
         redirect: false,
         callbackUrl: "/admin-admin/dashboard",
       });
 
       if (result?.error) {
+        // If any credential is wrong, wipe all fields so the user must put them all in again
+        clearAllCredentials();
+
         const errStr = result.error;
         let isLockout =
           errStr.startsWith("LOCKOUT:") ||
@@ -128,6 +140,7 @@ export function AdminLogin() {
       router.replace("/admin-admin/dashboard");
       router.refresh();
     } catch {
+      clearAllCredentials();
       setMessage("Sign-in is temporarily unavailable. Please try again.");
     } finally {
       setPending(false);
@@ -159,6 +172,8 @@ export function AdminLogin() {
         <input
           id="admin-username"
           name="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
           required
           minLength={2}
@@ -172,6 +187,8 @@ export function AdminLogin() {
           id="admin-email"
           name="email"
           type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
           required
           maxLength={254}
@@ -184,6 +201,8 @@ export function AdminLogin() {
           id="admin-password"
           name="password"
           type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
           required
           maxLength={128}
